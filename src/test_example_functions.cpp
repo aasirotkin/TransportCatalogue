@@ -1,9 +1,14 @@
 #include "test_example_functions.h"
 
+#include "input_reader.h"
+#include "stat_reader.h"
+#include "transport_catalogue.h"
+
 #include <chrono>
 #include <execution>
 #include <iostream>
 #include <random>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -158,11 +163,70 @@ private:
 
 // -------- Начало модульных тестов ----------
 
+void TestLocalBaseQueries() {
+    stringstream input_ss;
+    input_ss << "10\n";
+    input_ss << "Stop Tolstopaltsevo : 55.611087, 37.208290\n"s;
+    input_ss << "Stop Marushkino : 55.595884, 37.209755\n"s;
+    input_ss << "Bus 256 : Biryulyovo Zapadnoye > Biryusinka > Universam > Biryulyovo Tovarnaya > Biryulyovo Passazhirskaya > Biryulyovo Zapadnoye\n"s;
+    input_ss << "Bus 750: Tolstopaltsevo - Marushkino - Rasskazovka\n"s;
+    input_ss << "Stop Rasskazovka : 55.632761, 37.333324\n"s;
+    input_ss << "Stop Biryulyovo Zapadnoye : 55.574371, 37.651700\n"s;
+    input_ss << "Stop Biryusinka : 55.581065, 37.648390\n"s;
+    input_ss << "Stop Universam : 55.587655, 37.645687\n"s;
+    input_ss << "Stop Biryulyovo Tovarnaya : 55.592028, 37.653656\n"s;
+    input_ss << "Stop Biryulyovo Passazhirskaya : 55.580999, 37.659164\n"s;
+    input_ss << "3\n";
+    input_ss << "Bus 256\n"s;
+    input_ss << "Bus 750\n"s;
+    input_ss << "Bus 751\n"s;
+
+    stringstream output_ss;
+
+    TestBaseQueries(input_ss, output_ss);
+
+    stringstream base_ss;
+
+    base_ss << "Bus 256: 6 stops on route, 5 unique stops, 4371.02 route length\n"s;
+    base_ss << "Bus 750: 5 stops on route, 3 unique stops, 20939.5 route length\n"s;
+    base_ss << "Bus 751: not found\n"s;
+
+    string output_string;
+    string base_string;
+
+    ASSERT_EQUAL(output_ss.str().size(), base_ss.str().size());
+    while (getline(output_ss, output_string) && getline(base_ss, base_string)) {
+        ASSERT_EQUAL(output_string, base_string);
+    }
+}
+
 // --------- Окончание модульных тестов -----------
+
+// Функция TestBaseQueries является точкой входа прохождения тестов платформы
+void TestBaseQueries(istream& input_ss, ostream& output_ss) {
+    TransportCatalogue catalogue;
+
+    int query_count = 0;
+
+    query_count = ReadLineWithNumber(input_ss);
+    std::vector<std::string> queries;
+    queries.reserve(query_count);
+    for (int i = 0; i < query_count; ++i) {
+        string query = ReadLine(input_ss);
+        queries.push_back(query);
+    }
+    InputQueries(catalogue, queries);
+
+    query_count = ReadLineWithNumber(input_ss);
+    for (int i = 0; i < query_count; ++i) {
+        string query = ReadLine(input_ss);
+        OutputQuery(catalogue, query, output_ss);
+    }
+}
 
 // Функция TestTransportCatalogue является точкой входа для запуска тестов
 void TestTransportCatalogue() {
-
+    RUN_TEST(TestLocalBaseQueries);
 #ifndef _DEBUG
 
 #endif
