@@ -1,10 +1,13 @@
 #include "test_example_functions.h"
 
+#include "geo.h"
 #include "input_reader.h"
 #include "stat_reader.h"
 #include "transport_catalogue.h"
 
+#include <algorithm>
 #include <chrono>
+#include <deque>
 #include <execution>
 #include <iostream>
 #include <random>
@@ -161,21 +164,42 @@ private:
 #define ASSERT_DURATION_MILLISECONDS(x) AssertDuration<std::chrono::milliseconds> UNIQUE_VAR_NAME_PROFILE(x, __FILE__, __FUNCTION__, __LINE__)
 #define ASSERT_DURATION_SECONDS(x) AssertDuration<std::chrono::seconds> UNIQUE_VAR_NAME_PROFILE(x, __FILE__, __FUNCTION__, __LINE__)
 
+// -----------------------------------------------------------------------------
+
 // -------- Начало модульных тестов ----------
+
+void TestParseGeoFromStringView() {
+    Coordinates coord;
+    {
+        std::string str_coord = "55.611087, 37.208290"s;
+        coord = Coordinates::ParseFromStringView(str_coord);
+        ASSERT_EQUAL(coord, Coordinates({ 55.611087, 37.208290 }));
+    }
+    {
+        std::string str_coord = "   55.611087   ,   37.208290\n"s;
+        coord = Coordinates::ParseFromStringView(str_coord);
+        ASSERT_EQUAL(coord, Coordinates({ 55.611087, 37.208290 }));
+    }
+    {
+        std::string str_coord = "   55.611087   ,   37.208290    \n"s;
+        coord = Coordinates::ParseFromStringView(str_coord);
+        ASSERT_EQUAL(coord, Coordinates({ 55.611087, 37.208290 }));
+    }
+}
 
 void TestLocalBaseQueries() {
     stringstream input_ss;
     input_ss << "10\n";
-    input_ss << "Stop Tolstopaltsevo : 55.611087, 37.208290\n"s;
-    input_ss << "Stop Marushkino : 55.595884, 37.209755\n"s;
-    input_ss << "Bus 256 : Biryulyovo Zapadnoye > Biryusinka > Universam > Biryulyovo Tovarnaya > Biryulyovo Passazhirskaya > Biryulyovo Zapadnoye\n"s;
+    input_ss << "Stop Tolstopaltsevo: 55.611087, 37.208290\n"s;
+    input_ss << "Stop Marushkino: 55.595884, 37.209755\n"s;
+    input_ss << "Bus 256: Biryulyovo Zapadnoye > Biryusinka > Universam > Biryulyovo Tovarnaya > Biryulyovo Passazhirskaya > Biryulyovo Zapadnoye\n"s;
     input_ss << "Bus 750: Tolstopaltsevo - Marushkino - Rasskazovka\n"s;
-    input_ss << "Stop Rasskazovka : 55.632761, 37.333324\n"s;
-    input_ss << "Stop Biryulyovo Zapadnoye : 55.574371, 37.651700\n"s;
-    input_ss << "Stop Biryusinka : 55.581065, 37.648390\n"s;
-    input_ss << "Stop Universam : 55.587655, 37.645687\n"s;
-    input_ss << "Stop Biryulyovo Tovarnaya : 55.592028, 37.653656\n"s;
-    input_ss << "Stop Biryulyovo Passazhirskaya : 55.580999, 37.659164\n"s;
+    input_ss << "Stop Rasskazovka: 55.632761, 37.333324\n"s;
+    input_ss << "Stop Biryulyovo Zapadnoye: 55.574371, 37.651700\n"s;
+    input_ss << "Stop Biryusinka: 55.581065, 37.648390\n"s;
+    input_ss << "Stop Universam: 55.587655, 37.645687\n"s;
+    input_ss << "Stop Biryulyovo Tovarnaya: 55.592028, 37.653656\n"s;
+    input_ss << "Stop Biryulyovo Passazhirskaya: 55.580999, 37.659164\n"s;
     input_ss << "3\n";
     input_ss << "Bus 256\n"s;
     input_ss << "Bus 750\n"s;
@@ -226,6 +250,7 @@ void TestBaseQueries(istream& input_ss, ostream& output_ss) {
 
 // Функция TestTransportCatalogue является точкой входа для запуска тестов
 void TestTransportCatalogue() {
+    RUN_TEST(TestParseGeoFromStringView);
     RUN_TEST(TestLocalBaseQueries);
 #ifndef _DEBUG
 

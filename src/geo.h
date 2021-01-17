@@ -1,11 +1,45 @@
 #pragma once
 
+#include <algorithm>
+#include <charconv>
 #include <cmath>
+#include <ostream>
+#include <string>
+#include <string_view>
 
 struct Coordinates {
-    double lat;
-    double lng;
+    double lat = 0;
+    double lng = 0;
+
+    static Coordinates ParseFromStringView(const std::string_view& string_coord) {
+        size_t start_pos = string_coord.find_first_not_of(' ');
+        size_t comma_pos = string_coord.find_first_of(',');
+        size_t start_pos_next = string_coord.find_first_not_of(' ', comma_pos + 1);
+        size_t end_pos = std::min(string_coord.find_first_of('\n'), string_coord.size());
+        Coordinates coord;
+        std::from_chars(string_coord.data() + start_pos, string_coord.data() + comma_pos, coord.lat);
+        std::from_chars(string_coord.data() + start_pos_next, string_coord.data() + end_pos, coord.lng);
+        return coord;
+    }
 };
+
+inline bool InTheVicinity(const double d1, const double d2, const double delta = 1e-6) {
+    return abs(d1 - d2) < delta;
+}
+
+inline bool operator== (const Coordinates& lhs, const Coordinates& rhs) {
+    return InTheVicinity(lhs.lat, rhs.lat) && InTheVicinity(lhs.lng, rhs.lng);
+}
+
+inline bool operator!= (const Coordinates& lhs, const Coordinates& rhs) {
+    return !(lhs == rhs);
+}
+
+inline std::ostream& operator<< (std::ostream& out, const Coordinates& coord) {
+    using namespace std::string_literals;
+    out << "<|"s << coord.lat << ", "s << coord.lng << "|>"s;
+    return out;
+}
 
 inline double ComputeDistance(Coordinates from, Coordinates to) {
     using namespace std;
