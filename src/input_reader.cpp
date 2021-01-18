@@ -4,7 +4,6 @@
 
 #include <algorithm>
 #include <string_view>
-#include <utility>
 #include <vector>
 
 std::string ReadLine(std::istream& input) {
@@ -38,11 +37,9 @@ std::vector<std::string_view> SplitIntoWords(std::string_view text, char sep = '
 std::pair<std::string_view, std::string_view> ParseStringOnNameData(const std::string_view& query) {
     size_t start_name_pos = query.find_first_of(' ') + 1;
     size_t end_name_pos = query.find_first_of(':', start_name_pos);
-    size_t start_coord_pos = end_name_pos + 1;
-    size_t end_coord_pos = query.size();
     return {
         query.substr(start_name_pos, end_name_pos - start_name_pos),
-        query.substr(start_coord_pos, end_coord_pos) };
+        query.substr(end_name_pos + 1, query.size()) };
 }
 
 void InputStop(TransportCatalogue& transport_catalogue, const std::string_view& string_stop) {

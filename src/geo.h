@@ -1,7 +1,6 @@
 #pragma once
 
 #include <algorithm>
-#include <charconv>
 #include <cmath>
 #include <ostream>
 #include <string>
@@ -15,12 +14,9 @@ struct Coordinates {
         size_t start_pos = string_coord.find_first_not_of(' ');
         size_t comma_pos = string_coord.find_first_of(',');
         size_t start_pos_next = string_coord.find_first_not_of(' ', comma_pos + 1);
-        size_t end_pos = std::min(string_coord.find_first_of('\n'), string_coord.size());
         Coordinates coord;
-        coord.lat = std::stod(std::string(string_coord).substr(start_pos, comma_pos));
-        coord.lng = std::stod(std::string(string_coord).substr(start_pos_next, end_pos));
-        //std::from_chars(string_coord.data() + start_pos, string_coord.data() + comma_pos, coord.lat);
-        //std::from_chars(string_coord.data() + start_pos_next, string_coord.data() + end_pos, coord.lng);
+        coord.lat = std::stod(std::string(string_coord.substr(start_pos, comma_pos)));
+        coord.lng = std::stod(std::string(string_coord.substr(start_pos_next)));
         return coord;
     }
 };

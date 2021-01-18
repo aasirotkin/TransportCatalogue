@@ -227,7 +227,7 @@ void TestLocalBaseQueries() {
 // --------- Окончание модульных тестов -----------
 
 // Функция TestBaseQueries является точкой входа прохождения тестов платформы
-void TestBaseQueries(istream& input_ss, ostream& output_ss) {
+void TestBaseQueries(std::istream& input_ss, std::ostream& output_ss) {
     TransportCatalogue catalogue;
 
     int query_count = 0;
@@ -236,14 +236,14 @@ void TestBaseQueries(istream& input_ss, ostream& output_ss) {
     std::vector<std::string> queries;
     queries.reserve(query_count);
     for (int i = 0; i < query_count; ++i) {
-        string query = ReadLine(input_ss);
+        std::string query = ReadLine(input_ss);
         queries.push_back(query);
     }
     InputQueries(catalogue, queries);
 
     query_count = ReadLineWithNumber(input_ss);
     for (int i = 0; i < query_count; ++i) {
-        string query = ReadLine(input_ss);
+        std::string query = ReadLine(input_ss);
         OutputQuery(catalogue, query, output_ss);
     }
 }
