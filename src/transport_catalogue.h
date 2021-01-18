@@ -17,10 +17,6 @@
 struct Stop {
     std::string name;
     Coordinates coord;
-
-    bool operator==(const Stop& other) const {
-        return name == other.name;
-    }
 };
 
 enum class RoutType {
@@ -61,10 +57,6 @@ struct Bus {
             unique_stops -= 1;
         }
     }
-
-    bool operator==(const Bus& other) const {
-        return name == other.name;
-    }
 };
 
 inline std::ostream& operator<< (std::ostream& out, const Bus& bus) {
@@ -84,58 +76,50 @@ inline std::ostream& operator<< (std::ostream& out, const Bus& bus) {
     return out;
 }
 
-template <typename StructWithName>
-class CatalogueHash {
+template <typename VirtualStruct>
+class VirtualCatalogue {
 public:
-    size_t operator() (const StructWithName& struct_with_name) const {
-        return hasher_(struct_with_name.name);
-    }
-private:
-    std::hash<std::string> hasher_;
-};
+    VirtualCatalogue() = default;
 
-using StopHasher = CatalogueHash<Stop>;
-using BusHasher = CatalogueHash<Bus>;
-
-template <typename StructWithName, typename StructHasher>
-class Catalogue {
-public:
-    Catalogue() = default;
-
-    std::pair<typename std::unordered_set<StructWithName, StructHasher>::const_iterator, bool> at(const std::string_view& name) const {
-        auto it = std::find_if(data_.begin(), data_.end(), [&name](const StructWithName& value) { return value.name == name; });
+    auto at(const std::string_view& name) const {
+        auto it = data_.find(name);
         return std::make_pair(it, (it == data_.end() ? false : true));
     }
 
-    std::pair<typename std::unordered_set<StructWithName, StructHasher>::const_iterator, bool> push(StructWithName&& struct_with_name) {
-        return data_.insert(std::move(struct_with_name));
+    auto push(const std::string_view& name, const VirtualStruct* data) {
+        return data_.emplace(name, data);
     }
 private:
-    std::unordered_set<StructWithName, StructHasher> data_;
+    std::unordered_map<std::string_view, const VirtualStruct*> data_;
 };
 
-class StopCatalogue : public Catalogue<Stop, StopHasher> {
+using VirtualStopCatalogue = VirtualCatalogue<Stop>;
+using VirtualBusCatalogue = VirtualCatalogue<Bus>;
+
+class StopCatalogue : public std::deque<Stop> {
 public:
     StopCatalogue() = default;
 
-    auto push(std::string&& name, std::string&& string_coord) {
-        return Catalogue<Stop, StopHasher>::push({ name, Coordinates::ParseFromStringView(string_coord) });
+    const Stop* push(std::string&& name, std::string&& string_coord) {
+        push_back({ std::move(name), Coordinates::ParseFromStringView(string_coord) });
+        return &back();
     }
 };
 
-class BusCatalogue : public Catalogue<Bus, BusHasher> {
+class BusCatalogue : public std::deque<Bus> {
 public:
     BusCatalogue() = default;
 
-    auto push(std::string&& name, std::vector<std::string_view>&& string_rout, RoutType type, const StopCatalogue& stops_catalogue) {
+    const Bus* push(std::string&& name, std::vector<std::string_view>&& string_rout, RoutType type, const VirtualStopCatalogue& stops_catalogue) {
         std::deque<const Stop*> stops;
-        for (std::string_view stop_name : string_rout) {
+        for (const std::string_view& stop_name : string_rout) {
             auto [it, res] = stops_catalogue.at(stop_name);
             if (res) {
-                stops.push_back(&(*it));
+                stops.push_back((*it).second);
             }
         }
-        return Catalogue<Bus, BusHasher>::push(Bus(std::move(name), std::move(stops), type));
+        push_back(Bus(std::move(name), std::move(stops), type));
+        return &back();
     }
 };
 
@@ -143,19 +127,24 @@ class TransportCatalogue {
 public:
     TransportCatalogue() = default;
 
-    void AddBus(std::string&& name, std::vector<std::string_view>&& string_rout_container, RoutType type) {
-        buses_.push(std::move(name), std::move(string_rout_container), type, stops_);
+    void AddBus(std::string&& name, std::vector<std::string_view>&& rout, RoutType type) {
+        const Bus* bus = buses_.push(std::move(name), std::move(rout), type, virtual_stops_);
+        virtual_buses_.push(bus->name, bus);
     }
 
     void AddStop(std::string&& name, std::string&& string_coord) {
-        stops_.push(std::move(name), std::move(string_coord));
+        const Stop* stop = stops_.push(std::move(name), std::move(string_coord));
+        virtual_stops_.push(stop->name, stop);
     }
 
-    auto GetBus(const std::string& name) const {
-        return buses_.at(name);
+    auto GetBus(const std::string_view& name) const {
+        return virtual_buses_.at(name);
     }
 
 private:
-    StopCatalogue stops_;
     BusCatalogue buses_;
+    VirtualBusCatalogue virtual_buses_;
+
+    StopCatalogue stops_;
+    VirtualStopCatalogue virtual_stops_;
 };

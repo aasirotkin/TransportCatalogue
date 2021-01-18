@@ -6,7 +6,7 @@ void OutputQuery(const TransportCatalogue& transport_catalogue, const std::strin
     auto [it, bus_has_been_found] = transport_catalogue.GetBus(bus_name);
 
     if (bus_has_been_found) {
-        out << *it;
+        out << *(*it).second;
     }
     else {
         out << std::string("Bus ") << bus_name << std::string(": not found");
