@@ -260,12 +260,244 @@ void TestPlatformQueries() {
     TestQueries(input, output);
 }
 
+void TestExtraQueries1() {
+    const vector<string>& input = {
+        "4\n"s,
+        "Bus 1: A - B\n"s,
+        "Bus 2: A > B > A\n"s,
+        "Stop A: 0.0 0.0\n"s,
+        "Stop B: 0.0 0.0\n"s,
+        "2\n"s,
+        "Bus 1\n"s,
+        "Bus 2\n"s
+    };
+
+    const vector<string>& output = {
+        "Bus 1: 3 stops on route, 2 unique stops, 0 route length\n"s,
+        "Bus 2: 3 stops on route, 2 unique stops, 0 route length\n"s
+    };
+
+    TestQueries(input, output);
+}
+
+void TestExtraQueries2() {
+    const vector<string>& input = {
+        "3\n"s,
+        "Bus 1A 1B: A a - B b\n"s,
+        "Stop A a: 0.0, 0.0\n"s,
+        "Stop B b: 0.0, 0.0\n"s,
+        "2\n"s,
+        "Bus 1A 1B\n"s,
+        "Bus 2\n"s
+    };
+
+    const vector<string>& output = {
+        "Bus 1A 1B: 3 stops on route, 2 unique stops, 0 route length\n"s,
+        "Bus 2: not found\n"s
+    };
+
+    TestQueries(input, output);
+}
+
+void TestExtraQueries3() {
+    const vector<string>& input = {
+        "3\n"s,
+        "Bus 1A 1B: A a > B b > A a\n"s,
+        "Stop A a: 0.0, 0.0\n"s,
+        "Stop B b: 0.0, 0.0\n"s,
+        "2\n"s,
+        "Bus 1A 1B\n"s,
+        "Bus 2\n"s
+    };
+
+    const vector<string>& output = {
+        "Bus 1A 1B: 3 stops on route, 2 unique stops, 0 route length\n"s,
+        "Bus 2: not found\n"s
+    };
+
+    TestQueries(input, output);
+}
+
+void TestExtraQueries4() {
+    const vector<string>& input = {
+        "4\n"s,
+        "Bus 1: A - B\n"s,
+        "Stop A: 0.0, 0.0\n"s,
+        "Stop B: 0.0, 0.0\n"s,
+        "Bus 2: A > B > A\n"
+        "3\n"s,
+        "Bus 1\n"s,
+        "Bus 2\n"s,
+        "Bus 3\n"s
+    };
+
+    const vector<string>& output = {
+        "Bus 1: 3 stops on route, 2 unique stops, 0 route length\n"s,
+        "Bus 2: 3 stops on route, 2 unique stops, 0 route length\n"s,
+        "Bus 3: not found\n"s
+    };
+
+    TestQueries(input, output);
+}
+
+void TestExtraQueries5() {
+    const vector<string>& input = {
+        "3\n"s,
+        "Bus 1: A > B > A > B > A\n"s,
+        "Stop A: 0.0, 0.0\n"s,
+        "Stop B: 0.0, 0.0\n"s
+        "1\n"s,
+        "Bus 1\n"s
+    };
+
+    const vector<string>& output = {
+        "Bus 1: 5 stops on route, 2 unique stops, 0 route length\n"s
+    };
+
+    TestQueries(input, output);
+}
+
+void TestExtraQueries6() {
+    const vector<string>& input = {
+        "2\n"s,
+        "Bus 1: A\n"s,
+        "Stop A: 0.0, 0.0\n"s,
+        "1\n"s,
+        "Bus 1\n"s
+    };
+
+    const vector<string>& output = {
+        "Bus 1: 1 stops on route, 1 unique stops, 0 route length\n"s
+    };
+
+    TestQueries(input, output);
+}
+
+void TestExtraQueries7() {
+    const vector<string>& input = {
+        "2\n"s,
+        "Bus 1: A - A - A - A - A\n"s,
+        "Stop A: 0.0, 0.0\n"s,
+        "1\n"s,
+        "Bus 1\n"s
+    };
+
+    const vector<string>& output = {
+        "Bus 1: 9 stops on route, 1 unique stops, 0 route length\n"s
+    };
+
+    TestQueries(input, output);
+}
+
+void TestExtraQueries8() {
+    const vector<string>& input = {
+        "5\n"s,
+        "Bus 1 2 3 4 5: A > B > B > C > C > D > D > D > A\n"s,
+        "Stop A: 0.0, 0.0\n"s,
+        "Stop D: 0.0, 0.0\n"s,
+        "Stop C: 0.0, 0.0\n"s,
+        "Stop B: 0.0, 0.0\n"s,
+        "1\n"s,
+        "Bus 1 2 3 4 5\n"s
+    };
+
+    const vector<string>& output = {
+        "Bus 1 2 3 4 5: 9 stops on route, 4 unique stops, 0 route length\n"s
+    };
+
+    TestQueries(input, output);
+}
+
+void TestExtraQueries9() {
+    const vector<string>& input = {
+        "5\n"s,
+        "Bus 1 2 3 4 5: A > B > C > D > C > D > D > D > A\n"s,
+        "Stop A: 0.0, 0.0\n"s,
+        "Stop D: 0.0, 0.0\n"s,
+        "Stop C: 0.0, 0.0\n"s,
+        "Stop B: 0.0, 0.0\n"s,
+        "1\n"s,
+        "Bus 1 2 3 4 5\n"s
+    };
+
+    const vector<string>& output = {
+        "Bus 1 2 3 4 5: 9 stops on route, 4 unique stops, 0 route length\n"s
+    };
+
+    TestQueries(input, output);
+}
+
+void TestExtraQueries10() {
+    const vector<string>& input = {
+        "3\n"s,
+        "Bus A - B - C 182: A - B\n"s,
+        "Stop A: 0.0, 0.0\n"s,
+        "Stop B: 0.0, 0.0\n"s,
+        "1\n"s,
+        "Bus A - B - C 182\n"s
+    };
+
+    const vector<string>& output = {
+        "Bus A - B - C 182: 3 stops on route, 2 unique stops, 0 route length\n"s
+    };
+
+    TestQueries(input, output);
+}
+
+void TestExtraQueries11() {
+    const vector<string>& input = {
+        "4\n"s,
+        "Stop Tolstopaltsevo: 55.611087, 37.208290\n"s,
+        "Stop Marushkino: 55.595884, 37.209755\n"s,
+        "Stop Rasskazovka: 55.632761, 37.333324\n"s,
+        "Bus 750: Tolstopaltsevo - Tolstopaltsevo - Marushkino - Marushkino - Rasskazovka - Rasskazovka\n"s,
+        "1\n",
+        "Bus 750\n"s
+    };
+
+    const vector<string>& output = {
+        "Bus 750: 11 stops on route, 3 unique stops, 20939.5 route length\n"s
+    };
+
+    TestQueries(input, output);
+}
+
+void TestExtraQueries12() {
+    const vector<string>& input = {
+        "4\n"s,
+        "Stop Tolstopaltsevo: 55.611087, 37.208290\n"s,
+        "Stop Marushkino: 55.595884, 37.209755\n"s,
+        "Stop Rasskazovka: 55.632761, 37.333324\n"s,
+        "Bus 750: Tolstopaltsevo > Tolstopaltsevo > Marushkino > Marushkino > Rasskazovka > Rasskazovka\n"s,
+        "1\n",
+        "Bus 750\n"s
+    };
+
+    const vector<string>& output = {
+        "Bus 750: 6 stops on route, 3 unique stops, 10469.7 route length\n"s
+    };
+
+    TestQueries(input, output);
+}
+
 // --------- Окончание модульных тестов -----------
 
 // Функция TestTransportCatalogue является точкой входа для запуска тестов
 void TestTransportCatalogue() {
     RUN_TEST(TestParseGeoFromStringView);
     RUN_TEST(TestPlatformQueries);
+    RUN_TEST(TestExtraQueries1);
+    RUN_TEST(TestExtraQueries2);
+    RUN_TEST(TestExtraQueries3);
+    RUN_TEST(TestExtraQueries4);
+    RUN_TEST(TestExtraQueries5);
+    RUN_TEST(TestExtraQueries6);
+    RUN_TEST(TestExtraQueries7);
+    RUN_TEST(TestExtraQueries8);
+    RUN_TEST(TestExtraQueries9);
+    RUN_TEST(TestExtraQueries10);
+    RUN_TEST(TestExtraQueries11);
+    RUN_TEST(TestExtraQueries12);
 #ifndef _DEBUG
 
 #endif

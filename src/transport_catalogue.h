@@ -7,6 +7,7 @@
 #include <ostream>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 #include <unordered_map>
 #include <vector>
 
@@ -27,13 +28,16 @@ struct Bus {
     std::string name = {};
     std::deque<const Stop*> rout = {};
     RoutType rout_type = RoutType::Direct;
+    double rout_lenght = 0.0;
     int stops_on_rout = 0;
     int unique_stops = 0;
-    double rout_lenght = 0.0;
 
     Bus() = default;
 
     Bus(std::string&& name, std::deque<const Stop*>&& rout, RoutType rout_type);
+
+private:
+    double CalcRoutLenght(RoutType rout_type);
 };
 
 std::ostream& operator<< (std::ostream& out, const Bus& bus);

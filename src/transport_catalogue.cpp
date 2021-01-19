@@ -10,8 +10,20 @@ Bus::Bus(std::string&& name, std::deque<const Stop*>&& rout, RoutType rout_type)
     : name(name)
     , rout(rout)
     , rout_type(rout_type)
-    , stops_on_rout(rout.size())
-    , unique_stops(stops_on_rout) {
+    , rout_lenght(CalcRoutLenght(rout_type))
+    , stops_on_rout(rout.size()) {
+    std::unordered_set<std::string_view> unique_stops_names;
+    for (const Stop* stop : rout) {
+        unique_stops_names.insert(stop->name);
+    }
+    unique_stops = unique_stops_names.size();
+
+    if (rout_type == RoutType::BackAndForth) {
+        stops_on_rout = stops_on_rout * 2 - 1;
+    }
+}
+
+double Bus::CalcRoutLenght(RoutType rout_type) {
     std::vector<double> distance(rout.size() - 1);
     std::transform(
         rout.begin(), rout.end() - 1,
@@ -19,14 +31,13 @@ Bus::Bus(std::string&& name, std::deque<const Stop*>&& rout, RoutType rout_type)
         [](const Stop* from, const Stop* to) {
             return ComputeDistance(from->coord, to->coord);
         });
-    rout_lenght = std::reduce(distance.begin(), distance.end());
+    double lenght = std::reduce(distance.begin(), distance.end());
+
     if (rout_type == RoutType::BackAndForth) {
-        rout_lenght *= 2.0;
-        stops_on_rout = stops_on_rout * 2 - 1;
+        lenght *= 2.0;
     }
-    else if (rout_type == RoutType::Round) {
-        unique_stops -= 1;
-    }
+
+    return lenght;
 }
 
 std::ostream& operator<<(std::ostream& out, const Bus& bus) {
