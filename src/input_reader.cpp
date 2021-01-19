@@ -21,17 +21,17 @@ int ReadLineWithNumber(std::istream& input) {
 
 std::vector<std::string_view> SplitIntoWords(std::string_view text, char sep = ' ')
 {
-    std::vector<std::string_view> words;
+    std::vector<std::string_view> result;
+    int64_t pos_end = std::string_view::npos;
     while (true) {
-        size_t pos_begin = text.find_first_not_of(sep);
-        size_t pos_end = std::min(text.find_first_of(sep, pos_begin + 1), text.size());
-        if (pos_begin == std::string_view::npos) {
+        int64_t space = text.find(sep);
+        result.push_back(text.substr(0, space));
+        if (space == pos_end) {
             break;
         }
-        words.push_back(text.substr(pos_begin, pos_end - pos_begin));
-        text.remove_prefix(pos_end);
+        text.remove_prefix(space + 1);
     }
-    return words;
+    return result;
 }
 
 std::pair<std::string_view, std::string_view> ParseStringOnNameData(const std::string_view& query) {
