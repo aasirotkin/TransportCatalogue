@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <deque>
+#include <functional>
 #include <iostream>
 #include <ostream>
 #include <set>
@@ -16,6 +17,10 @@
 struct Stop {
     std::string name;
     Coordinates coord;
+
+    bool operator== (const Stop* other) const {
+        return name == other->name;
+    }
 };
 
 enum class RoutType {
@@ -68,6 +73,19 @@ using VirtualBusCatalogue = VirtualCatalogue<Bus>;
 
 // ----------------------------------------------------------------------------
 
+using StopsReferencePair = std::pair<const Stop*, const Stop*>;
+
+class StopsReferencePairHasher {
+public:
+    size_t operator() (const StopsReferencePair& stop_pair) const {
+        return hasher_(stop_pair.first) + hasher_(stop_pair.second);
+    }
+private:
+    std::hash<const Stop*> hasher_;
+};
+
+// ----------------------------------------------------------------------------
+
 using BusesToStopNames = std::set<std::string_view>;
 
 std::ostream& operator<< (std::ostream& out, const BusesToStopNames& buses);
@@ -84,8 +102,20 @@ public:
         return stop_buses_.at(stop);
     }
 
+    void add_distance(const Stop* stop_1, const Stop* stop_2, double distance) {
+        StopsReferencePair stop_pair_direct = { stop_1, stop_2 };
+        StopsReferencePair stop_pair_reverse = { stop_2, stop_1 };
+
+        distances_between_stops_[stop_pair_direct] = distance;
+
+        if (distances_between_stops_.count(stop_pair_reverse) == 0) {
+            distances_between_stops_[stop_pair_reverse] = distance;
+        }
+    }
+
 private:
     std::unordered_map<const Stop*, BusesToStopNames> stop_buses_ = {};
+    std::unordered_map<StopsReferencePair, double, StopsReferencePairHasher> distances_between_stops_ = {};
 };
 
 // ----------------------------------------------------------------------------
@@ -127,6 +157,12 @@ public:
         return (stop_has_been_found)
             ? std::make_pair(stops_.get_buses((*it).second), stop_has_been_found)
             : std::make_pair(empty_set, stop_has_been_found);
+    }
+
+    void AddDistanceBetweenStops(const std::string_view& stop_from_name, const std::string_view& stop_to_name, double distance) {
+        auto [stop_from_it, fist_stop_found] = virtual_stops_.at(stop_from_name);
+        auto [stop_to_it, second_stop_found] = virtual_stops_.at(stop_to_name);
+        stops_.add_distance((*stop_from_it).second, (*stop_to_it).second, distance);
     }
 
 private:
