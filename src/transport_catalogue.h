@@ -4,7 +4,9 @@
 
 #include <algorithm>
 #include <deque>
+#include <iostream>
 #include <ostream>
+#include <set>
 #include <string>
 #include <string_view>
 #include <unordered_set>
@@ -29,8 +31,8 @@ struct Bus {
     std::deque<const Stop*> rout = {};
     RoutType rout_type = RoutType::Direct;
     double rout_lenght = 0.0;
-    int stops_on_rout = 0;
-    int unique_stops = 0;
+    size_t stops_on_rout = 0;
+    size_t unique_stops = 0;
 
     Bus() = default;
 
@@ -66,11 +68,24 @@ using VirtualBusCatalogue = VirtualCatalogue<Bus>;
 
 // ----------------------------------------------------------------------------
 
+using BusesToStopNames = std::set<std::string_view>;
+
+std::ostream& operator<< (std::ostream& out, const BusesToStopNames& buses);
+
 class StopCatalogue : public std::deque<Stop> {
 public:
     StopCatalogue() = default;
 
     const Stop* push(std::string&& name, std::string&& string_coord);
+
+    void push_bus_to_stop(const Stop* stop, const std::string_view& bus_name);
+
+    const std::set<std::string_view>& get_buses(const Stop* stop) const {
+        return stop_buses_.at(stop);
+    }
+
+private:
+    std::unordered_map<const Stop*, BusesToStopNames> stop_buses_ = {};
 };
 
 // ----------------------------------------------------------------------------
@@ -91,6 +106,10 @@ public:
     void AddBus(std::string&& name, std::vector<std::string_view>&& rout, RoutType type) {
         const Bus* bus = buses_.push(std::move(name), std::move(rout), type, virtual_stops_);
         virtual_buses_.push(bus->name, bus);
+
+        for (const Stop* stop : bus->rout) {
+            stops_.push_bus_to_stop(stop, bus->name);
+        }
     }
 
     void AddStop(std::string&& name, std::string&& string_coord) {
@@ -100,6 +119,14 @@ public:
 
     auto GetBus(const std::string_view& name) const {
         return virtual_buses_.at(name);
+    }
+
+    auto GetStop(const std::string_view& name) const {
+        static const std::set<std::string_view> empty_set = {};
+        auto [it, stop_has_been_found] = virtual_stops_.at(name);
+        return (stop_has_been_found)
+            ? std::make_pair(stops_.get_buses((*it).second), stop_has_been_found)
+            : std::make_pair(empty_set, stop_has_been_found);
     }
 
 private:

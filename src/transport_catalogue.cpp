@@ -57,11 +57,29 @@ std::ostream& operator<<(std::ostream& out, const Bus& bus) {
     return out;
 }
 
+std::ostream& operator<<(std::ostream& out, const BusesToStopNames& buses) {
+    bool first = true;
+    for (const std::string_view& bus : buses) {
+        if (!first) {
+            out << std::string(" ");
+        }
+        out << bus;
+        first = false;
+    }
+    return out;
+}
+
 // ----------------------------------------------------------------------------
 
 const Stop* StopCatalogue::push(std::string&& name, std::string&& string_coord) {
     push_back({ std::move(name), Coordinates::ParseFromStringView(string_coord) });
+    stop_buses_.insert({ &back(), {} });
     return &back();
+}
+
+void StopCatalogue::push_bus_to_stop(const Stop* stop, const std::string_view& bus_name)
+{
+    stop_buses_.at(stop).insert(bus_name);
 }
 
 // ----------------------------------------------------------------------------

@@ -480,6 +480,43 @@ void TestExtraQueries12() {
     TestQueries(input, output);
 }
 
+void TestExtraQueries13() {
+    const vector<string>& input = {
+        "13\n"s,
+        "Stop Tolstopaltsevo: 55.611087, 37.20829\n"s,
+        "Stop Marushkino: 55.595884, 37.209755\n"s,
+        "Bus 256: Biryulyovo Zapadnoye > Biryusinka > Universam > Biryulyovo Tovarnaya > Biryulyovo Passazhirskaya > Biryulyovo Zapadnoye\n"s,
+        "Bus 750: Tolstopaltsevo - Marushkino - Rasskazovka\n"s,
+        "Stop Rasskazovka: 55.632761, 37.333324\n"s,
+        "Stop Biryulyovo Zapadnoye: 55.574371, 37.6517\n"s,
+        "Stop Biryusinka: 55.581065, 37.64839\n"s,
+        "Stop Universam: 55.587655, 37.645687\n"s,
+        "Stop Biryulyovo Tovarnaya: 55.592028, 37.653656\n"s,
+        "Stop Biryulyovo Passazhirskaya: 55.580999, 37.659164\n"s,
+        "Bus 828: Biryulyovo Zapadnoye > Universam > Rossoshanskaya ulitsa > Biryulyovo Zapadnoye\n"s,
+        "Stop Rossoshanskaya ulitsa: 55.595579, 37.605757\n"s,
+        "Stop Prazhskaya: 55.611678, 37.603831\n"s,
+        "6\n"s,
+        "Bus 256\n"s,
+        "Bus 750\n"s,
+        "Bus 751\n"s,
+        "Stop Samara\n"s,
+        "Stop Prazhskaya\n"s,
+        "Stop Biryulyovo Zapadnoye\n"s
+    };
+
+    const vector<string>& output = {
+        "Bus 256: 6 stops on route, 5 unique stops, 4371.02 route length\n"s,
+        "Bus 750: 5 stops on route, 3 unique stops, 20939.5 route length\n"s,
+        "Bus 751: not found\n"s,
+        "Stop Samara: not found\n"s,
+        "Stop Prazhskaya: no buses\n"s,
+        "Stop Biryulyovo Zapadnoye: buses 256 828\n"s
+    };
+
+    TestQueries(input, output);
+}
+
 // --------- Окончание модульных тестов -----------
 
 // Функция TestTransportCatalogue является точкой входа для запуска тестов
@@ -498,6 +535,7 @@ void TestTransportCatalogue() {
     RUN_TEST(TestExtraQueries10);
     RUN_TEST(TestExtraQueries11);
     RUN_TEST(TestExtraQueries12);
+    RUN_TEST(TestExtraQueries13);
 #ifndef _DEBUG
 
 #endif
