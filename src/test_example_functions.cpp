@@ -187,47 +187,8 @@ void TestParseGeoFromStringView() {
     }
 }
 
-void TestLocalBaseQueries() {
-    stringstream input_ss;
-    input_ss << "10\n";
-    input_ss << "Stop Tolstopaltsevo: 55.611087, 37.208290\n"s;
-    input_ss << "Stop Marushkino: 55.595884, 37.209755\n"s;
-    input_ss << "Bus 256: Biryulyovo Zapadnoye > Biryusinka > Universam > Biryulyovo Tovarnaya > Biryulyovo Passazhirskaya > Biryulyovo Zapadnoye\n"s;
-    input_ss << "Bus 750: Tolstopaltsevo - Marushkino - Rasskazovka\n"s;
-    input_ss << "Stop Rasskazovka: 55.632761, 37.333324\n"s;
-    input_ss << "Stop Biryulyovo Zapadnoye: 55.574371, 37.651700\n"s;
-    input_ss << "Stop Biryusinka: 55.581065, 37.648390\n"s;
-    input_ss << "Stop Universam: 55.587655, 37.645687\n"s;
-    input_ss << "Stop Biryulyovo Tovarnaya: 55.592028, 37.653656\n"s;
-    input_ss << "Stop Biryulyovo Passazhirskaya: 55.580999, 37.659164\n"s;
-    input_ss << "3\n";
-    input_ss << "Bus 256\n"s;
-    input_ss << "Bus 750\n"s;
-    input_ss << "Bus 751\n"s;
-
-    stringstream output_ss;
-
-    TestBaseQueries(input_ss, output_ss);
-
-    stringstream base_ss;
-
-    base_ss << "Bus 256: 6 stops on route, 5 unique stops, 4371.02 route length\n"s;
-    base_ss << "Bus 750: 5 stops on route, 3 unique stops, 20939.5 route length\n"s;
-    base_ss << "Bus 751: not found\n"s;
-
-    string output_string;
-    string base_string;
-
-    ASSERT_EQUAL(output_ss.str().size(), base_ss.str().size());
-    while (getline(output_ss, output_string) && getline(base_ss, base_string)) {
-        ASSERT_EQUAL(output_string, base_string);
-    }
-}
-
-// --------- Окончание модульных тестов -----------
-
-// Функция TestBaseQueries является точкой входа прохождения тестов платформы
-void TestBaseQueries(std::istream& input_ss, std::ostream& output_ss) {
+// Функция TestQueriesEngine является точкой входа прохождения тестов платформы
+void TestQueriesEngine(std::istream& input_ss, std::ostream& output_ss) {
     TransportCatalogue catalogue;
 
     int query_count = 0;
@@ -248,10 +209,63 @@ void TestBaseQueries(std::istream& input_ss, std::ostream& output_ss) {
     }
 }
 
+void TestQueries(const vector<string>& input, const vector<string>& output) {
+    stringstream input_ss;
+    for (const string& input_i : input) {
+        input_ss << input_i;
+    }
+
+    stringstream output_ss;
+    for (const string& output_i : output) {
+        output_ss << output_i;
+    }
+
+    stringstream result_ss;
+    TestQueriesEngine(input_ss, result_ss);
+
+    string result_string;
+    string output_string;
+
+    ASSERT_EQUAL(result_ss.str().size(), output_ss.str().size());
+    while (getline(result_ss, result_string) && getline(output_ss, output_string)) {
+        ASSERT_EQUAL(result_string, output_string);
+    }
+}
+
+void TestPlatformQueries() {
+    const vector<string>& input = {
+        "10\n"s,
+        "Stop Tolstopaltsevo: 55.611087, 37.208290\n"s,
+        "Stop Marushkino: 55.595884, 37.209755\n"s,
+        "Bus 256: Biryulyovo Zapadnoye > Biryusinka > Universam > Biryulyovo Tovarnaya > Biryulyovo Passazhirskaya > Biryulyovo Zapadnoye\n"s,
+        "Bus 750: Tolstopaltsevo - Marushkino - Rasskazovka\n"s,
+        "Stop Rasskazovka: 55.632761, 37.333324\n"s,
+        "Stop Biryulyovo Zapadnoye: 55.574371, 37.651700\n"s,
+        "Stop Biryusinka: 55.581065, 37.648390\n"s,
+        "Stop Universam: 55.587655, 37.645687\n"s,
+        "Stop Biryulyovo Tovarnaya: 55.592028, 37.653656\n"s,
+        "Stop Biryulyovo Passazhirskaya: 55.580999, 37.659164\n"s,
+        "3\n",
+        "Bus 256\n"s,
+        "Bus 750\n"s,
+        "Bus 751\n"s,
+    };
+
+    const vector<string>& output = {
+        "Bus 256: 6 stops on route, 5 unique stops, 4371.02 route length\n"s,
+        "Bus 750: 5 stops on route, 3 unique stops, 20939.5 route length\n"s,
+        "Bus 751: not found\n"s
+    };
+
+    TestQueries(input, output);
+}
+
+// --------- Окончание модульных тестов -----------
+
 // Функция TestTransportCatalogue является точкой входа для запуска тестов
 void TestTransportCatalogue() {
     RUN_TEST(TestParseGeoFromStringView);
-    RUN_TEST(TestLocalBaseQueries);
+    RUN_TEST(TestPlatformQueries);
 #ifndef _DEBUG
 
 #endif
