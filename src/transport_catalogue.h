@@ -78,7 +78,7 @@ using StopsReferencePair = std::pair<const Stop*, const Stop*>;
 class StopsReferencePairHasher {
 public:
     size_t operator() (const StopsReferencePair& stop_pair) const {
-        return hasher_(stop_pair.first) + hasher_(stop_pair.second);
+        return hasher_(stop_pair.first) * 47 + hasher_(stop_pair.second);
     }
 private:
     std::hash<const Stop*> hasher_;
