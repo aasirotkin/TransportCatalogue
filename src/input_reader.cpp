@@ -19,6 +19,11 @@ int ReadLineWithNumber(std::istream& input) {
     return number;
 }
 
+void TrimSpacesInPlace(std::string_view& value) {
+    value.remove_prefix(value.find_first_not_of(' '));
+    value.remove_suffix(value.size() - value.find_last_not_of(' ') - 1);
+}
+
 std::vector<std::string_view> SplitIntoWords(std::string_view text, char sep = ' ')
 {
     std::vector<std::string_view> result;
@@ -31,6 +36,11 @@ std::vector<std::string_view> SplitIntoWords(std::string_view text, char sep = '
         }
         text.remove_prefix(space + 1);
     }
+
+    for (std::string_view& result_i : result) {
+        TrimSpacesInPlace(result_i);
+    }
+
     return result;
 }
 
@@ -39,12 +49,43 @@ std::pair<std::string_view, std::string_view> ParseStringOnNameData(const std::s
     size_t end_name_pos = query.find_first_of(':', start_name_pos);
     return {
         query.substr(start_name_pos, end_name_pos - start_name_pos),
-        query.substr(end_name_pos + 1, query.size()) };
+        query.substr(end_name_pos + 1) };
 }
 
-void InputStop(TransportCatalogue& transport_catalogue, const std::string_view& string_stop) {
-    auto [name, data] = ParseStringOnNameData(string_stop);
-    transport_catalogue.AddStop(std::string(name), std::string(data));
+struct StopQuery {
+    std::string_view name = {};
+    std::string_view coord = {};
+    std::vector<std::string_view> dist = {};
+
+    StopQuery(const std::string_view& query) {
+        auto [parse_name, data] = ParseStringOnNameData(query);
+
+        size_t data_size = data.size();
+        size_t first_comma = data.find_first_of(',');
+        size_t second_comma = std::min(data.find_first_of(',', first_comma + 1), data_size);
+
+        name = parse_name;
+        coord = data.substr(0, second_comma);
+        TrimSpacesInPlace(coord);
+        if (second_comma != data_size) {
+            dist = SplitIntoWords(data.substr(second_comma + 1, data.size()), ',');
+        }
+    }
+};
+
+void InputStop(TransportCatalogue& transport_catalogue, const std::string_view& name, const std::string_view& coord) {
+    transport_catalogue.AddStop(std::string(name), std::string(coord));
+}
+
+void InputStopDistance(TransportCatalogue& transport_catalogue, const StopQuery& query) {
+    for (const std::string_view& dist_query : query.dist) {
+        size_t m_pos = dist_query.find_first_of('m');
+        size_t name_start_pos = m_pos + 5;
+
+        double dist = std::stod(std::string(dist_query.substr(0, m_pos)));
+
+        transport_catalogue.AddDistanceBetweenStops(query.name, dist_query.substr(name_start_pos), dist);
+    }
 }
 
 void InputBus(TransportCatalogue& transport_catalogue, const std::string_view& string_bus) {
@@ -55,28 +96,27 @@ void InputBus(TransportCatalogue& transport_catalogue, const std::string_view& s
 
     std::vector<std::string_view> rout = SplitIntoWords(data, sep);
 
-    for (std::string_view& rout_i : rout) {
-        rout_i.remove_prefix(rout_i.find_first_not_of(' '));
-        rout_i.remove_suffix(rout_i.size() - rout_i.find_last_not_of(' ') - 1);
-    }
-
     transport_catalogue.AddBus(std::string(name), std::move(rout), type);
 }
 
 void InputQueries(TransportCatalogue& transport_catalogue, const std::vector<std::string>& queries) {
-    std::vector<std::string_view> stop_query;
+    std::vector<StopQuery> stop_query;
     std::vector<std::string_view> bus_query;
-    for (const std::string& query : queries) {
+    for (const std::string_view& query : queries) {
         if (query.rfind(std::string("Stop"), 0) == 0) {
-            stop_query.push_back(query);
+            stop_query.push_back(StopQuery(query));
         }
         else {
             bus_query.push_back(query);
         }
     }
 
-    for (const std::string_view& query : stop_query) {
-        InputStop(transport_catalogue, query);
+    for (const StopQuery& query : stop_query) {
+        InputStop(transport_catalogue, query.name, query.coord);
+    }
+
+    for (const StopQuery& query : stop_query) {
+        InputStopDistance(transport_catalogue, query);
     }
 
     for (const std::string_view& query : bus_query) {
