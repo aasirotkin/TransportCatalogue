@@ -36,15 +36,13 @@ struct Bus {
     std::deque<const Stop*> rout = {};
     RoutType rout_type = RoutType::Direct;
     double rout_lenght = 0.0;
+    double rout_true_lenght = 0.0;
     size_t stops_on_rout = 0;
     size_t unique_stops = 0;
 
     Bus() = default;
 
-    Bus(std::string&& name, std::deque<const Stop*>&& rout, RoutType rout_type);
-
-private:
-    double CalcRoutLenght(RoutType rout_type);
+    Bus(std::string&& name, std::deque<const Stop*>&& rout, double rout_lenght, double rout_true_lenght, RoutType rout_type);
 };
 
 std::ostream& operator<< (std::ostream& out, const Bus& bus);
@@ -87,6 +85,7 @@ private:
 // ----------------------------------------------------------------------------
 
 using BusesToStopNames = std::set<std::string_view>;
+using StopDistancesContainer = std::unordered_map<StopsReferencePair, double, StopsReferencePairHasher>;
 
 std::ostream& operator<< (std::ostream& out, const BusesToStopNames& buses);
 
@@ -113,9 +112,13 @@ public:
         }
     }
 
+    const StopDistancesContainer& get_distances() const {
+        return distances_between_stops_;
+    }
+
 private:
     std::unordered_map<const Stop*, BusesToStopNames> stop_buses_ = {};
-    std::unordered_map<StopsReferencePair, double, StopsReferencePairHasher> distances_between_stops_ = {};
+    StopDistancesContainer distances_between_stops_ = {};
 };
 
 // ----------------------------------------------------------------------------
@@ -124,7 +127,12 @@ class BusCatalogue : public std::deque<Bus> {
 public:
     BusCatalogue() = default;
 
-    const Bus* push(std::string&& name, std::vector<std::string_view>&& string_rout, RoutType type, const VirtualStopCatalogue& stops_catalogue);
+    const Bus* push(std::string&& name, std::vector<std::string_view>&& string_rout, RoutType type,
+        const VirtualStopCatalogue& stops_catalogue, const StopDistancesContainer& stops_distances);
+
+private:
+    double CalcRoutGeoLenght(const std::deque<const Stop*>& rout, RoutType rout_type);
+    double CalcRoutTrueLenght(const std::deque<const Stop*>& rout, const StopDistancesContainer& stops_distances, RoutType rout_type);
 };
 
 // ----------------------------------------------------------------------------
@@ -134,7 +142,7 @@ public:
     TransportCatalogue() = default;
 
     void AddBus(std::string&& name, std::vector<std::string_view>&& rout, RoutType type) {
-        const Bus* bus = buses_.push(std::move(name), std::move(rout), type, virtual_stops_);
+        const Bus* bus = buses_.push(std::move(name), std::move(rout), type, virtual_stops_, stops_.get_distances());
         virtual_buses_.push(bus->name, bus);
 
         for (const Stop* stop : bus->rout) {
