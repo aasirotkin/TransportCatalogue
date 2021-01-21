@@ -45,6 +45,8 @@ std::ostream& operator<<(std::ostream& out, const Bus& bus) {
     return out;
 }
 
+// ----------------------------------------------------------------------------
+
 std::ostream& operator<<(std::ostream& out, const BusesToStopNames& buses) {
     bool first = true;
     for (const std::string_view& bus : buses) {
@@ -59,32 +61,42 @@ std::ostream& operator<<(std::ostream& out, const BusesToStopNames& buses) {
 
 // ----------------------------------------------------------------------------
 
-const Stop* StopCatalogue::push(std::string&& name, std::string&& string_coord) {
-    push_back({ std::move(name), Coordinates::ParseFromStringView(string_coord) });
-    stop_buses_.insert({ &back(), {} });
-    return &back();
+const Stop* StopCatalogue::Push(std::string&& name, std::string&& string_coord) {
+    stops_.push_back({ std::move(name), Coordinates::ParseFromStringView(string_coord) });
+    stop_buses_.insert({ &stops_.back(), {} });
+    return &stops_.back();
 }
 
-void StopCatalogue::push_bus_to_stop(const Stop* stop, const std::string_view& bus_name)
-{
+void StopCatalogue::PushBusToStop(const Stop* stop, const std::string_view& bus_name) {
     stop_buses_.at(stop).insert(bus_name);
+}
+
+void StopCatalogue::AddDistance(const Stop* stop_1, const Stop* stop_2, double distance) {
+    StopsReferencePair stop_pair_direct = { stop_1, stop_2 };
+    StopsReferencePair stop_pair_reverse = { stop_2, stop_1 };
+
+    distances_between_stops_[stop_pair_direct] = distance;
+
+    if (distances_between_stops_.count(stop_pair_reverse) == 0) {
+        distances_between_stops_[stop_pair_reverse] = distance;
+    }
 }
 
 // ----------------------------------------------------------------------------
 
-const Bus* BusCatalogue::push(std::string&& name, std::vector<std::string_view>&& string_rout, RoutType type,
+const Bus* BusCatalogue::Push(std::string&& name, std::vector<std::string_view>&& string_rout, RoutType type,
     const VirtualStopCatalogue& stops_catalogue, const StopDistancesContainer& stops_distances) {
     std::deque<const Stop*> stops;
     for (const std::string_view& stop_name : string_rout) {
-        auto [it, res] = stops_catalogue.at(stop_name);
+        auto [it, res] = stops_catalogue.At(stop_name);
         if (res) {
             stops.push_back((*it).second);
         }
     }
     double rout_geo_lenght = CalcRoutGeoLenght(stops, type);
     double rout_true_lenght = CalcRoutTrueLenght(stops, stops_distances, type);
-    push_back(Bus(std::move(name), std::move(stops), rout_geo_lenght, rout_true_lenght, type));
-    return &back();
+    buses_.push_back(Bus(std::move(name), std::move(stops), rout_geo_lenght, rout_true_lenght, type));
+    return &buses_.back();
 }
 
 double BusCatalogue::CalcRoutGeoLenght(const std::deque<const Stop*>& rout, RoutType rout_type) {
@@ -110,7 +122,7 @@ double BusCatalogue::CalcRoutTrueLenght(const std::deque<const Stop*>& rout, con
         rout.begin(), rout.end() - 1,
         rout.begin() + 1, distance.begin(),
         [&stops_distances](const Stop* from, const Stop* to) {
-            return stops_distances.at(StopsReferencePair{ from, to });;
+            return stops_distances.at(StopsReferencePair{ from, to });
         });
     double lenght = std::reduce(distance.begin(), distance.end());
 
@@ -119,7 +131,7 @@ double BusCatalogue::CalcRoutTrueLenght(const std::deque<const Stop*>& rout, con
             rout.rbegin(), rout.rend() - 1,
             rout.rbegin() + 1, distance.begin(),
             [&stops_distances](const Stop* from, const Stop* to) {
-                return stops_distances.at(StopsReferencePair{ from, to });;
+                return stops_distances.at(StopsReferencePair{ from, to });
             });
         lenght += std::reduce(distance.begin(), distance.end());
     }
