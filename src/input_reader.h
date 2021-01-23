@@ -4,7 +4,16 @@
 
 #include <istream>
 #include <string>
+#include <string_view>
 #include <vector>
+
+struct StopQuery {
+    std::string_view name = {};
+    std::string_view coord = {};
+    std::vector<std::string_view> dist = {};
+
+    StopQuery(const std::string_view& query);
+};
 
 std::string ReadLine(std::istream& input);
 

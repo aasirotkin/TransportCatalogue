@@ -3,7 +3,6 @@
 #include "geo.h"
 
 #include <algorithm>
-#include <string_view>
 
 using namespace transport_catalogue;
 
@@ -53,26 +52,20 @@ std::pair<std::string_view, std::string_view> ParseStringOnNameData(const std::s
         query.substr(end_name_pos + 1) };
 }
 
-struct StopQuery {
-    std::string_view name = {};
-    std::string_view coord = {};
-    std::vector<std::string_view> dist = {};
+StopQuery::StopQuery(const std::string_view& query) {
+    auto [parse_name, data] = ParseStringOnNameData(query);
 
-    StopQuery(const std::string_view& query) {
-        auto [parse_name, data] = ParseStringOnNameData(query);
+    size_t data_size = data.size();
+    size_t first_comma = data.find_first_of(',');
+    size_t second_comma = std::min(data.find_first_of(',', first_comma + 1), data_size);
 
-        size_t data_size = data.size();
-        size_t first_comma = data.find_first_of(',');
-        size_t second_comma = std::min(data.find_first_of(',', first_comma + 1), data_size);
-
-        name = parse_name;
-        coord = data.substr(0, second_comma);
-        TrimSpacesInPlace(coord);
-        if (second_comma != data_size) {
-            dist = SplitIntoWords(data.substr(second_comma + 1, data.size()), ',');
-        }
+    name = parse_name;
+    coord = data.substr(0, second_comma);
+    TrimSpacesInPlace(coord);
+    if (second_comma != data_size) {
+        dist = SplitIntoWords(data.substr(second_comma + 1, data.size()), ',');
     }
-};
+}
 
 void InputStop(TransportCatalogue& transport_catalogue, const std::string_view& name, const std::string_view& coord) {
     transport_catalogue.AddStop(std::string(name), std::string(coord));
