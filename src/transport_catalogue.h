@@ -73,11 +73,11 @@ using VirtualBusCatalogue = VirtualCatalogue<Bus>;
 
 // ----------------------------------------------------------------------------
 
-using StopsReferencePair = std::pair<const Stop*, const Stop*>;
+using StopsPointerPair = std::pair<const Stop*, const Stop*>;
 
-class StopsReferencePairHasher {
+class StopsPointerPairHasher {
 public:
-    size_t operator() (const StopsReferencePair& stop_pair) const {
+    size_t operator() (const StopsPointerPair& stop_pair) const {
         return hasher_(stop_pair.first) * 47 + hasher_(stop_pair.second);
     }
 private:
@@ -87,7 +87,7 @@ private:
 // ----------------------------------------------------------------------------
 
 using BusesToStopNames = std::set<std::string_view>;
-using StopDistancesContainer = std::unordered_map<StopsReferencePair, double, StopsReferencePairHasher>;
+using StopDistancesContainer = std::unordered_map<StopsPointerPair, double, StopsPointerPairHasher>;
 
 std::ostream& operator<< (std::ostream& out, const BusesToStopNames& buses);
 
@@ -156,7 +156,7 @@ public:
         return virtual_buses_.At(name);
     }
 
-    auto GetStop(const std::string_view& name) const {
+    std::pair<std::set<std::string_view>, bool> GetBusesForStop(const std::string_view& name) const {
         static const std::set<std::string_view> empty_set = {};
         auto [it, stop_has_been_found] = virtual_stops_.At(name);
         return (stop_has_been_found)

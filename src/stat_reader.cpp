@@ -15,7 +15,7 @@ void BusOutputQuery(const TransportCatalogue& transport_catalogue, std::string&&
 }
 
 void StopOutputQuery(const TransportCatalogue& transport_catalogue, std::string&& stop_name, std::ostream& out) {
-    auto [buses, stop_has_been_found] = transport_catalogue.GetStop(stop_name);
+    auto [buses, stop_has_been_found] = transport_catalogue.GetBusesForStop(stop_name);
 
     if (stop_has_been_found) {
         if (!buses.empty()) {

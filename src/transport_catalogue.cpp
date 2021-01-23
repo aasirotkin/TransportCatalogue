@@ -72,8 +72,8 @@ void StopCatalogue::PushBusToStop(const Stop* stop, const std::string_view& bus_
 }
 
 void StopCatalogue::AddDistance(const Stop* stop_1, const Stop* stop_2, double distance) {
-    StopsReferencePair stop_pair_direct = { stop_1, stop_2 };
-    StopsReferencePair stop_pair_reverse = { stop_2, stop_1 };
+    StopsPointerPair stop_pair_direct = { stop_1, stop_2 };
+    StopsPointerPair stop_pair_reverse = { stop_2, stop_1 };
 
     distances_between_stops_[stop_pair_direct] = distance;
 
@@ -122,7 +122,7 @@ double BusCatalogue::CalcRoutTrueLenght(const std::deque<const Stop*>& rout, con
         rout.begin(), rout.end() - 1,
         rout.begin() + 1, distance.begin(),
         [&stops_distances](const Stop* from, const Stop* to) {
-            return stops_distances.at(StopsReferencePair{ from, to });
+            return stops_distances.at(StopsPointerPair{ from, to });
         });
     double lenght = std::reduce(distance.begin(), distance.end());
 
@@ -131,7 +131,7 @@ double BusCatalogue::CalcRoutTrueLenght(const std::deque<const Stop*>& rout, con
             rout.rbegin(), rout.rend() - 1,
             rout.rbegin() + 1, distance.begin(),
             [&stops_distances](const Stop* from, const Stop* to) {
-                return stops_distances.at(StopsReferencePair{ from, to });
+                return stops_distances.at(StopsPointerPair{ from, to });
             });
         lenght += std::reduce(distance.begin(), distance.end());
     }
