@@ -54,21 +54,21 @@ namespace bus_catalogue {
 using namespace detail;
 using namespace stop_catalogue;
 
-Bus::Bus(std::string&& name, std::deque<const Stop*>&& rout, double rout_lenght, double rout_true_lenght, RoutType rout_type)
+Bus::Bus(std::string&& name, std::deque<const Stop*>&& route, double route_geo_lenght, double route_true_lenght, RouteType route_type)
     : name(name)
-    , rout(rout)
-    , rout_type(rout_type)
-    , rout_lenght(rout_lenght)
-    , rout_true_lenght(rout_true_lenght)
-    , stops_on_rout(rout.size()) {
+    , route(route)
+    , route_type(route_type)
+    , route_geo_lenght(route_geo_lenght)
+    , route_true_lenght(route_true_lenght)
+    , stops_on_route(route.size()) {
     std::unordered_set<std::string_view> unique_stops_names;
-    for (const Stop* stop : rout) {
+    for (const Stop* stop : route) {
         unique_stops_names.insert(stop->name);
     }
     unique_stops = unique_stops_names.size();
 
-    if (rout_type == RoutType::BackAndForth) {
-        stops_on_rout = stops_on_rout * 2 - 1;
+    if (route_type == RouteType::BackAndForth) {
+        stops_on_route = stops_on_route * 2 - 1;
     }
 }
 
@@ -77,68 +77,68 @@ std::ostream& operator<<(std::ostream& out, const Bus& bus) {
     static const char* str_sep = ": ";
     static const char* str_comma = ", ";
     static const char* str_space = " ";
-    static const char* str_stops_on_rout = "stops on route";
+    static const char* str_stops_on_route = "stops on route";
     static const char* str_unique_stops = "unique stops";
     static const char* str_route_lenght = "route length";
     static const char* str_curvature = "curvature";
 
-    double curvature = bus.rout_true_lenght / bus.rout_lenght;
+    double curvature = bus.route_true_lenght / bus.route_geo_lenght;
 
     out << str_bus << bus.name << str_sep;
-    out << bus.stops_on_rout << str_space << str_stops_on_rout << str_comma;
+    out << bus.stops_on_route << str_space << str_stops_on_route << str_comma;
     out << bus.unique_stops << str_space << str_unique_stops << str_comma;
-    out << std::setprecision(6) << bus.rout_true_lenght << str_space << str_route_lenght << str_comma;
+    out << std::setprecision(6) << bus.route_true_lenght << str_space << str_route_lenght << str_comma;
     out << std::setprecision(6) << curvature << str_space << str_curvature;
 
     return out;
 }
 
-const Bus* Catalogue::Push(std::string&& name, std::vector<std::string_view>&& string_rout, RoutType type,
+const Bus* Catalogue::Push(std::string&& name, std::vector<std::string_view>&& string_route, RouteType type,
     const VirtualCatalogue<Stop>& stops_catalogue, const DistancesContainer& stops_distances) {
     std::deque<const Stop*> stops;
-    for (const std::string_view& stop_name : string_rout) {
+    for (const std::string_view& stop_name : string_route) {
         auto [it, res] = stops_catalogue.At(stop_name);
         if (res) {
             stops.push_back((*it).second);
         }
     }
-    double rout_geo_lenght = CalcRoutGeoLenght(stops, type);
-    double rout_true_lenght = CalcRoutTrueLenght(stops, stops_distances, type);
-    buses_.push_back(Bus(std::move(name), std::move(stops), rout_geo_lenght, rout_true_lenght, type));
+    double route_geo_lenght = CalcRouteGeoLenght(stops, type);
+    double route_true_lenght = CalcRouteTrueLenght(stops, stops_distances, type);
+    buses_.push_back(Bus(std::move(name), std::move(stops), route_geo_lenght, route_true_lenght, type));
     return &buses_.back();
 }
 
-double Catalogue::CalcRoutGeoLenght(const std::deque<const Stop*>& rout, RoutType rout_type) {
-    std::vector<double> distance(rout.size() - 1);
+double Catalogue::CalcRouteGeoLenght(const std::deque<const Stop*>& route, RouteType route_type) {
+    std::vector<double> distance(route.size() - 1);
     std::transform(
-        rout.begin(), rout.end() - 1,
-        rout.begin() + 1, distance.begin(),
+        route.begin(), route.end() - 1,
+        route.begin() + 1, distance.begin(),
         [](const Stop* from, const Stop* to) {
             return ComputeDistance(from->coord, to->coord);
         });
     double lenght = std::reduce(distance.begin(), distance.end());
 
-    if (rout_type == RoutType::BackAndForth) {
+    if (route_type == RouteType::BackAndForth) {
         lenght *= 2.0;
     }
 
     return lenght;
 }
 
-double Catalogue::CalcRoutTrueLenght(const std::deque<const Stop*>& rout, const DistancesContainer& stops_distances, RoutType rout_type) {
-    std::vector<double> distance(rout.size() - 1);
+double Catalogue::CalcRouteTrueLenght(const std::deque<const Stop*>& route, const DistancesContainer& stops_distances, RouteType route_type) {
+    std::vector<double> distance(route.size() - 1);
     std::transform(
-        rout.begin(), rout.end() - 1,
-        rout.begin() + 1, distance.begin(),
+        route.begin(), route.end() - 1,
+        route.begin() + 1, distance.begin(),
         [&stops_distances](const Stop* from, const Stop* to) {
             return stops_distances.at(PointerPair<Stop>{ from, to });
         });
     double lenght = std::reduce(distance.begin(), distance.end());
 
-    if (rout_type == RoutType::BackAndForth) {
+    if (route_type == RouteType::BackAndForth) {
         std::transform(
-            rout.rbegin(), rout.rend() - 1,
-            rout.rbegin() + 1, distance.begin(),
+            route.rbegin(), route.rend() - 1,
+            route.rbegin() + 1, distance.begin(),
             [&stops_distances](const Stop* from, const Stop* to) {
                 return stops_distances.at(PointerPair<Stop>{ from, to });
             });

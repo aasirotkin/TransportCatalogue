@@ -18,7 +18,7 @@ namespace transport_catalogue {
 
 // ----------------------------------------------------------------------------
 
-enum class RoutType {
+enum class RouteType {
     Direct,
     BackAndForth,
     Round
@@ -112,16 +112,16 @@ namespace bus_catalogue {
 
 struct Bus {
     std::string name = {};
-    std::deque<const stop_catalogue::Stop*> rout = {};
-    RoutType rout_type = RoutType::Direct;
-    double rout_lenght = 0.0;
-    double rout_true_lenght = 0.0;
-    size_t stops_on_rout = 0;
+    std::deque<const stop_catalogue::Stop*> route = {};
+    RouteType route_type = RouteType::Direct;
+    double route_geo_lenght = 0.0;
+    double route_true_lenght = 0.0;
+    size_t stops_on_route = 0;
     size_t unique_stops = 0;
 
     Bus() = default;
 
-    Bus(std::string&& name, std::deque<const stop_catalogue::Stop*>&& rout, double rout_lenght, double rout_true_lenght, RoutType rout_type);
+    Bus(std::string&& name, std::deque<const stop_catalogue::Stop*>&& route, double route_geo_lenght, double route_true_lenght, RouteType route_type);
 };
 
 std::ostream& operator<< (std::ostream& out, const Bus& bus);
@@ -130,12 +130,12 @@ class Catalogue {
 public:
     Catalogue() = default;
 
-    const Bus* Push(std::string&& name, std::vector<std::string_view>&& string_rout, RoutType type,
+    const Bus* Push(std::string&& name, std::vector<std::string_view>&& string_route, RouteType type,
         const detail::VirtualCatalogue<stop_catalogue::Stop>& stops_catalogue, const stop_catalogue::DistancesContainer& stops_distances);
 
 private:
-    double CalcRoutGeoLenght(const std::deque<const stop_catalogue::Stop*>& rout, RoutType rout_type);
-    double CalcRoutTrueLenght(const std::deque<const stop_catalogue::Stop*>& rout, const stop_catalogue::DistancesContainer& stops_distances, RoutType rout_type);
+    double CalcRouteGeoLenght(const std::deque<const stop_catalogue::Stop*>& route, RouteType route_type);
+    double CalcRouteTrueLenght(const std::deque<const stop_catalogue::Stop*>& route, const stop_catalogue::DistancesContainer& stops_distances, RouteType route_type);
 
 private:
     std::deque<Bus> buses_ = {};
@@ -149,11 +149,11 @@ class TransportCatalogue {
 public:
     TransportCatalogue() = default;
 
-    void AddBus(std::string&& name, std::vector<std::string_view>&& rout, RoutType type) {
-        const bus_catalogue::Bus* bus = buses_.Push(std::move(name), std::move(rout), type, virtual_stops_, stops_.GetDistances());
+    void AddBus(std::string&& name, std::vector<std::string_view>&& route, RouteType type) {
+        const bus_catalogue::Bus* bus = buses_.Push(std::move(name), std::move(route), type, virtual_stops_, stops_.GetDistances());
         virtual_buses_.Push(bus->name, bus);
 
-        for (const stop_catalogue::Stop* stop : bus->rout) {
+        for (const stop_catalogue::Stop* stop : bus->route) {
             stops_.PushBusToStop(stop, bus->name);
         }
     }

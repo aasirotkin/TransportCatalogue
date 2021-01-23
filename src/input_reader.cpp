@@ -4,7 +4,6 @@
 
 #include <algorithm>
 #include <string_view>
-#include <vector>
 
 using namespace transport_catalogue;
 
@@ -93,12 +92,12 @@ void InputStopDistance(TransportCatalogue& transport_catalogue, const StopQuery&
 void InputBus(TransportCatalogue& transport_catalogue, const std::string_view& string_bus) {
     auto [name, data] = ParseStringOnNameData(string_bus);
 
-    RoutType type = (data.find('>') != std::string_view::npos) ? RoutType::Round : RoutType::BackAndForth;
-    char sep = (type == RoutType::Round) ? '>' : '-';
+    RouteType type = (data.find('>') != std::string_view::npos) ? RouteType::Round : RouteType::BackAndForth;
+    char sep = (type == RouteType::Round) ? '>' : '-';
 
-    std::vector<std::string_view> rout = SplitIntoWords(data, sep);
+    std::vector<std::string_view> route = SplitIntoWords(data, sep);
 
-    transport_catalogue.AddBus(std::string(name), std::move(rout), type);
+    transport_catalogue.AddBus(std::string(name), std::move(route), type);
 }
 
 void InputQueries(TransportCatalogue& transport_catalogue, const std::vector<std::string>& queries) {
