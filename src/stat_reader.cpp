@@ -2,6 +2,8 @@
 
 #include <algorithm>
 
+using namespace transport_catalogue;
+
 void BusOutputQuery(const TransportCatalogue& transport_catalogue, std::string&& bus_name, std::ostream& out) {
     auto [it, bus_has_been_found] = transport_catalogue.GetBus(bus_name);
 
@@ -15,6 +17,8 @@ void BusOutputQuery(const TransportCatalogue& transport_catalogue, std::string&&
 }
 
 void StopOutputQuery(const TransportCatalogue& transport_catalogue, std::string&& stop_name, std::ostream& out) {
+    using namespace transport_catalogue::stop_catalogue;
+
     auto [buses, stop_has_been_found] = transport_catalogue.GetBusesForStop(stop_name);
 
     if (stop_has_been_found) {

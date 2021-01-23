@@ -6,4 +6,4 @@
 #include <ostream>
 #include <string>
 
-void OutputQuery(const TransportCatalogue& transport_catalogue, const std::string& query, std::ostream& out = std::cout);
+void OutputQuery(const transport_catalogue::TransportCatalogue& transport_catalogue, const std::string& query, std::ostream& out = std::cout);

@@ -14,14 +14,9 @@
 #include <unordered_map>
 #include <vector>
 
-struct Stop {
-    std::string name;
-    Coordinates coord;
+namespace transport_catalogue {
 
-    bool operator== (const Stop* other) const {
-        return name == other->name;
-    }
-};
+// ----------------------------------------------------------------------------
 
 enum class RoutType {
     Direct,
@@ -31,23 +26,7 @@ enum class RoutType {
 
 // ----------------------------------------------------------------------------
 
-struct Bus {
-    std::string name = {};
-    std::deque<const Stop*> rout = {};
-    RoutType rout_type = RoutType::Direct;
-    double rout_lenght = 0.0;
-    double rout_true_lenght = 0.0;
-    size_t stops_on_rout = 0;
-    size_t unique_stops = 0;
-
-    Bus() = default;
-
-    Bus(std::string&& name, std::deque<const Stop*>&& rout, double rout_lenght, double rout_true_lenght, RoutType rout_type);
-};
-
-std::ostream& operator<< (std::ostream& out, const Bus& bus);
-
-// ----------------------------------------------------------------------------
+namespace detail {
 
 template <typename VirtualStruct>
 class VirtualCatalogue {
@@ -68,32 +47,42 @@ private:
     std::unordered_map<std::string_view, const VirtualStruct*> data_;
 };
 
-using VirtualStopCatalogue = VirtualCatalogue<Stop>;
-using VirtualBusCatalogue = VirtualCatalogue<Bus>;
+template <typename Pointer>
+using PointerPair = std::pair<const Pointer*, const Pointer*>;
 
-// ----------------------------------------------------------------------------
-
-using StopsPointerPair = std::pair<const Stop*, const Stop*>;
-
-class StopsPointerPairHasher {
+template <typename Pointer>
+class PointerPairHasher {
 public:
-    size_t operator() (const StopsPointerPair& stop_pair) const {
+    size_t operator() (const PointerPair<Pointer>& stop_pair) const {
         return hasher_(stop_pair.first) * 47 + hasher_(stop_pair.second);
     }
 private:
-    std::hash<const Stop*> hasher_;
+    std::hash<const Pointer*> hasher_;
 };
+
+} // namespace detail
 
 // ----------------------------------------------------------------------------
 
+namespace stop_catalogue {
+
+struct Stop {
+    std::string name;
+    Coordinates coord;
+
+    bool operator== (const Stop* other) const {
+        return name == other->name;
+    }
+};
+
 using BusesToStopNames = std::set<std::string_view>;
-using StopDistancesContainer = std::unordered_map<StopsPointerPair, double, StopsPointerPairHasher>;
+using DistancesContainer = std::unordered_map<detail::PointerPair<Stop>, double, detail::PointerPairHasher<Stop>>;
 
 std::ostream& operator<< (std::ostream& out, const BusesToStopNames& buses);
 
-class StopCatalogue {
+class Catalogue {
 public:
-    StopCatalogue() = default;
+    Catalogue() = default;
 
     const Stop* Push(std::string&& name, std::string&& string_coord);
 
@@ -105,32 +94,54 @@ public:
         return stop_buses_.at(stop);
     }
 
-    const StopDistancesContainer& GetDistances() const {
+    const DistancesContainer& GetDistances() const {
         return distances_between_stops_;
     }
 
 private:
     std::deque<Stop> stops_ = {};
     std::unordered_map<const Stop*, BusesToStopNames> stop_buses_ = {};
-    StopDistancesContainer distances_between_stops_ = {};
+    DistancesContainer distances_between_stops_ = {};
 };
+
+} // namespace stop_catalogue
 
 // ----------------------------------------------------------------------------
 
-class BusCatalogue {
+namespace bus_catalogue {
+
+struct Bus {
+    std::string name = {};
+    std::deque<const stop_catalogue::Stop*> rout = {};
+    RoutType rout_type = RoutType::Direct;
+    double rout_lenght = 0.0;
+    double rout_true_lenght = 0.0;
+    size_t stops_on_rout = 0;
+    size_t unique_stops = 0;
+
+    Bus() = default;
+
+    Bus(std::string&& name, std::deque<const stop_catalogue::Stop*>&& rout, double rout_lenght, double rout_true_lenght, RoutType rout_type);
+};
+
+std::ostream& operator<< (std::ostream& out, const Bus& bus);
+
+class Catalogue {
 public:
-    BusCatalogue() = default;
+    Catalogue() = default;
 
     const Bus* Push(std::string&& name, std::vector<std::string_view>&& string_rout, RoutType type,
-        const VirtualStopCatalogue& stops_catalogue, const StopDistancesContainer& stops_distances);
+        const detail::VirtualCatalogue<stop_catalogue::Stop>& stops_catalogue, const stop_catalogue::DistancesContainer& stops_distances);
 
 private:
-    double CalcRoutGeoLenght(const std::deque<const Stop*>& rout, RoutType rout_type);
-    double CalcRoutTrueLenght(const std::deque<const Stop*>& rout, const StopDistancesContainer& stops_distances, RoutType rout_type);
+    double CalcRoutGeoLenght(const std::deque<const stop_catalogue::Stop*>& rout, RoutType rout_type);
+    double CalcRoutTrueLenght(const std::deque<const stop_catalogue::Stop*>& rout, const stop_catalogue::DistancesContainer& stops_distances, RoutType rout_type);
 
 private:
     std::deque<Bus> buses_ = {};
 };
+
+} // namespace bus_catalogue
 
 // ----------------------------------------------------------------------------
 
@@ -139,16 +150,16 @@ public:
     TransportCatalogue() = default;
 
     void AddBus(std::string&& name, std::vector<std::string_view>&& rout, RoutType type) {
-        const Bus* bus = buses_.Push(std::move(name), std::move(rout), type, virtual_stops_, stops_.GetDistances());
+        const bus_catalogue::Bus* bus = buses_.Push(std::move(name), std::move(rout), type, virtual_stops_, stops_.GetDistances());
         virtual_buses_.Push(bus->name, bus);
 
-        for (const Stop* stop : bus->rout) {
+        for (const stop_catalogue::Stop* stop : bus->rout) {
             stops_.PushBusToStop(stop, bus->name);
         }
     }
 
     void AddStop(std::string&& name, std::string&& string_coord) {
-        const Stop* stop = stops_.Push(std::move(name), std::move(string_coord));
+        const stop_catalogue::Stop* stop = stops_.Push(std::move(name), std::move(string_coord));
         virtual_stops_.Push(stop->name, stop);
     }
 
@@ -171,11 +182,13 @@ public:
     }
 
 private:
-    BusCatalogue buses_;
-    VirtualBusCatalogue virtual_buses_;
+    bus_catalogue::Catalogue buses_;
+    detail::VirtualCatalogue<bus_catalogue::Bus> virtual_buses_;
 
-    StopCatalogue stops_;
-    VirtualStopCatalogue virtual_stops_;
+    stop_catalogue::Catalogue stops_;
+    detail::VirtualCatalogue<stop_catalogue::Stop> virtual_stops_;
 };
 
 // ----------------------------------------------------------------------------
+
+} // namespace transport_catalogue

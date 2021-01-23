@@ -6,6 +6,8 @@
 #include <string_view>
 #include <vector>
 
+using namespace transport_catalogue;
+
 std::string ReadLine(std::istream& input) {
     std::string s;
     std::getline(input, s);

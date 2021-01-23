@@ -4,7 +4,55 @@
 #include <numeric>
 #include <utility>
 
+namespace transport_catalogue {
+
 // ----------------------------------------------------------------------------
+
+namespace stop_catalogue {
+
+using namespace detail;
+
+std::ostream& operator<<(std::ostream& out, const BusesToStopNames& buses) {
+    bool first = true;
+    for (const std::string_view& bus : buses) {
+        if (!first) {
+            out << std::string(" ");
+        }
+        out << bus;
+        first = false;
+    }
+    return out;
+}
+
+const Stop* Catalogue::Push(std::string&& name, std::string&& string_coord) {
+    stops_.push_back({ std::move(name), Coordinates::ParseFromStringView(string_coord) });
+    stop_buses_.insert({ &stops_.back(), {} });
+    return &stops_.back();
+}
+
+void Catalogue::PushBusToStop(const Stop* stop, const std::string_view& bus_name) {
+    stop_buses_.at(stop).insert(bus_name);
+}
+
+void Catalogue::AddDistance(const Stop* stop_1, const Stop* stop_2, double distance) {
+    PointerPair<Stop> stop_pair_direct = { stop_1, stop_2 };
+    PointerPair<Stop> stop_pair_reverse = { stop_2, stop_1 };
+
+    distances_between_stops_[stop_pair_direct] = distance;
+
+    if (distances_between_stops_.count(stop_pair_reverse) == 0) {
+        distances_between_stops_[stop_pair_reverse] = distance;
+    }
+}
+
+} // namespace stop_catalogue
+
+// ----------------------------------------------------------------------------
+
+namespace bus_catalogue {
+
+using namespace detail;
+using namespace stop_catalogue;
 
 Bus::Bus(std::string&& name, std::deque<const Stop*>&& rout, double rout_lenght, double rout_true_lenght, RoutType rout_type)
     : name(name)
@@ -45,47 +93,8 @@ std::ostream& operator<<(std::ostream& out, const Bus& bus) {
     return out;
 }
 
-// ----------------------------------------------------------------------------
-
-std::ostream& operator<<(std::ostream& out, const BusesToStopNames& buses) {
-    bool first = true;
-    for (const std::string_view& bus : buses) {
-        if (!first) {
-            out << std::string(" ");
-        }
-        out << bus;
-        first = false;
-    }
-    return out;
-}
-
-// ----------------------------------------------------------------------------
-
-const Stop* StopCatalogue::Push(std::string&& name, std::string&& string_coord) {
-    stops_.push_back({ std::move(name), Coordinates::ParseFromStringView(string_coord) });
-    stop_buses_.insert({ &stops_.back(), {} });
-    return &stops_.back();
-}
-
-void StopCatalogue::PushBusToStop(const Stop* stop, const std::string_view& bus_name) {
-    stop_buses_.at(stop).insert(bus_name);
-}
-
-void StopCatalogue::AddDistance(const Stop* stop_1, const Stop* stop_2, double distance) {
-    StopsPointerPair stop_pair_direct = { stop_1, stop_2 };
-    StopsPointerPair stop_pair_reverse = { stop_2, stop_1 };
-
-    distances_between_stops_[stop_pair_direct] = distance;
-
-    if (distances_between_stops_.count(stop_pair_reverse) == 0) {
-        distances_between_stops_[stop_pair_reverse] = distance;
-    }
-}
-
-// ----------------------------------------------------------------------------
-
-const Bus* BusCatalogue::Push(std::string&& name, std::vector<std::string_view>&& string_rout, RoutType type,
-    const VirtualStopCatalogue& stops_catalogue, const StopDistancesContainer& stops_distances) {
+const Bus* Catalogue::Push(std::string&& name, std::vector<std::string_view>&& string_rout, RoutType type,
+    const VirtualCatalogue<Stop>& stops_catalogue, const DistancesContainer& stops_distances) {
     std::deque<const Stop*> stops;
     for (const std::string_view& stop_name : string_rout) {
         auto [it, res] = stops_catalogue.At(stop_name);
@@ -99,7 +108,7 @@ const Bus* BusCatalogue::Push(std::string&& name, std::vector<std::string_view>&
     return &buses_.back();
 }
 
-double BusCatalogue::CalcRoutGeoLenght(const std::deque<const Stop*>& rout, RoutType rout_type) {
+double Catalogue::CalcRoutGeoLenght(const std::deque<const Stop*>& rout, RoutType rout_type) {
     std::vector<double> distance(rout.size() - 1);
     std::transform(
         rout.begin(), rout.end() - 1,
@@ -116,13 +125,13 @@ double BusCatalogue::CalcRoutGeoLenght(const std::deque<const Stop*>& rout, Rout
     return lenght;
 }
 
-double BusCatalogue::CalcRoutTrueLenght(const std::deque<const Stop*>& rout, const StopDistancesContainer& stops_distances, RoutType rout_type) {
+double Catalogue::CalcRoutTrueLenght(const std::deque<const Stop*>& rout, const DistancesContainer& stops_distances, RoutType rout_type) {
     std::vector<double> distance(rout.size() - 1);
     std::transform(
         rout.begin(), rout.end() - 1,
         rout.begin() + 1, distance.begin(),
         [&stops_distances](const Stop* from, const Stop* to) {
-            return stops_distances.at(StopsPointerPair{ from, to });
+            return stops_distances.at(PointerPair<Stop>{ from, to });
         });
     double lenght = std::reduce(distance.begin(), distance.end());
 
@@ -131,7 +140,7 @@ double BusCatalogue::CalcRoutTrueLenght(const std::deque<const Stop*>& rout, con
             rout.rbegin(), rout.rend() - 1,
             rout.rbegin() + 1, distance.begin(),
             [&stops_distances](const Stop* from, const Stop* to) {
-                return stops_distances.at(StopsPointerPair{ from, to });
+                return stops_distances.at(PointerPair<Stop>{ from, to });
             });
         lenght += std::reduce(distance.begin(), distance.end());
     }
@@ -139,4 +148,8 @@ double BusCatalogue::CalcRoutTrueLenght(const std::deque<const Stop*>& rout, con
     return lenght;
 }
 
+} // namespace bus_catalogue
+
 // ----------------------------------------------------------------------------
+
+} // namespace transport_catalogue

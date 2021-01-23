@@ -10,4 +10,4 @@ std::string ReadLine(std::istream& input);
 
 int ReadLineWithNumber(std::istream& input);
 
-void InputQueries(TransportCatalogue& transport_catalogue, const std::vector<std::string>& queries);
+void InputQueries(transport_catalogue::TransportCatalogue& transport_catalogue, const std::vector<std::string>& queries);
