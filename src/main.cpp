@@ -1,6 +1,8 @@
-#include "test_example_functions.h"
+#include "request_handler.h"
+
+#include <iostream>
 
 int main() {
-    TestTransportCatalogue();
+    request_handler::RequestHandler(std::cin, std::cout);
     return 0;
 }

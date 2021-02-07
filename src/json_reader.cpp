@@ -1,5 +1,9 @@
 #include "json_reader.h"
 
+#include <map>
+#include <set>
+#include <string>
+
 namespace json {
 
 // ---------- Document --------------------------------------------------------
@@ -23,6 +27,8 @@ bool operator!= (const Document& lhs, const Document& rhs) {
 namespace detail {
 
 #define TO_STR(str) (std::string(str))
+
+static const std::set<char> skip_this = { ' ', '\t', '\r', '\n', };
 
 // ----------------------------------------------------------------------------
 
@@ -184,7 +190,7 @@ Node LoadArray(std::istream& input) {
         if (is_closed = (c == ']'); is_closed) {
             break;
         }
-        if (c == ' ' || c == ',') {
+        if (skip_this.count(c) > 0 || c == ',') {
             continue;
         }
         input.putback(c);
@@ -206,7 +212,7 @@ Node LoadDict(std::istream& input) {
         if (is_closed = (c == '}'); is_closed) {
             break;
         }
-        if (c == ' ' || c == ',') {
+        if (skip_this.count(c) > 0 || c == ',') {
             continue;
         }
 
@@ -226,7 +232,7 @@ Node LoadNode(std::istream& input) {
     char c;
     input >> c;
 
-    if (c == ' ') {
+    if (skip_this.count(c) > 0) {
         return LoadNode(input);
     }
     else if (c == '[') {

@@ -2,6 +2,8 @@
 
 #include "json.h"
 
+#include <iostream>
+
 namespace json {
 
 // ---------- Document --------------------------------------------------------
