@@ -262,7 +262,7 @@ Node LoadNode(std::istream& input) {
     }
 }
 
-}
+} // namespace detail
 
 // ----------------------------------------------------------------------------
 
@@ -274,4 +274,4 @@ void Print(const Document& doc, std::ostream& output) {
     std::visit(NodePrinter{ output }, doc.GetRoot().Data());
 }
 
-}
+} // namespace json
