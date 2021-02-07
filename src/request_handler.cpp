@@ -130,7 +130,7 @@ void RequestStatBusProcess(TransportCatalogue& catalogue, const json::Dict& requ
         output << "\t\"request_id\": "sv << id << ",\n"sv;
         output << "\t\"route_length\": "sv << bus->route_true_lenght << ",\n"sv;
         output << "\t\"stop_count\": "sv << bus->stops_on_route << ",\n"sv;
-        output << "\t\"unique_stop_count\": "sv << bus->unique_stops << ",\n"sv;
+        output << "\t\"unique_stop_count\": "sv << bus->unique_stops << "\n"sv;
         output << "}"sv;
     }
     else {
