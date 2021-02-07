@@ -20,6 +20,8 @@ public:
 
     void AddStop(std::string&& name, std::string&& string_coord);
 
+    void AddStop(std::string&& name, Coordinates&& coord);
+
     void AddDistanceBetweenStops(const std::string_view& stop_from_name, const std::string_view& stop_to_name, double distance);
 
     detail::VirtualPair<bus_catalogue::Bus> GetBus(const std::string_view& name) const;

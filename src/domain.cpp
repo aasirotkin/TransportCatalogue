@@ -18,9 +18,11 @@ std::ostream& operator<<(std::ostream& out, const BusesToStopNames& buses) {
     bool first = true;
     for (const std::string_view& bus : buses) {
         if (!first) {
-            out << std::string(" ");
+            out << std::string(", ");
         }
+        out << std::string("\"");
         out << bus;
+        out << std::string("\"");
         first = false;
     }
     return out;
@@ -28,6 +30,12 @@ std::ostream& operator<<(std::ostream& out, const BusesToStopNames& buses) {
 
 const Stop* Catalogue::Push(std::string&& name, std::string&& string_coord) {
     stops_.push_back({ std::move(name), Coordinates::ParseFromStringView(string_coord) });
+    stop_buses_.insert({ &stops_.back(), {} });
+    return &stops_.back();
+}
+
+const Stop* Catalogue::Push(std::string&& name, Coordinates&& coord) {
+    stops_.push_back({ std::move(name), std::move(coord) });
     stop_buses_.insert({ &stops_.back(), {} });
     return &stops_.back();
 }

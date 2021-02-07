@@ -85,6 +85,8 @@ public:
 
     const Stop* Push(std::string&& name, std::string&& string_coord);
 
+    const Stop* Push(std::string&& name, Coordinates&& coord);
+
     void PushBusToStop(const Stop* stop, const std::string_view& bus_name);
 
     void AddDistance(const Stop* stop_1, const Stop* stop_2, double distance);

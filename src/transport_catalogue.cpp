@@ -16,6 +16,11 @@ void TransportCatalogue::AddStop(std::string&& name, std::string&& string_coord)
     virtual_stops_.Push(stop->name, stop);
 }
 
+void TransportCatalogue::AddStop(std::string&& name, Coordinates&& coord) {
+    const stop_catalogue::Stop* stop = stops_.Push(std::move(name), std::move(coord));
+    virtual_stops_.Push(stop->name, stop);
+}
+
 void TransportCatalogue::AddDistanceBetweenStops(const std::string_view& stop_from_name, const std::string_view& stop_to_name, double distance) {
     auto [stop_from_it, fist_stop_found] = virtual_stops_.At(stop_from_name);
     auto [stop_to_it, second_stop_found] = virtual_stops_.At(stop_to_name);
