@@ -1,8 +1,7 @@
 #include "test_example_functions.h"
 
 #include "geo.h"
-#include "input_reader.h"
-#include "stat_reader.h"
+#include "request_handler.h"
 #include "transport_catalogue.h"
 
 #include <algorithm>
