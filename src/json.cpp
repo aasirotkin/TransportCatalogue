@@ -84,7 +84,7 @@ Node::Node(nullptr_t)
     : Node() {
 }
 
-Node::Node(std::string value)
+Node::Node(std::string&& value)
     : data_(std::move(value)) {
 }
 
@@ -100,11 +100,11 @@ Node::Node(double value)
     : data_(value) {
 }
 
-Node::Node(Array value)
+Node::Node(Array&& value)
     : data_(std::move(value)) {
 }
 
-Node::Node(Dict value)
+Node::Node(Dict&& value)
     : data_(std::move(value)) {
 }
 

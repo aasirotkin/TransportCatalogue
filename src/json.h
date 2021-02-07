@@ -46,12 +46,12 @@ public:
     Node() = default;
 
     Node(nullptr_t);
-    Node(std::string value);
+    Node(std::string&& value);
     Node(bool value);
     Node(int value);
     Node(double value);
-    Node(Array value);
-    Node(Dict value);
+    Node(Array&& value);
+    Node(Dict&& value);
 
     const std::string& AsString() const;
     bool AsBool() const;
