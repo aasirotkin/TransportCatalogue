@@ -2,7 +2,6 @@
 
 #include "geo.h"
 #include "request_handler.h"
-#include "transport_catalogue.h"
 
 #include <algorithm>
 #include <chrono>
@@ -15,7 +14,6 @@
 #include <vector>
 
 using namespace std;
-using namespace transport_catalogue;
 
 // -----------------------------------------------------------------------------
 
@@ -187,11 +185,65 @@ void TestParseGeoFromStringView() {
     }
 }
 
+// ----------------------------------------------------------------------------
+
+#include <algorithm>
+#include <cassert>
+#include <iostream>
+#include <filesystem>
+#include <fstream>
+#include <map>
+#include <string>
+#include <sstream>
+
+struct TestData {
+    std::string result;
+    std::string reference;
+};
+
+void RemoveIndentInPlace(std::string& str) {
+    str.erase(std::remove_if(str.begin(), str.end(), [](char c) { return c == ' ' || c == '\t' || c == '\n' || c == '\r'; }), str.end());
+}
+
+void TestsFromFile() {
+    std::string path = "C:\\Users\\aasir\\source\\repos\\aasirotkin\\TransportCatalogue\\Tests\\";
+    std::map<int, TestData> test_data;
+    for (const auto& entry : std::filesystem::directory_iterator(path)) {
+        std::string file_name = entry.path().filename().u8string();
+
+        std::ifstream t(path + file_name);
+        std::stringstream buffer;
+        buffer << t.rdbuf();
+
+        size_t id_begin = file_name.find_first_of('_') + 1;
+        int id = std::stoi(file_name.substr(id_begin));
+
+        if (file_name.front() == 'i') {
+            std::stringstream out;
+            request_handler::RequestHandler(buffer, out);
+            test_data[id].result = out.str();
+        }
+        else {
+            test_data[id].reference = buffer.str();
+        }
+    }
+
+    for (auto& [key, value] : test_data) {
+        RemoveIndentInPlace(value.result);
+        RemoveIndentInPlace(value.reference);
+
+        ASSERT(value.result == value.reference);
+    }
+}
+
+// ----------------------------------------------------------------------------
+
 // --------- Окончание модульных тестов -----------
 
 // Функция TestTransportCatalogue является точкой входа для запуска тестов
 void TestTransportCatalogue() {
     RUN_TEST(TestParseGeoFromStringView);
+    RUN_TEST(TestsFromFile);
 
 #ifndef _DEBUG
 
