@@ -96,7 +96,7 @@ void RequestStatStopProcess(TransportCatalogue& catalogue, const json::Dict& req
 
     const auto& [buses, stop_has_been_found] = catalogue.GetBusesForStop(name);
 
-    if (stop_has_been_found) {
+    if (stop_has_been_found && buses.size() > 0) {
         output << "{\n"sv;
         output << "\t\"buses\": [\n"sv;
         output << "\t\t"sv << buses << "\n"sv;
