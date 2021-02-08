@@ -7,7 +7,10 @@
 #include <chrono>
 #include <deque>
 #include <execution>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <map>
 #include <random>
 #include <sstream>
 #include <string>
@@ -187,15 +190,6 @@ void TestParseGeoFromStringView() {
 
 // ----------------------------------------------------------------------------
 
-#include <algorithm>
-#include <cassert>
-#include <iostream>
-#include <filesystem>
-#include <fstream>
-#include <map>
-#include <string>
-#include <sstream>
-
 struct TestData {
     std::string result;
     std::string reference;
@@ -211,6 +205,10 @@ void TestsFromFile() {
     for (const auto& entry : std::filesystem::directory_iterator(path)) {
         std::string file_name = entry.path().filename().u8string();
 
+        if (file_name.find("programm") != std::string::npos) {
+            continue;
+        }
+
         std::ifstream t(path + file_name);
         std::stringstream buffer;
         buffer << t.rdbuf();
@@ -222,6 +220,10 @@ void TestsFromFile() {
             std::stringstream out;
             request_handler::RequestHandler(buffer, out);
             test_data[id].result = out.str();
+
+            std::ofstream out_to_file(path + "output_programm_"s + std::to_string(id) + ".txt"s);
+            out_to_file << out.str();
+            out_to_file.close();
         }
         else {
             test_data[id].reference = buffer.str();
@@ -232,11 +234,18 @@ void TestsFromFile() {
         RemoveIndentInPlace(value.result);
         RemoveIndentInPlace(value.reference);
 
-        ASSERT(value.result == value.reference);
+        if (value.result != value.reference) {
+            std::ofstream out_to_file(path + "error_programm_"s + std::to_string(key) + ".txt"s);
+            for (int i = 0; i < std::min(value.result.size(), value.reference.size()); ++i) {
+                if (value.result.at(i) != value.reference.at(i)) {
+                    std::string out_str = std::to_string(i) + ": "s + value.result.at(i) + " "s + value.reference.at(i) + "\n"s;
+                    out_to_file << out_str;
+                }
+            }
+            out_to_file.close();
+        }
     }
 }
-
-// ----------------------------------------------------------------------------
 
 // --------- Окончание модульных тестов -----------
 
