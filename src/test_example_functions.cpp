@@ -199,7 +199,7 @@ void RemoveIndentInPlace(std::string& str) {
     str.erase(std::remove_if(str.begin(), str.end(), [](char c) { return c == ' ' || c == '\t' || c == '\n' || c == '\r'; }), str.end());
 }
 
-void TestsFromFile() {
+void TestFromFile() {
     std::string path = "C:\\Users\\aasir\\source\\repos\\aasirotkin\\TransportCatalogue\\Tests\\";
     std::map<int, TestData> test_data;
     for (const auto& entry : std::filesystem::directory_iterator(path)) {
@@ -234,6 +234,10 @@ void TestsFromFile() {
         RemoveIndentInPlace(value.result);
         RemoveIndentInPlace(value.reference);
 
+        std::ofstream out_without_indent_to_file(path + "output_programm_without_indent_"s + std::to_string(key) + ".txt"s);
+        out_without_indent_to_file << value.result;
+        out_without_indent_to_file.close();
+
         if (value.result != value.reference) {
             std::ofstream out_to_file(path + "error_programm_"s + std::to_string(key) + ".txt"s);
             for (int i = 0; i < std::min(value.result.size(), value.reference.size()); ++i) {
@@ -252,7 +256,7 @@ void TestsFromFile() {
 // Функция TestTransportCatalogue является точкой входа для запуска тестов
 void TestTransportCatalogue() {
     RUN_TEST(TestParseGeoFromStringView);
-    RUN_TEST(TestsFromFile);
+    RUN_TEST(TestFromFile);
 
 #ifndef _DEBUG
 
