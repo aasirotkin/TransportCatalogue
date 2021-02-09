@@ -141,6 +141,11 @@ void RequestStatBusProcess(TransportCatalogue& catalogue, const json::Dict& requ
     }
 }
 
+void RequestMapProcess(TransportCatalogue& catalogue, const json::Dict& render_settings) {
+    (void)catalogue;
+    (void)render_settings;
+}
+
 void RequestStatProcess(TransportCatalogue& catalogue, const json::Array& stat_requests, std::ostream& output) {
     using namespace std::literals;
 
@@ -162,6 +167,9 @@ void RequestStatProcess(TransportCatalogue& catalogue, const json::Array& stat_r
         else if (type == "Bus"sv) {
             RequestStatBusProcess(catalogue, request, output);
         }
+        else if (type == "Map"sv) {
+            throw json::ParsingError("Map type is not ready yet"s);
+        }
         else {
             throw json::ParsingError("Unknown type "s + std::string(type) + " in RequestStatProcess"s);
         }
@@ -173,19 +181,36 @@ void RequestStatProcess(TransportCatalogue& catalogue, const json::Array& stat_r
 }
 
 void RequestHandler(std::istream& input, std::ostream& output) {
-    using namespace std::literals;
+    try {
+        using namespace std::literals;
 
-    json::Document doc = std::move(json::Load(input));
+        json::Document doc = std::move(json::Load(input));
 
-    const json::Dict& input_requests = doc.GetRoot().AsMap();
+        const json::Dict& input_requests = doc.GetRoot().AsMap();
 
-    const json::Array& base_requests = input_requests.at("base_requests"s).AsArray();
-    const json::Array& stat_requests = input_requests.at("stat_requests"s).AsArray();
+        const json::Array& base_requests = input_requests.at("base_requests"s).AsArray();
 
-    TransportCatalogue catalogue;
+        static const json::Dict empty_dict{};
+        bool is_render_settings = (input_requests.count("render_settings"s) > 0);
+        const json::Dict& render_settings = (is_render_settings) ? input_requests.at("render_settings"s).AsMap() : empty_dict;
+        const json::Array& stat_requests = input_requests.at("stat_requests"s).AsArray();
 
-    RequestBaseProcess(catalogue, base_requests);
-    RequestStatProcess(catalogue, stat_requests, output);
+        TransportCatalogue catalogue;
+
+        RequestBaseProcess(catalogue, base_requests);
+        RequestMapProcess(catalogue, render_settings);
+        RequestStatProcess(catalogue, stat_requests, output);
+    }
+    catch (const json::ParsingError& error) {
+        output << error.what();
+    }
+    catch (const std::exception& error) {
+        output << std::string("Unknown error has occured") << std::endl;
+        output << error.what();
+    }
+    catch (...) {
+        output << std::string("Unknown error has occured") << std::endl;
+    }
 }
 
 } // namespace request_handler
