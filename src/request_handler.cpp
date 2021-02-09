@@ -96,7 +96,7 @@ void RequestStatStopProcess(TransportCatalogue& catalogue, const json::Dict& req
 
     const auto& [buses, stop_has_been_found] = catalogue.GetBusesForStop(name);
 
-    if (stop_has_been_found && buses.size() > 0) {
+    if (stop_has_been_found) {
         output << "{\n"sv;
         output << "\t\"buses\": [\n"sv;
         output << "\t\t"sv << buses << "\n"sv;
@@ -173,24 +173,19 @@ void RequestStatProcess(TransportCatalogue& catalogue, const json::Array& stat_r
 }
 
 void RequestHandler(std::istream& input, std::ostream& output) {
-    try {
-        using namespace std::literals;
+    using namespace std::literals;
 
-        json::Document doc = std::move(json::Load(input));
+    json::Document doc = std::move(json::Load(input));
 
-        const json::Dict& input_requests = doc.GetRoot().AsMap();
+    const json::Dict& input_requests = doc.GetRoot().AsMap();
 
-        const json::Array& base_requests = input_requests.at("base_requests"s).AsArray();
-        const json::Array& stat_requests = input_requests.at("stat_requests"s).AsArray();
+    const json::Array& base_requests = input_requests.at("base_requests"s).AsArray();
+    const json::Array& stat_requests = input_requests.at("stat_requests"s).AsArray();
 
-        TransportCatalogue catalogue;
+    TransportCatalogue catalogue;
 
-        RequestBaseProcess(catalogue, base_requests);
-        RequestStatProcess(catalogue, stat_requests, output);
-    }
-    catch (std::exception& ex) {
-        output << ex.what() << std::endl;
-    }
+    RequestBaseProcess(catalogue, base_requests);
+    RequestStatProcess(catalogue, stat_requests, output);
 }
 
 } // namespace request_handler
