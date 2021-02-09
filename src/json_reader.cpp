@@ -28,7 +28,7 @@ namespace detail {
 
 #define TO_STR(str) (std::string(str))
 
-static const std::set<char> skip_this = { ' ', '\t', '\r', '\n', };
+static const std::set<char> skip_this = { ' ', '\t', '\r', '\n', ':' };
 
 // ----------------------------------------------------------------------------
 
@@ -36,7 +36,7 @@ Node LoadNode(std::istream& input);
 
 std::string LoadStringCount(std::istream& input, size_t count) {
     std::string line;
-    for (char c; input >> c && count > 0;) {
+    for (char c; count > 0 && input >> c;) {
         line += c;
         count--;
     }
@@ -72,6 +72,10 @@ Node LoadString(std::istream& input) {
     std::string line;
 
     input >> std::noskipws;
+
+    if (input.peek() == '\"') {
+        input.get();
+    }
 
     bool is_closed = false;
 
