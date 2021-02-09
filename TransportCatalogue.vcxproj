@@ -160,7 +160,9 @@
     <ClCompile Include="src\json.cpp" />
     <ClCompile Include="src\json_reader.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\map_renderer.cpp" />
     <ClCompile Include="src\request_handler.cpp" />
+    <ClCompile Include="src\svg.cpp" />
     <ClCompile Include="src\test_example_functions.cpp" />
     <ClCompile Include="src\transport_catalogue.cpp" />
   </ItemGroup>
@@ -170,7 +172,9 @@
     <ClInclude Include="src\json.h" />
     <ClInclude Include="src\json_reader.h" />
     <ClInclude Include="src\log_duration.h" />
+    <ClInclude Include="src\map_renderer.h" />
     <ClInclude Include="src\request_handler.h" />
+    <ClInclude Include="src\svg.h" />
     <ClInclude Include="src\test_example_functions.h" />
     <ClInclude Include="src\transport_catalogue.h" />
   </ItemGroup>
