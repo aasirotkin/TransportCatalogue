@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 #include <deque>
 #include <iostream>
@@ -26,6 +27,14 @@ struct Point {
     double x = 0.0;
     double y = 0.0;
 };
+
+inline bool operator== (const Point& lhs, const Point& rhs) {
+    return (std::abs(lhs.x - rhs.x) < 1e-6) && (std::abs(lhs.y - rhs.y) < 1e-6);
+}
+
+inline bool operator!= (const Point& lhs, const Point& rhs) {
+    return !(lhs == rhs);
+}
 
 // ---------- RenderContext ---------------------------------------------------
 

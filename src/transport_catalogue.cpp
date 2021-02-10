@@ -39,4 +39,16 @@ std::pair<std::set<std::string_view>, bool> TransportCatalogue::GetBusesForStop(
         : std::make_pair(empty_set, stop_has_been_found);
 }
 
+const detail::VirtualCatalogue<stop_catalogue::Stop>& TransportCatalogue::GetStops() const {
+    return virtual_stops_;
+}
+
+const detail::VirtualCatalogue<bus_catalogue::Bus>& TransportCatalogue::GetBuses() const {
+    return virtual_buses_;
+}
+
+const stop_catalogue::Catalogue& TransportCatalogue::GetStopsCatalogue() const {
+    return stops_;
+}
+
 }

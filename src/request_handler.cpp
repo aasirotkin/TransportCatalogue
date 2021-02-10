@@ -2,6 +2,7 @@
 
 #include "geo.h"
 #include "json_reader.h"
+#include "map_renderer.h"
 #include "transport_catalogue.h"
 
 #include <algorithm>
@@ -141,12 +142,56 @@ void RequestStatBusProcess(TransportCatalogue& catalogue, const json::Dict& requ
     }
 }
 
-void RequestMapProcess(TransportCatalogue& catalogue, const json::Dict& render_settings) {
-    (void)catalogue;
-    (void)render_settings;
+svg::Color ParseColor(const json::Node& node) {
+    if (node.IsString()) {
+        return svg::Color(node.AsString());
+    }
+    else if (node.IsArray()) {
+        const json::Array& array_color = node.AsArray();
+        int r = array_color.at(0).AsInt();
+        int g = array_color.at(1).AsInt();
+        int b = array_color.at(2).AsInt();
+        if (array_color.size() == 3) {
+            return svg::Color(svg::Rgb(r, g, b));
+        }
+        else {
+            double opacity = array_color.at(3).AsDouble();
+            return svg::Color(svg::Rgba(r, g, b, opacity));
+        }
+    }
 }
 
-void RequestStatProcess(TransportCatalogue& catalogue, const json::Array& stat_requests, std::ostream& output) {
+std::vector<svg::Color> ParsePaletteColors(const json::Array& array_color_palette) {
+    std::vector<svg::Color> color_palette;
+    for (const json::Node& node : array_color_palette) {
+        color_palette.push_back(ParseColor(node));
+    }
+    return std::move(color_palette);
+}
+
+svg::Point ParseOffset(const json::Array& offset) {
+    return svg::Point{ offset.at(0).AsDouble(), offset.at(1).AsDouble() };
+}
+
+void RequestRenderProcess(const TransportCatalogue& catalogue, const json::Dict& render_settings, std::ostream& output) {
+    using namespace std::literals;
+
+    MapRenderer render;
+    render.CalculateZoomCoef(catalogue.GetStops(), catalogue.GetStopsCatalogue(),
+        render_settings.at("width"s).AsDouble(), render_settings.at("height"s).AsDouble(), render_settings.at("padding"s).AsDouble());
+    render.InitStopsCoordForBuses(catalogue.GetBuses());
+    render.SetColorPalette(ParsePaletteColors(render_settings.at("color_palette"s).AsArray()));
+    render.DrawLines(render_settings.at("line_width"s).AsDouble());
+    render.DrawText(render_settings.at("bus_label_font_size"s).AsInt(),
+        ParseOffset(render_settings.at("bus_label_offset"s).AsArray()),
+        ParseColor(render_settings.at("underlayer_color"s)),
+        render_settings.at("underlayer_width"s).AsDouble());
+
+    render.Render(output);
+    throw json::ParsingError("Render map is not ready yet"s);
+}
+
+void RequestStatProcess(TransportCatalogue& catalogue, const json::Array& stat_requests, const json::Dict& render_settings, std::ostream& output) {
     using namespace std::literals;
 
     bool first = true;
@@ -168,7 +213,7 @@ void RequestStatProcess(TransportCatalogue& catalogue, const json::Array& stat_r
             RequestStatBusProcess(catalogue, request, output);
         }
         else if (type == "Map"sv) {
-            throw json::ParsingError("Map type is not ready yet"s);
+            RequestRenderProcess(catalogue, render_settings, output);
         }
         else {
             throw json::ParsingError("Unknown type "s + std::string(type) + " in RequestStatProcess"s);
@@ -198,8 +243,7 @@ void RequestHandler(std::istream& input, std::ostream& output) {
         TransportCatalogue catalogue;
 
         RequestBaseProcess(catalogue, base_requests);
-        RequestMapProcess(catalogue, render_settings);
-        RequestStatProcess(catalogue, stat_requests, output);
+        RequestStatProcess(catalogue, stat_requests, render_settings, output);
     }
     catch (const json::ParsingError& error) {
         output << error.what();

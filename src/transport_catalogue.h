@@ -28,6 +28,12 @@ public:
 
     std::pair<std::set<std::string_view>, bool> GetBusesForStop(const std::string_view& name) const;
 
+    const detail::VirtualCatalogue<stop_catalogue::Stop>& GetStops() const;
+
+    const detail::VirtualCatalogue<bus_catalogue::Bus>& GetBuses() const;
+
+    const stop_catalogue::Catalogue& GetStopsCatalogue() const;
+
 private:
     bus_catalogue::Catalogue buses_;
     detail::VirtualCatalogue<bus_catalogue::Bus> virtual_buses_;

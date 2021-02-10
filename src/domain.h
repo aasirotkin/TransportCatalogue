@@ -42,6 +42,15 @@ public:
     VirtualPair<VirtualStruct> Push(const std::string_view& name, const VirtualStruct* data) {
         return data_.emplace(name, data);
     }
+
+    ConstIterator<VirtualStruct> begin() const {
+        return data_.begin();
+    }
+
+    ConstIterator<VirtualStruct> end() const {
+        return data_.end();
+    }
+
 private:
     std::unordered_map<std::string_view, const VirtualStruct*> data_;
 };
@@ -97,6 +106,10 @@ public:
 
     const DistancesContainer& GetDistances() const {
         return distances_between_stops_;
+    }
+
+    bool IsEmpty(const Stop* stop) const {
+        return stop_buses_.count(stop) == 0 || stop_buses_.at(stop).empty();
     }
 
 private:
