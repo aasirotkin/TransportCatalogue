@@ -98,6 +98,7 @@ Text& Text::SetData(std::string data) {
         {'&', "&amp;"s}
     };
 
+    data_.clear();
     data_.reserve(data.size());
     for (char c : data) {
         if (svg_style.count(c)) {

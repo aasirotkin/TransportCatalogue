@@ -159,6 +159,7 @@ svg::Color ParseColor(const json::Node& node) {
             return svg::Color(svg::Rgba(r, g, b, opacity));
         }
     }
+    return svg::Color{};
 }
 
 std::vector<svg::Color> ParsePaletteColors(const json::Array& array_color_palette) {
@@ -166,29 +167,53 @@ std::vector<svg::Color> ParsePaletteColors(const json::Array& array_color_palett
     for (const json::Node& node : array_color_palette) {
         color_palette.push_back(ParseColor(node));
     }
-    return std::move(color_palette);
+    return color_palette;
 }
 
 svg::Point ParseOffset(const json::Array& offset) {
     return svg::Point{ offset.at(0).AsDouble(), offset.at(1).AsDouble() };
 }
 
-void RequestRenderProcess(const TransportCatalogue& catalogue, const json::Dict& render_settings, std::ostream& output) {
+MapRendererSettings CreateMapRendererSettings(const json::Dict& render_settings) {
+    using namespace std::string_literals;
+
+    MapRendererSettings settings;
+
+    settings.width = render_settings.at("width"s).AsDouble();
+    settings.height = render_settings.at("height"s).AsDouble();
+    settings.padding = render_settings.at("padding"s).AsDouble();
+    settings.line_width = render_settings.at("line_width"s).AsDouble();
+    settings.stop_radius = render_settings.at("stop_radius"s).AsDouble();
+    settings.bus_label_font_size = render_settings.at("bus_label_font_size"s).AsInt();
+    settings.bus_label_offset = std::move(ParseOffset(render_settings.at("bus_label_offset"s).AsArray()));
+    settings.stop_label_font_size = render_settings.at("stop_label_font_size"s).AsInt();
+    settings.stop_label_offset = std::move(ParseOffset(render_settings.at("stop_label_offset"s).AsArray()));
+    settings.underlayer_color = std::move(ParseColor(render_settings.at("underlayer_color"s)));
+    settings.underlayer_width = render_settings.at("underlayer_width"s).AsDouble();
+    settings.color_palette = std::move(ParsePaletteColors(render_settings.at("color_palette"s).AsArray()));
+
+    return settings;
+}
+
+void RequestRenderProcess(const TransportCatalogue& catalogue, const json::Dict& request, const json::Dict& render_settings, std::ostream& output) {
     using namespace std::literals;
 
-    MapRenderer render;
-    render.CalculateZoomCoef(catalogue.GetStops(), catalogue.GetStopsCatalogue(),
-        render_settings.at("width"s).AsDouble(), render_settings.at("height"s).AsDouble(), render_settings.at("padding"s).AsDouble());
-    render.InitStopsCoordForBuses(catalogue.GetBuses());
-    render.SetColorPalette(ParsePaletteColors(render_settings.at("color_palette"s).AsArray()));
-    render.DrawLines(render_settings.at("line_width"s).AsDouble());
-    render.DrawText(render_settings.at("bus_label_font_size"s).AsInt(),
-        ParseOffset(render_settings.at("bus_label_offset"s).AsArray()),
-        ParseColor(render_settings.at("underlayer_color"s)),
-        render_settings.at("underlayer_width"s).AsDouble());
+    int id = request.at("id"s).AsInt();
 
-    render.Render(output);
-    throw json::ParsingError("Render map is not ready yet"s);
+    MapRenderer render(
+        std::move(CreateMapRendererSettings(render_settings)),
+        catalogue.GetStopsCatalogue(),
+        catalogue.GetStops(),
+        catalogue.GetBuses());
+
+    std::ostringstream oss;
+    render.Render(oss);
+
+    output << "{\n"sv;
+    output << "\t\"map\": "sv;
+    json::Print(oss.str(), output);
+    output << "\n\t\"request_id\": "sv << id << ",\n"sv;
+    output << "}"sv;
 }
 
 void RequestStatProcess(TransportCatalogue& catalogue, const json::Array& stat_requests, const json::Dict& render_settings, std::ostream& output) {
@@ -213,7 +238,7 @@ void RequestStatProcess(TransportCatalogue& catalogue, const json::Array& stat_r
             RequestStatBusProcess(catalogue, request, output);
         }
         else if (type == "Map"sv) {
-            RequestRenderProcess(catalogue, render_settings, output);
+            RequestRenderProcess(catalogue, request, render_settings, output);
         }
         else {
             throw json::ParsingError("Unknown type "s + std::string(type) + " in RequestStatProcess"s);
