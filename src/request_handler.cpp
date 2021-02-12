@@ -88,7 +88,7 @@ void RequestBaseProcess(TransportCatalogue& catalogue, const json::Array& base_r
     RequestBaseBusProcess(catalogue, bus_requests);
 }
 
-void RequestStatStopProcess(TransportCatalogue& catalogue, const json::Dict& request, std::ostream& output) {
+void RequestStatStopProcess(const TransportCatalogue& catalogue, const json::Dict& request, std::ostream& output) {
     using namespace std::literals;
     using namespace transport_catalogue::stop_catalogue;
 
@@ -113,7 +113,7 @@ void RequestStatStopProcess(TransportCatalogue& catalogue, const json::Dict& req
     }
 }
 
-void RequestStatBusProcess(TransportCatalogue& catalogue, const json::Dict& request, std::ostream& output) {
+void RequestStatBusProcess(const TransportCatalogue& catalogue, const json::Dict& request, std::ostream& output) {
     using namespace std::literals;
 
     std::string_view name = request.at("name"s).AsString();
@@ -195,11 +195,19 @@ MapRendererSettings CreateMapRendererSettings(const json::Dict& render_settings)
     return settings;
 }
 
-void RequestRenderProcess(const TransportCatalogue& catalogue, const json::Dict& request, const json::Dict& render_settings, std::ostream& output) {
+void RequestRenderProcess(std::string_view map_render_result, const json::Dict& request, std::ostream& output) {
     using namespace std::literals;
 
     int id = request.at("id"s).AsInt();
 
+    output << "{\n"sv;
+    output << "\t\"map\": "sv;
+    json::Print(map_render_result, output);
+    output << "\n\t\"request_id\": "sv << id << ",\n"sv;
+    output << "}"sv;
+}
+
+std::string RequestMap(const TransportCatalogue& catalogue, const json::Dict& render_settings) {
     MapRenderer render(
         std::move(CreateMapRendererSettings(render_settings)),
         catalogue.GetStopsCatalogue(),
@@ -209,17 +217,15 @@ void RequestRenderProcess(const TransportCatalogue& catalogue, const json::Dict&
     std::ostringstream oss;
     render.Render(oss);
 
-    output << "{\n"sv;
-    output << "\t\"map\": "sv;
-    json::Print(oss.str(), output);
-    output << "\n\t\"request_id\": "sv << id << ",\n"sv;
-    output << "}"sv;
+    return oss.str();
 }
 
-void RequestStatProcess(TransportCatalogue& catalogue, const json::Array& stat_requests, const json::Dict& render_settings, std::ostream& output) {
+void RequestStatProcess(const TransportCatalogue& catalogue, const json::Array& stat_requests, const json::Dict& render_settings, std::ostream& output) {
     using namespace std::literals;
 
     bool first = true;
+
+    std::optional<std::string> map_render_result;
 
     output << "[\n\n"sv;
 
@@ -238,7 +244,10 @@ void RequestStatProcess(TransportCatalogue& catalogue, const json::Array& stat_r
             RequestStatBusProcess(catalogue, request, output);
         }
         else if (type == "Map"sv) {
-            RequestRenderProcess(catalogue, request, render_settings, output);
+            if (!map_render_result) {
+                map_render_result = RequestMap(catalogue, render_settings);
+            }
+            RequestRenderProcess(*map_render_result, request, output);
         }
         else {
             throw json::ParsingError("Unknown type "s + std::string(type) + " in RequestStatProcess"s);
