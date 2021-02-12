@@ -165,7 +165,7 @@ svg::Color ParseColor(const json::Node& node) {
 std::vector<svg::Color> ParsePaletteColors(const json::Array& array_color_palette) {
     std::vector<svg::Color> color_palette;
     for (const json::Node& node : array_color_palette) {
-        color_palette.push_back(ParseColor(node));
+        color_palette.push_back(std::move(ParseColor(node)));
     }
     return color_palette;
 }
