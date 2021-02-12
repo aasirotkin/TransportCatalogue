@@ -78,8 +78,12 @@ struct Stop {
     std::string name;
     Coordinates coord;
 
-    bool operator== (const Stop* other) const {
-        return name == other->name;
+    bool operator== (const Stop& other) const {
+        return name == other.name;
+    }
+
+    bool operator!= (const Stop& other) const {
+        return !(*this == other);
     }
 };
 

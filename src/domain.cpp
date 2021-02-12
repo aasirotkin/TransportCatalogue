@@ -119,42 +119,46 @@ const Bus* Catalogue::Push(std::string&& name, std::vector<std::string_view>&& s
 }
 
 double Catalogue::CalcRouteGeoLenght(const std::deque<const Stop*>& route, RouteType route_type) {
-    std::vector<double> distance(route.size() - 1);
-    std::transform(
-        route.begin(), route.end() - 1,
-        route.begin() + 1, distance.begin(),
-        [](const Stop* from, const Stop* to) {
-            return ComputeDistance(from->coord, to->coord);
-        });
-    double lenght = std::reduce(distance.begin(), distance.end());
+    double lenght = 0.0;
+    if (route.size() > 0) {
+        std::vector<double> distance(route.size());
+        std::transform(
+            route.begin(), route.end() - 1,
+            route.begin() + 1, distance.begin(),
+            [](const Stop* from, const Stop* to) {
+                return ComputeDistance(from->coord, to->coord);
+            });
+        lenght = std::reduce(distance.begin(), distance.end());
 
-    if (route_type == RouteType::BackAndForth) {
-        lenght *= 2.0;
+        if (route_type == RouteType::BackAndForth) {
+            lenght *= 2.0;
+        }
     }
-
     return lenght;
 }
 
 double Catalogue::CalcRouteTrueLenght(const std::deque<const Stop*>& route, const DistancesContainer& stops_distances, RouteType route_type) {
-    std::vector<double> distance(route.size() - 1);
-    std::transform(
-        route.begin(), route.end() - 1,
-        route.begin() + 1, distance.begin(),
-        [&stops_distances](const Stop* from, const Stop* to) {
-            return stops_distances.at(PointerPair<Stop>{ from, to });
-        });
-    double lenght = std::reduce(distance.begin(), distance.end());
-
-    if (route_type == RouteType::BackAndForth) {
+    double lenght = 0.0;
+    if (route.size() > 0) {
+        std::vector<double> distance(route.size());
         std::transform(
-            route.rbegin(), route.rend() - 1,
-            route.rbegin() + 1, distance.begin(),
+            route.begin(), route.end() - 1,
+            route.begin() + 1, distance.begin(),
             [&stops_distances](const Stop* from, const Stop* to) {
                 return stops_distances.at(PointerPair<Stop>{ from, to });
             });
-        lenght += std::reduce(distance.begin(), distance.end());
-    }
+        lenght = std::reduce(distance.begin(), distance.end());
 
+        if (route_type == RouteType::BackAndForth) {
+            std::transform(
+                route.rbegin(), route.rend() - 1,
+                route.rbegin() + 1, distance.begin(),
+                [&stops_distances](const Stop* from, const Stop* to) {
+                    return stops_distances.at(PointerPair<Stop>{ from, to });
+                });
+            lenght += std::reduce(distance.begin(), distance.end());
+        }
+    }
     return lenght;
 }
 
