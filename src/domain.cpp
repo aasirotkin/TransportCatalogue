@@ -77,7 +77,7 @@ Bus::Bus(std::string&& name, std::deque<const Stop*>&& route, double route_geo_l
     }
     unique_stops = unique_stops_names.size();
 
-    if (route_type == RouteType::BackAndForth) {
+    if (route_type == RouteType::BackAndForth && stops_on_route > 0) {
         stops_on_route = stops_on_route * 2 - 1;
     }
 }

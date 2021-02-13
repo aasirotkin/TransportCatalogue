@@ -106,7 +106,7 @@ void MapRenderer::DrawLines() {
             polyline.AddPoint(stop_point_.at(stop));
         }
 
-        if (bus->route_type == transport_catalogue::RouteType::BackAndForth) {
+        if (bus->route_type == transport_catalogue::RouteType::BackAndForth && !bus->route.empty()) {
             for (auto it = bus->route.rbegin() + 1; it != bus->route.rend(); ++it) {
                 polyline.AddPoint(stop_point_.at(*it));
             }
@@ -150,7 +150,7 @@ void MapRenderer::DrawBusText() {
         Add(underlayer_text);
         Add(data_text);
 
-        if (bus->route_type == transport_catalogue::RouteType::BackAndForth && *bus->route.front() != *bus->route.back()) {
+        if (bus->route_type == transport_catalogue::RouteType::BackAndForth && !bus->route.empty() && *bus->route.front() != *bus->route.back()) {
             underlayer_text.SetPosition(stop_point_.at(bus->route.back()));
             data_text.SetPosition(stop_point_.at(bus->route.back()));
 
