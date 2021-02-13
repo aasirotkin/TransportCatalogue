@@ -198,12 +198,15 @@ MapRendererSettings CreateMapRendererSettings(const json::Dict& render_settings)
 void RequestRenderProcess(std::string_view map_render_result, const json::Dict& request, std::ostream& output) {
     using namespace std::literals;
 
+    //output << map_render_result;
+    //throw json::ParsingError(""s);
+
     int id = request.at("id"s).AsInt();
 
     output << "{\n"sv;
     output << "\t\"map\": "sv;
     json::Print(map_render_result, output);
-    output << "\n\t\"request_id\": "sv << id << ",\n"sv;
+    output << ",\n\t\"request_id\": "sv << id << "\n"sv;
     output << "}"sv;
 }
 
