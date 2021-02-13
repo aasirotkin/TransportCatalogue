@@ -269,50 +269,16 @@ void TestFromFile() {
 
 // ----------------------------------------------------------------------------
 
-std::string CreateBus(std::mt19937& generator, const std::string& name, int max_stop_index, int stops_in_route_count) {
-    std::string bus;
-    bus += "\"type\": \"Bus\",\n"s;
-    bus += "\"name\": \"bus_"s + name + "\",\n"s;
-    bus += "\"stops\": [";
-
-    bool is_roundtrip = uniform_int_distribution<size_t>(0, 1)(generator);
-    size_t stops_count = uniform_int_distribution<size_t>(1, stops_in_route_count)(generator);
-    std::optional<size_t> first_index;
-    bool first = true;
-    for (size_t i = 0; i < stops_count; ++i) {
-        if (!first) {
-            bus += ", "s;
-        }
-        size_t index = uniform_int_distribution<size_t>(0, max_stop_index)(generator);
-        bus += "\"stop_"s + std::to_string(index) + "\""s;
-
-        if (!first_index) {
-            first_index = index;
-        }
-        first = false;
-    }
-    if (is_roundtrip) {
-        bus += ", ";
-        bus += "\"stop_"s + std::to_string(*first_index) + "\""s;
-    }
-    bus += "],\n"s;
-    if (is_roundtrip) {
-        bus += "\"is_roundtrip\" : true"s;
-    }
-    else {
-        bus += "\"is_roundtrip\" : false"s;
-    }
-
-    return bus;
-}
+static const std::string stop_prefix = "stop_"s;
+static const std::string bus_prefix = "bus_"s;
 
 std::string CreateStop(std::mt19937& generator, const std::string& stop_name) {
     std::string stop;
     stop += "\"type\": \"Stop\",\n"s;
-    stop += "\"name\": \"stop_"s + stop_name + "\",\n"s;
+    stop += "\"name\": \"" + stop_prefix + stop_name + "\",\n"s;
 
-    double latitude = std::uniform_real_distribution<double>(20.0, 50.0)(generator);
-    double longitude = std::uniform_real_distribution<double>(30.0, 60.0)(generator);
+    double latitude = std::uniform_real_distribution<double>(-90.0, 90.0)(generator);
+    double longitude = std::uniform_real_distribution<double>(-180.0, 180.0)(generator);
 
     stop += "\"latitude\":"s + std::to_string(latitude) + ",\n"s;
     stop += "\"longitude\":"s + std::to_string(longitude) + ",\n"s;
@@ -321,14 +287,14 @@ std::string CreateStop(std::mt19937& generator, const std::string& stop_name) {
 }
 
 void AddRoadDistances(std::mt19937& generator, std::string& current_stop, int max_stop_name) {
-    std::string road_distances = "\"road_distances\" : {"s;
+    std::string road_distances = "\"road_distances\": {"s;
     bool first = true;
     for (int i = 0; i < max_stop_name; ++i) {
         if (!first) {
             road_distances += ", "s;
         }
-        int distance = std::uniform_int_distribution<int>(100, 1000)(generator);
-        road_distances += "\"stop_"s + std::to_string(i) + "\": "s + std::to_string(distance);
+        int distance = std::uniform_int_distribution<int>(100, 10000)(generator);
+        road_distances += "\"" + stop_prefix + std::to_string(i) + "\": "s + std::to_string(distance);
         first = false;
     }
     road_distances += "}"s;
@@ -344,17 +310,85 @@ std::vector<std::string> CreateStops(std::mt19937& generator, int count) {
     return stops;
 }
 
+std::string CreateBus(std::mt19937& generator, const std::string& name, const std::vector<std::string>& stops, int stops_in_route_count) {
+    std::string bus;
+    bus += "\"type\": \"Bus\",\n"s;
+    bus += "\"name\": \"" + bus_prefix + name + "\",\n"s;
+    bus += "\"stops\": [";
+
+    bool is_roundtrip = uniform_int_distribution<size_t>(0, 1)(generator);
+    size_t stops_count = uniform_int_distribution<size_t>(0, stops_in_route_count)(generator);
+    std::optional<size_t> first_stop;
+    bool first = true;
+    for (size_t i = 0; i < stops_count; ++i) {
+        if (!first) {
+            bus += ", "s;
+        }
+        size_t index = uniform_int_distribution<size_t>(0, stops.size() - 1)(generator);
+        bus += "\"" + stop_prefix + std::to_string(index) +"\""s;
+        first = false;
+
+        if (!first_stop) {
+            first_stop = index;
+        }
+    }
+    if (is_roundtrip && first_stop) {
+        bus += ", \""s + stop_prefix + std::to_string(*first_stop) + "\""s;
+    }
+    bus += "],\n"s;
+    if (is_roundtrip) {
+        bus += "\"is_roundtrip\": true"s;
+    }
+    else {
+        bus += "\"is_roundtrip\": false"s;
+    }
+    return bus;
+}
+
 std::vector<std::string> CreateBuses(std::mt19937& generator, const std::vector<std::string>& stops, int bus_count, int max_stops_in_route) {
     std::vector<std::string> buses;
     for (int i = 0; i < bus_count; ++i) {
-        buses.push_back(CreateBus(generator, std::to_string(i), stops.size() - 1, max_stops_in_route));
+        buses.push_back(CreateBus(generator, std::to_string(i), stops, max_stops_in_route));
     }
     return buses;
 }
 
-void TestRandomValues() {
+std::string CreateBaseRequests(std::mt19937& generator, const std::vector<std::string>& buses, const std::vector<std::string>& stops) {
+    std::string request;
+
+    int bus_counter = 0;
+    bool is_bus_valid = !buses.empty();
+    int stop_counter = 0;
+    bool is_stop_valid = !stops.empty();
+
+    bool first = true;
+    while (true) {
+        if (!first) {
+            request += ",\n";
+        }
+        first = false;
+
+        int which_turn = std::uniform_int_distribution<int>(0, 1)(generator);
+
+        if ((which_turn == 0 || !is_stop_valid) && is_bus_valid) {
+            request += "{\n"s + buses.at(bus_counter++) + "\n}";
+            is_bus_valid = !(bus_counter == buses.size());
+        }
+        else if (is_stop_valid) {
+            request += "{\n"s + stops.at(stop_counter++) + "\n}";
+            is_stop_valid = !(stop_counter == stops.size());
+        }
+
+        if (!is_bus_valid && !is_stop_valid) {
+            break;
+        }
+    }
+
+    return request;
+}
+
+std::string CreateRenderSettings() {
     std::string render_settings =
-        "\"render_settings\": {\n"s +
         "\"width\": 1000,\n"s +
         "\"height\": 1000,\n"s +
         "\"padding\": 30,\n"s +
@@ -366,74 +400,64 @@ void TestRandomValues() {
         "\"stop_label_offset\": [7, -3],\n"s +
         "\"underlayer_color\": [255, 255, 255, 0.85],\n"s +
         "\"underlayer_width\": 3,\n"s +
-        "\"color_palette\": [\"green\", [255, 160, 0], \"red\", [255, 111, 3, 4]]\n}"s;
+        "\"color_palette\": [\"green\", [255, 160, 0], \"red\", [255, 111, 3, 4]]"s;
+    return render_settings;
+}
 
-    std::mt19937 gen;
-    gen.seed();
+std::string CreateStatRequest(std::mt19937 generator, int request_count, int stop_count, int bus_count) {
+    std::string request;
+    bool first = true;
+    for (int i = 0; i < request_count; ++i) {
+        if (!first) {
+            request += ",\n";
+        }
+        first = false;
+
+        if (i == 0 || i == (request_count / 2)) {
+            request += "{ \"id\": " + std::to_string(i) + ", \"type\": \"Map\" }";
+        }
+        else if (i % 2 == 0) {
+            int stop_id = std::uniform_int_distribution<int>(0, stop_count - 1)(generator);
+            request += "{ \"id\": " + std::to_string(i) + ", \"type\": \"Stop\", \"name\": \"" + stop_prefix + std::to_string(stop_id) + "\" }"s;
+        }
+        else {
+            int bus_id = std::uniform_int_distribution<int>(0, bus_count - 1)(generator);
+            request += "{ \"id\": " + std::to_string(i) + ", \"type\": \"Bus\", \"name\": \"" + bus_prefix + std::to_string(bus_id) + "\" }"s;
+        }
+    }
+    return request;
+}
+
+void TestRandomValues() {
+    std::mt19937 generator;
+    generator.seed();
 
     int stop_count = 100;
     int bus_count = 100;
     int stops_in_route_count = 100;
     int request_count = 20000;
 
-    std::vector<std::string> stops = std::move(CreateStops(gen, stop_count));
-    std::vector<std::string> buses = std::move(CreateBuses(gen, stops, bus_count, stops_in_route_count));
+    std::vector<std::string> stops = std::move(CreateStops(generator, stop_count));
+    std::vector<std::string> buses = std::move(CreateBuses(generator, stops, bus_count, stops_in_route_count));
 
-    std::string request = "{\n"s + "\"base_requests\": [\n"s;
+    std::string request = "{\n"s;
 
-    bool first = true;
-    for (const auto& bus : buses) {
-        if (!first) {
-            request += ",\n";
-        }
-        first = false;
-        request += "{\n"s + bus + "\n}";
-    }
-
-    for (const auto& stop : stops) {
-        if (!first) {
-            request += ",\n";
-        }
-        first = false;
-        request += "{\n"s + stop + "\n}";
-    }
-
+    request += "\"base_requests\": [\n"s;
+    request += CreateBaseRequests(generator, buses, stops);
     request += "\n],\n"s;
 
-    request += render_settings + ",\n"s;
+    request += "\"render_settings\": {\n"s;
+    request += CreateRenderSettings();
+    request += "\n},\n"s;
 
     request += "\"stat_requests\": [\n"s;
-
-    first = true;
-    for (int i = 0; i < request_count; ++i) {
-        if (!first) {
-            request += ",\n";
-        }
-        if (i % 999 == 0) {
-            request += "{ \"id\": " + std::to_string(i) + ", \"type\": \"Map\" }";
-        }
-        else if (i % 2 == 0) {
-            int id = std::uniform_int_distribution<int>(0, stop_count - 1)(gen);
-            request += "{ \"id\": " + std::to_string(i) + ", \"type\": \"Stop\", \"name\": \"stop_" + std::to_string(id) + "\" }"s;
-        }
-        else {
-            int id = std::uniform_int_distribution<int>(0, bus_count - 1)(gen);
-            request += "{ \"id\": " + std::to_string(i) + ", \"type\": \"Bus\", \"name\": \"bus_" + std::to_string(id) + "\" }"s;
-        }
-        first = false;
-    }
-
+    request += CreateStatRequest(generator, request_count, stop_count, bus_count);
     request += "]\n}";
 
-    std::string path = "C:\\Users\\aasir\\source\\repos\\aasirotkin\\TransportCatalogue\\Tests\\";
-
-    std::ofstream request_file(path + "programm_request.txt"s);
-    request_file << request;
-    request_file.close();
+    SAVE_FILE("request.txt"s, request);
 
     std::stringstream in;
     std::stringstream out;
-
     in << request;
 
     {
@@ -441,9 +465,7 @@ void TestRandomValues() {
         request_handler::RequestHandler(in, out);
     }
 
-    std::ofstream request_result_file(path + "programm_request_result.txt"s);
-    request_result_file << out.str();
-    request_result_file.close();
+    SAVE_FILE("request_result.txt"s, out.str());
 }
 
 // --------- Окончание модульных тестов -----------
