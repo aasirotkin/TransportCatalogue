@@ -1,9 +1,0 @@
-[
-    {
-        "curvature": 0,
-        "request_id": 1,
-        "route_length": 0,
-        "stop_count": 8,
-        "unique_stop_count": 8
-    }
-]
