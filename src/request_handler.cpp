@@ -124,12 +124,12 @@ void RequestStatBusProcess(const TransportCatalogue& catalogue, const json::Dict
     if (bus_has_been_found) {
         const bus_catalogue::Bus* bus = (*it).second;
 
-        double curvature = (std::abs(bus->route_geo_lenght) > 1e-6) ? bus->route_true_lenght / bus->route_geo_lenght : 0.0;
+        double curvature = (std::abs(bus->route_geo_length) > 1e-6) ? bus->route_true_length / bus->route_geo_length : 0.0;
 
         output << "{\n"sv;
         output << "\t\"curvature\": "sv << curvature << ",\n"sv;
         output << "\t\"request_id\": "sv << id << ",\n"sv;
-        output << "\t\"route_length\": "sv << bus->route_true_lenght << ",\n"sv;
+        output << "\t\"route_length\": "sv << bus->route_true_length << ",\n"sv;
         output << "\t\"stop_count\": "sv << bus->stops_on_route << ",\n"sv;
         output << "\t\"unique_stop_count\": "sv << bus->unique_stops << "\n"sv;
         output << "}"sv;

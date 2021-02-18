@@ -132,14 +132,14 @@ struct Bus {
     std::string name = {};
     std::deque<const stop_catalogue::Stop*> route = {};
     RouteType route_type = RouteType::Direct;
-    double route_geo_lenght = 0.0;
-    double route_true_lenght = 0.0;
+    double route_geo_length = 0.0;
+    double route_true_length = 0.0;
     size_t stops_on_route = 0;
     size_t unique_stops = 0;
 
     Bus() = default;
 
-    Bus(std::string&& name, std::deque<const stop_catalogue::Stop*>&& route, double route_geo_lenght, double route_true_lenght, RouteType route_type);
+    Bus(std::string&& name, std::deque<const stop_catalogue::Stop*>&& route, double route_geo_length, double route_true_length, RouteType route_type);
 };
 
 std::ostream& operator<< (std::ostream& out, const Bus& bus);
@@ -152,8 +152,8 @@ public:
         const detail::VirtualCatalogue<stop_catalogue::Stop>& stops_catalogue, const stop_catalogue::DistancesContainer& stops_distances);
 
 private:
-    double CalcRouteGeoLenght(const std::deque<const stop_catalogue::Stop*>& route, RouteType route_type);
-    double CalcRouteTrueLenght(const std::deque<const stop_catalogue::Stop*>& route, const stop_catalogue::DistancesContainer& stops_distances, RouteType route_type);
+    double CalcRouteGeolength(const std::deque<const stop_catalogue::Stop*>& route, RouteType route_type);
+    double CalcRouteTruelength(const std::deque<const stop_catalogue::Stop*>& route, const stop_catalogue::DistancesContainer& stops_distances, RouteType route_type);
 
 private:
     std::deque<Bus> buses_ = {};
