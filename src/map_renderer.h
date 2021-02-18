@@ -11,6 +11,8 @@
 #include "geo.h"
 #include "svg.h"
 
+namespace map_renderer {
+
 struct MapRendererSettings {
     MapRendererSettings() = default;
 
@@ -64,7 +66,31 @@ struct MapRendererSettings {
     std::vector<svg::Color> color_palette = {};
 };
 
-class MapRenderer : public svg::Document {
+// ----------------------------------------------------------------------------
+
+class MapRendererCreator {
+public:
+    MapRendererCreator(MapRendererSettings&& render_settings);
+
+    svg::Polyline CreateLine(int color_index);
+
+    svg::Text CreateBusText();
+    svg::Text CreateUnderlayerBusText();
+    svg::Text CreateDataBusText(int color_index);
+
+    svg::Text CreateStopText();
+    svg::Text CreateUnderlayerStopText();
+    svg::Text CreateDataStopText();
+
+    svg::Circle CreateCircle(const svg::Point& center);
+
+protected:
+    const MapRendererSettings render_settings_;
+};
+
+// ----------------------------------------------------------------------------
+
+class MapRenderer : public svg::Document, private MapRendererCreator {
 public:
     MapRenderer(
         MapRendererSettings&& render_settings,
@@ -101,7 +127,6 @@ private:
     void DrawStopText();
 
 private:
-    MapRendererSettings render_settings_;
     double zoom_coef_ = 0.0;
     double min_longitude_ = 0.0;
     double max_latitude_ = 0.0;
@@ -110,3 +135,5 @@ private:
     std::map<std::string_view, const transport_catalogue::stop_catalogue::Stop*> stops_;
     std::map<std::string_view, const transport_catalogue::bus_catalogue::Bus*> buses_;
 };
+
+} // namespace map_renderer

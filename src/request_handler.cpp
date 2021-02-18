@@ -12,6 +12,7 @@
 namespace request_handler {
 
 using namespace transport_catalogue;
+using namespace map_renderer;
 
 void RequestBaseStopProcess(
     TransportCatalogue& catalogue,
