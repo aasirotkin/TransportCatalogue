@@ -263,7 +263,14 @@ void TestFromFile() {
         RemoveIndentInPlace(value.program);
         RemoveIndentInPlace(value.expected);
 
-        ASSERT_HINT(value.program == value.expected, "Error in file with id = \""s + std::to_string(key) + "\"");
+        if (value.program != value.expected) {
+            SAVE_FILE("value.program.error.txt"s, value.program);
+            SAVE_FILE("value.expected.error.txt"s, value.expected);
+            for (int i = 0; i < std::min(value.program.size(), value.expected.size()); ++i) {
+                ASSERT_EQUAL_HINT(value.program.at(i), value.expected.at(i),
+                    "Error in file with id = \""s + std::to_string(key) + "\" and in column = "s + std::to_string(i));
+            }
+        }
     }
 }
 
