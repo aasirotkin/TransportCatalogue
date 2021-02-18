@@ -96,11 +96,7 @@ void MapRenderer::DrawLines() {
         polyline.SetStrokeWidth(render_settings_.line_width);
         polyline.SetStrokeLineCap(svg::StrokeLineCap::ROUND);
         polyline.SetStrokeLineJoin(svg::StrokeLineJoin::ROUND);
-        polyline.SetStrokeColor(render_settings_.color_palette.at(color_index));
-        ++color_index;
-        if (color_index == color_palette_size) {
-            color_index = 0;
-        }
+        polyline.SetStrokeColor(render_settings_.color_palette.at(color_index++ % color_palette_size));
 
         for (const auto& stop : bus->route) {
             polyline.AddPoint(stop_point_.at(stop));
@@ -138,11 +134,7 @@ void MapRenderer::DrawBusText() {
         underlayer_text.SetStrokeLineJoin(svg::StrokeLineJoin::ROUND);
 
         svg::Text data_text = text;
-        data_text.SetFillColor(render_settings_.color_palette.at(color_index));
-        ++color_index;
-        if (color_index == color_palette_size) {
-            color_index = 0;
-        }
+        data_text.SetFillColor(render_settings_.color_palette.at(color_index++ % color_palette_size));
 
         underlayer_text.SetPosition(stop_point_.at(bus->route.front()));
         data_text.SetPosition(stop_point_.at(bus->route.front()));
