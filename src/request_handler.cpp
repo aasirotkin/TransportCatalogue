@@ -1,6 +1,7 @@
 #include "request_handler.h"
 
 #include "geo.h"
+#include "json_builder.h"
 #include "json_reader.h"
 #include "map_renderer.h"
 #include "transport_catalogue.h"
@@ -89,6 +90,33 @@ void RequestBaseProcess(TransportCatalogue& catalogue, const json::Array& base_r
     RequestBaseBusProcess(catalogue, bus_requests);
 }
 
+void RequestStatStopProcessJson(const std::set<std::string_view>& buses, bool stop_has_been_found, int id, std::ostream& output) {
+    using namespace std::literals;
+    using namespace transport_catalogue::stop_catalogue;
+
+    json::Builder build;
+
+    if (stop_has_been_found) {
+        json::Array buses_arr;
+        for (const std::string_view bus : buses) {
+            buses_arr.push_back(std::string(bus));
+        }
+
+        build.StartDict()
+                .Key("buses"s).Value(std::move(buses_arr))
+                .Key("request_id"s).Value(id)
+             .EndDict();
+    }
+    else {
+        build.StartDict()
+                .Key("error_message"s).Value("not found"s)
+                .Key("request_id"s).Value(id)
+             .EndDict();
+    }
+
+    json::Print(json::Document(build.Build()), output);
+}
+
 void RequestStatStopProcess(const TransportCatalogue& catalogue, const json::Dict& request, std::ostream& output) {
     using namespace std::literals;
     using namespace transport_catalogue::stop_catalogue;
@@ -98,20 +126,34 @@ void RequestStatStopProcess(const TransportCatalogue& catalogue, const json::Dic
 
     const auto& [buses, stop_has_been_found] = catalogue.GetBusesForStop(name);
 
-    if (stop_has_been_found) {
-        output << "{\n"sv;
-        output << "\t\"buses\": [\n"sv;
-        output << "\t\t"sv << buses << "\n"sv;
-        output << "\t],\n"sv;
-        output << "\t\"request_id\": "sv << id << "\n"sv;
-        output << "}"sv;
+    RequestStatStopProcessJson(buses, stop_has_been_found, id, output);
+}
+
+void RequestStatBusProcessJson(const bus_catalogue::Bus* bus, bool bus_has_been_found, int id, std::ostream& output) {
+    using namespace std::literals;
+    using namespace transport_catalogue::stop_catalogue;
+
+    json::Builder build;
+
+    if (bus_has_been_found) {
+        double curvature = (std::abs(bus->route_geo_length) > 1e-6) ? bus->route_true_length / bus->route_geo_length : 0.0;
+
+        build.StartDict()
+                .Key("curvature"s).Value(curvature)
+                .Key("request_id"s).Value(id)
+                .Key("route_length"s).Value(bus->route_true_length)
+                .Key("stop_count"s).Value(static_cast<int>(bus->stops_on_route))
+                .Key("unique_stop_count"s).Value(static_cast<int>(bus->unique_stops))
+             .EndDict();
     }
     else {
-        output << "{\n"sv;
-        output << "\t\"request_id\": "sv << id << ",\n"sv;
-        output << "\t\"error_message\": \"not found\"\n"sv;
-        output << "}"sv;
+        build.StartDict()
+            .Key("error_message"s).Value("not found"s)
+            .Key("request_id"s).Value(id)
+            .EndDict();
     }
+
+    json::Print(json::Document(build.Build()), output);
 }
 
 void RequestStatBusProcess(const TransportCatalogue& catalogue, const json::Dict& request, std::ostream& output) {
@@ -122,25 +164,9 @@ void RequestStatBusProcess(const TransportCatalogue& catalogue, const json::Dict
 
     auto [it, bus_has_been_found] = catalogue.GetBus(name);
 
-    if (bus_has_been_found) {
-        const bus_catalogue::Bus* bus = (*it).second;
+    const bus_catalogue::Bus* bus = (bus_has_been_found) ? (*it).second : nullptr;
 
-        double curvature = (std::abs(bus->route_geo_length) > 1e-6) ? bus->route_true_length / bus->route_geo_length : 0.0;
-
-        output << "{\n"sv;
-        output << "\t\"curvature\": "sv << curvature << ",\n"sv;
-        output << "\t\"request_id\": "sv << id << ",\n"sv;
-        output << "\t\"route_length\": "sv << bus->route_true_length << ",\n"sv;
-        output << "\t\"stop_count\": "sv << bus->stops_on_route << ",\n"sv;
-        output << "\t\"unique_stop_count\": "sv << bus->unique_stops << "\n"sv;
-        output << "}"sv;
-    }
-    else {
-        output << "{\n"sv;
-        output << "\t\"request_id\": "sv << id << ",\n"sv;
-        output << "\t\"error_message\": \"not found\"\n"sv;
-        output << "}"sv;
-    }
+    RequestStatBusProcessJson(bus, bus_has_been_found, id, output);
 }
 
 svg::Color ParseColor(const json::Node& node) {
