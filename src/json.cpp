@@ -80,110 +80,90 @@ void NodePrinter::operator() (const Dict& value) const {
 
 // ---------- Node ------------------------------------------------------------
 
-Node::Node(nullptr_t)
-    : Node() {
-}
-
-Node::Node(std::string&& value)
-    : data_(std::move(value)) {
-}
-
-Node::Node(bool value)
-    : data_(value) {
-}
-
-Node::Node(int value)
-    : data_(value) {
-}
-
-Node::Node(double value)
-    : data_(value) {
-}
-
-Node::Node(Array&& value)
-    : data_(std::move(value)) {
-}
-
-Node::Node(Dict&& value)
-    : data_(std::move(value)) {
-}
-
 const std::string& Node::AsString() const {
     if (!IsString()) {
         throw std::logic_error("Node data is not string format");
     }
-    return std::get<std::string>(data_);
+    return std::get<std::string>(Data());
 }
 
 bool Node::AsBool() const {
     if (!IsBool()) {
         throw std::logic_error("Node data is not bool format");
     }
-    return std::get<bool>(data_);
+    return std::get<bool>(Data());
 }
 
 int Node::AsInt() const {
     if (!IsInt()) {
         throw std::logic_error("Node data is not int format");
     }
-    return std::get<int>(data_);
+    return std::get<int>(Data());
 }
 
 double Node::AsDouble() const {
     if (!IsDouble()) {
         throw std::logic_error("Node data is not double format");
     }
-    return (IsPureDouble()) ? std::get<double>(data_) : static_cast<double>(AsInt());
+    return (IsPureDouble()) ? std::get<double>(Data()) : static_cast<double>(AsInt());
 }
 
 const Array& Node::AsArray() const {
     if (!IsArray()) {
         throw std::logic_error("Node data is not Array format");
     }
-    return std::get<Array>(data_);
+    return std::get<Array>(Data());
 }
 
 const Dict& Node::AsMap() const {
     if (!IsMap()) {
         throw std::logic_error("Node data is not Dict format");
     }
-    return std::get<Dict>(data_);
+    return std::get<Dict>(Data());
+}
+
+const Dict& Node::AsDict() const {
+    return AsMap();
 }
 
 bool Node::IsNull() const {
-    return std::holds_alternative<std::nullptr_t>(data_);
+    return std::holds_alternative<std::nullptr_t>(Data());
 }
 
 bool Node::IsString() const {
-    return std::holds_alternative<std::string>(data_);
+    return std::holds_alternative<std::string>(Data());
 }
 
 bool Node::IsBool() const {
-    return std::holds_alternative<bool>(data_);
+    return std::holds_alternative<bool>(Data());
 }
 
 bool Node::IsInt() const {
-    return std::holds_alternative<int>(data_);
+    return std::holds_alternative<int>(Data());
 }
 
 bool Node::IsDouble() const {
-    return std::holds_alternative<double>(data_) || IsInt();
+    return std::holds_alternative<double>(Data()) || IsInt();
 }
 
 bool Node::IsPureDouble() const {
-    return std::holds_alternative<double>(data_);
+    return std::holds_alternative<double>(Data());
 }
 
 bool Node::IsArray() const {
-    return std::holds_alternative<Array>(data_);
+    return std::holds_alternative<Array>(Data());
 }
 
 bool Node::IsMap() const {
-    return std::holds_alternative<Dict>(data_);
+    return std::holds_alternative<Dict>(Data());
+}
+
+bool Node::IsDict() const {
+    return IsMap();
 }
 
 const Node::NodeData& Node::Data() const {
-    return data_;
+    return *this;
 }
 
 bool operator== (const Node& lhs, const Node& rhs) {
@@ -191,7 +171,7 @@ bool operator== (const Node& lhs, const Node& rhs) {
 }
 
 bool operator!= (const Node& lhs, const Node& rhs) {
-    return !(lhs.Data() == rhs.Data());
+    return !(lhs == rhs);
 }
 
 } // namespace json

@@ -39,26 +39,20 @@ struct NodePrinter {
 
 // ---------- Node ------------------------------------------------------------
 
-class Node {
-    using NodeData = std::variant<std::nullptr_t, std::string, bool, int, double, Array, Dict>;
+class Node : private std::variant<std::nullptr_t, std::string, bool, int, double, Array, Dict> {
+public:
+    using variant::variant;
+    using NodeData = variant;
+    using Value = variant;
 
 public:
-    Node() = default;
-
-    Node(nullptr_t);
-    Node(std::string&& value);
-    Node(bool value);
-    Node(int value);
-    Node(double value);
-    Node(Array&& value);
-    Node(Dict&& value);
-
     const std::string& AsString() const;
     bool AsBool() const;
     int AsInt() const;
     double AsDouble() const;
     const Array& AsArray() const;
     const Dict& AsMap() const;
+    const Dict& AsDict() const;
 
     bool IsNull() const;
     bool IsString() const;
@@ -68,11 +62,9 @@ public:
     bool IsPureDouble() const;
     bool IsArray() const;
     bool IsMap() const;
+    bool IsDict() const;
 
     const NodeData& Data() const;
-
-private:
-    NodeData data_;
 };
 
 bool operator== (const Node& lhs, const Node& rhs);
