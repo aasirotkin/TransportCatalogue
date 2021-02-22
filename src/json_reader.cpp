@@ -278,29 +278,6 @@ void Print(const Document& doc, std::ostream& output) {
     std::visit(NodePrinter{ output }, doc.GetRoot().Data());
 }
 
-void Print(std::string_view str, std::ostream& output) {
-    using namespace std::literals;
-
-    static const std::map<char, std::string> escapes = {
-        {'\"', "\\\""s},
-        {'\\', "\\\\"s},
-        {'\t', "\\t"s},
-        {'\r', "\\r"s},
-        {'\n', "\\n"s}
-    };
-
-    output << "\""sv;
-    for (char c : str) {
-        if (escapes.count(c)) {
-            output << escapes.at(c);
-        }
-        else {
-            output << c;
-        }
-    }
-    output << "\""sv;
-}
-
 // ---------- Reader ----------------------------------------------------------
 
 Reader::Reader(std::istream& input)

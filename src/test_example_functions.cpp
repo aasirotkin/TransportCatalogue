@@ -442,7 +442,7 @@ void TestRandomValues() {
     int stop_count = 100;
     int bus_count = 100;
     int stops_in_route_count = 100;
-    int request_count = 20000;
+    int request_count = 2000;
 
     std::vector<std::string> stops = std::move(CreateStops(generator, stop_count));
     std::vector<std::string> buses = std::move(CreateBuses(generator, stops, bus_count, stops_in_route_count));
@@ -468,7 +468,7 @@ void TestRandomValues() {
     in << request;
 
     {
-        ASSERT_DURATION_SECONDS(2);
+        ASSERT_DURATION_SECONDS(5);
         request_handler::RequestHandlerProcess(in, out);
     }
 

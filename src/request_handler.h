@@ -35,7 +35,7 @@ public:
     void RenderMap(map_renderer::MapRendererSettings&& settings);
 
     // Метод возвращает массив автобусов, проходящих через заданную остановку
-    const std::pair<std::set<std::string_view>, bool>& GetStopBuses(std::string_view name) const {
+    const std::pair<std::set<std::string_view>, bool> GetStopBuses(std::string_view name) const {
         return catalogue_.GetBusesForStop(name);
     }
 
@@ -61,8 +61,7 @@ namespace detail_base {
 // Функция обрабатывает запрос на создание остановки
 void RequestBaseStopProcess(
     RequestHandler& request_handler,
-    const json::Node* node,
-    const std::unordered_map<std::string_view, const json::Dict*>& road_distances);
+    const json::Node* node);
 
 // Функция обрабатывает запрос на создание автобусного маршрута
 void RequestBaseBusProcess(
@@ -70,10 +69,10 @@ void RequestBaseBusProcess(
     const json::Node* node);
 
 // Функция преобразует json узел в цвет
-svg::Color&& ParseColor(const json::Node& node);
+svg::Color ParseColor(const json::Node* node);
 
 // Функция преобразует json массив в набор цветов
-std::vector<svg::Color>&& ParsePaletteColors(const json::Array& array_color_palette);
+std::vector<svg::Color> ParsePaletteColors(const json::Array& array_color_palette);
 
 // Функция преобразует json массив в координаты точки на проскости
 svg::Point ParseOffset(const json::Array& offset);

@@ -39,11 +39,15 @@ class Builder {
 public:
     Builder() = default;
 
+    Builder(size_t reserve) {
+        nodes_stack_.reserve(reserve);
+    }
+
     // Задаёт строковое значение ключа для очередной пары ключ-значение
-    KeyItemContext Key(std::string value);
+    KeyItemContext Key(std::string&& value);
 
     // Задаёт значение, соответствующее ключу при определении словаря, очередной элемент массива всё содержимое конструируемого JSON-объекта
-    Builder& Value(Node::Value value);
+    Builder& Value(Node::Value&& value);
 
     // Начинает определение сложного значения-словаря
     DictItemContext StartDict();
@@ -92,7 +96,7 @@ public:
         : ItemContext(builder) {
     }
 
-    DictItemContext Value(Node::Value value);
+    DictItemContext Value(Node::Value&& value);
 
     DictItemContext StartDict();
 
@@ -107,7 +111,7 @@ public:
         : ItemContext(builder) {
     }
 
-    KeyItemContext Key(std::string value);
+    KeyItemContext Key(std::string&& value);
 
     Builder& EndDict();
 };
@@ -120,7 +124,7 @@ public:
         : ItemContext(builder) {
     }
 
-    ArrayItemContext Value(Node::Value value);
+    ArrayItemContext Value(Node::Value&& value);
 
     DictItemContext StartDict();
 

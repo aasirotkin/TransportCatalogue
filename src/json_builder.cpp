@@ -38,7 +38,7 @@ Node NodeGetter::operator()(Dict&& value) const {
 
 // ----------------------------------------------------------------------------
 
-KeyItemContext Builder::Key(std::string value) {
+KeyItemContext Builder::Key(std::string&& value) {
     if (nodes_stack_.empty() || !nodes_stack_.back()->IsDict()) {
         throw std::logic_error("Key method expects a Dict(map) as the last Node");
     }
@@ -46,7 +46,7 @@ KeyItemContext Builder::Key(std::string value) {
     return KeyItemContext{ *this };
 }
 
-Builder& Builder::Value(Node::Value value) {
+Builder& Builder::Value(Node::Value&& value) {
     Node node = std::visit(detail::NodeGetter{}, std::move(value));
     if (nodes_stack_.empty()) {
         nodes_stack_.emplace_back(std::make_unique<Node>(std::move(node)));
@@ -132,7 +132,7 @@ Node Builder::Build() {
 
 // ----------------------------------------------------------------------------
 
-DictItemContext KeyItemContext::Value(Node::Value value) {
+DictItemContext KeyItemContext::Value(Node::Value&& value) {
     Get().Value(std::move(value));
     return DictItemContext{ Get() };
 }
@@ -147,7 +147,7 @@ ArrayItemContext KeyItemContext::StartArray() {
 
 // ----------------------------------------------------------------------------
 
-KeyItemContext DictItemContext::Key(std::string value) {
+KeyItemContext DictItemContext::Key(std::string&& value) {
     return Get().Key(std::move(value));
 }
 
@@ -157,7 +157,7 @@ Builder& DictItemContext::EndDict() {
 
 // ----------------------------------------------------------------------------
 
-ArrayItemContext ArrayItemContext::Value(Node::Value value)
+ArrayItemContext ArrayItemContext::Value(Node::Value&& value)
 {
     Get().Value(std::move(value));
     return ArrayItemContext{ Get() };

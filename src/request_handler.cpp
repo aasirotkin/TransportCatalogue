@@ -49,8 +49,7 @@ namespace detail_base {
 
 void RequestBaseStopProcess(
     RequestHandler& request_handler,
-    const json::Node* node,
-    const std::unordered_map<std::string_view, const json::Dict*>& road_distances) {
+    const json::Node* node) {
     using namespace std::literals;
 
     const json::Dict& request = node->AsMap();
@@ -58,12 +57,6 @@ void RequestBaseStopProcess(
     std::string name = request.at("name"s).AsString();
 
     request_handler.AddStop(std::move(name), Coordinates{ request.at("latitude"s).AsDouble(), request.at("longitude"s).AsDouble() });
-
-    for (const auto& [name_from, distances] : road_distances) {
-        for (const auto& [name_to, distance] : *distances) {
-            request_handler.AddDistance(name_from, name_to, distance.AsDouble());
-        }
-    }
 }
 
 void RequestBaseBusProcess(
@@ -87,12 +80,14 @@ void RequestBaseBusProcess(
     request_handler.AddBus(std::string(name), std::move(route), type);
 }
 
-svg::Color&& ParseColor(const json::Node& node) {
-    if (node.IsString()) {
-        return svg::Color(node.AsString());
+svg::Color ParseColor(const json::Node* node) {
+    using namespace std::string_literals;
+
+    if (node->IsString()) {
+        return svg::Color(node->AsString());
     }
-    else if (node.IsArray()) {
-        const json::Array& array_color = node.AsArray();
+    else if (node->IsArray()) {
+        const json::Array& array_color = node->AsArray();
         int r = array_color.at(0).AsInt();
         int g = array_color.at(1).AsInt();
         int b = array_color.at(2).AsInt();
@@ -104,15 +99,16 @@ svg::Color&& ParseColor(const json::Node& node) {
             return svg::Color(svg::Rgba(r, g, b, opacity));
         }
     }
+    throw json::ParsingError("ParseColor error"s);
     return svg::Color{};
 }
 
-std::vector<svg::Color>&& ParsePaletteColors(const json::Array& array_color_palette) {
+std::vector<svg::Color> ParsePaletteColors(const json::Array& array_color_palette) {
     std::vector<svg::Color> color_palette;
     for (const json::Node& node : array_color_palette) {
-        color_palette.push_back(std::move(ParseColor(node)));
+        color_palette.push_back(std::move(ParseColor(&node)));
     }
-    return std::move(color_palette);
+    return color_palette;
 }
 
 svg::Point ParseOffset(const json::Array& offset) {
@@ -158,8 +154,8 @@ void RequestStatStopProcess(
     std::string_view name = request.at("name"s).AsString();
     int id = request.at("id"s).AsInt();
 
-    // MAYBY ERROR
-    const auto& [buses, stop_has_been_found] = request_handler.GetStopBuses(name);
+    // TODO: подумать над получением информации по ссылке, а не по значению
+    const auto [buses, stop_has_been_found] = request_handler.GetStopBuses(name);
 
     if (stop_has_been_found) {
         json::Array buses_arr;
@@ -191,8 +187,8 @@ void RequestStatBusProcess(
     std::string_view name = request.at("name"s).AsString();
     int id = request.at("id"s).AsInt();
 
-    // MAYBY ERROR
-    const auto& [it, bus_has_been_found] = request_handler.GetBus(name);
+    // TODO: подумать над получением информации по ссылке, а не по значению
+    const auto [it, bus_has_been_found] = request_handler.GetBus(name);
 
     const bus_catalogue::Bus* bus = (bus_has_been_found) ? (*it).second : nullptr;
 
@@ -273,18 +269,29 @@ void RequestHandlerProcess(std::istream& input, std::ostream& output) {
         json::Builder builder;
         json::Reader reader(input);
 
+        // Добавляеме остановки
         for (const json::Node* node : reader.StopRequests()) {
             detail_base::RequestBaseStopProcess(request_handler, node, reader.RoadDistances());
         }
 
+        // Добавляеме реальные расстояния между остановками
+        for (const auto& [name_from, distances] : reader.RoadDistances()) {
+            for (const auto& [name_to, distance] : *distances) {
+                request_handler.AddDistance(name_from, name_to, distance.AsDouble());
+            }
+        }
+
+        // Добавляеме автобусные маршруты
         for (const json::Node* node : reader.BusRequests()) {
             detail_base::RequestBaseBusProcess(request_handler, node);
         }
 
+        // Инициализируем карту маршрутов
         if (!reader.RenderSettings().empty()) {
             detail_base::RequestBaseMapProcess(request_handler, reader.RenderSettings());
         }
 
+        // Выводим результат
         builder.StartArray();
         for (const json::Node* node : reader.StatRequests()) {
             detail_stat::RequestStatProcess(builder, request_handler, node);

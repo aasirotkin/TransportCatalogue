@@ -30,8 +30,6 @@ Document Load(std::istream& input);
 
 void Print(const Document& doc, std::ostream& output);
 
-void Print(std::string_view str, std::ostream& output);
-
 // ---------- Reader ----------------------------------------------------------
 
 class Reader {
@@ -50,11 +48,11 @@ public:
         return stat_requests_;
     }
 
-    const std::unordered_map<std::string_view, const json::Node*> RenderSettings() const {
+    const std::unordered_map<std::string_view, const json::Node*>& RenderSettings() const {
         return render_settings_;
     }
 
-    const std::unordered_map<std::string_view, const json::Dict*> RoadDistances() const {
+    const std::unordered_map<std::string_view, const json::Dict*>& RoadDistances() const {
         return road_distances_;
     }
 
