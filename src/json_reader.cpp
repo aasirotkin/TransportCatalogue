@@ -301,4 +301,56 @@ void Print(std::string_view str, std::ostream& output) {
     output << "\""sv;
 }
 
+// ---------- Reader ----------------------------------------------------------
+
+Reader::Reader(std::istream& input)
+    : doc_(std::move(json::Load(input))) {
+    using namespace std::string_literals;
+
+    const json::Dict& input_requests = doc_.GetRoot().AsMap();
+
+    InitBaseRequests(input_requests.at("base_requests"s).AsArray());
+    InitStatRequests(input_requests.at("stat_requests"s).AsArray());
+    InitRenderSettings(input_requests);
+}
+
+void Reader::InitBaseRequests(const json::Array& base_requests) {
+    using namespace std::literals;
+
+    for (const json::Node& node_request : base_requests) {
+        const json::Dict& request = node_request.AsMap();
+        std::string_view type = request.at("type"s).AsString();
+        if (type == "Stop"sv) {
+            stop_requests_.push_back(&node_request);
+            road_distances_.insert({
+                request.at("name"s).AsString(),
+                &request.at("road_distances"s).AsMap()
+                });
+        }
+        else if (type == "Bus"sv) {
+            bus_requests_.push_back(&node_request);
+        }
+        else {
+            throw json::ParsingError("Unknown type \""s + std::string(type) + "\""s);
+        }
+    }
+}
+
+void Reader::InitStatRequests(const json::Array& stat_requests) {
+    for (const json::Node& node_request : stat_requests) {
+        stat_requests_.push_back(&node_request);
+    }
+}
+
+void Reader::InitRenderSettings(const json::Dict& input_requests) {
+    using namespace std::literals;
+    static const json::Dict empty_dict{};
+
+    bool is_render_settings = (input_requests.count("render_settings"s) > 0);
+
+    for (const auto& [name, node] : (is_render_settings) ? input_requests.at("render_settings"s).AsMap() : empty_dict) {
+        render_settings_.emplace(name, &node);
+    }
+}
+
 } // namespace json

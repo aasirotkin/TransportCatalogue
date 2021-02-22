@@ -17,7 +17,7 @@ int main() {
 
 #else
 
-    request_handler::RequestHandler(std::cin, std::cout);
+    request_handler::RequestHandlerProcess(std::cin, std::cout);
 
 #endif
 

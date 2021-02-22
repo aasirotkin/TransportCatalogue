@@ -247,7 +247,7 @@ void TestFromFile() {
 
         if (file_name.front() == 'i') {
             std::stringstream output;
-            request_handler::RequestHandler(input, output);
+            request_handler::RequestHandlerProcess(input, output);
             test_data[id].program = output.str();
             SAVE_FILE(file_name, test_data[id].program);
         }
@@ -469,7 +469,7 @@ void TestRandomValues() {
 
     {
         ASSERT_DURATION_SECONDS(2);
-        request_handler::RequestHandler(in, out);
+        request_handler::RequestHandlerProcess(in, out);
     }
 
     SAVE_FILE("request_result.txt"s, out.str());
