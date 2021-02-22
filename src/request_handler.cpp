@@ -155,12 +155,9 @@ void RequestStatStopProcess(
     std::string_view name = request.at("name"s).AsString();
     int id = request.at("id"s).AsInt();
 
-    // TODO: подумать над получением информации по ссылке, а не по значению
-    const auto [buses, stop_has_been_found] = request_handler.GetStopBuses(name);
-
-    if (stop_has_been_found) {
+    if (request_handler.DoesStopExist(name)) {
         json::Array buses_arr;
-        for (const std::string_view bus : buses) {
+        for (const std::string_view bus : request_handler.GetStopBuses(name)) {
             buses_arr.push_back(std::string(bus));
         }
 
@@ -188,7 +185,6 @@ void RequestStatBusProcess(
     std::string_view name = request.at("name"s).AsString();
     int id = request.at("id"s).AsInt();
 
-    // TODO: подумать над получением информации по ссылке, а не по значению
     const auto [it, bus_has_been_found] = request_handler.GetBus(name);
 
     const bus_catalogue::Bus* bus = (bus_has_been_found) ? (*it).second : nullptr;
@@ -228,8 +224,8 @@ void RequestMapProcess(
 
     builder
         .StartDict()
-        .Key("map"s).Value(*request_handler.GetMap())
-        .Key("request_id"s).Value(id)
+            .Key("map"s).Value(*request_handler.GetMap())
+            .Key("request_id"s).Value(id)
         .EndDict();
 }
 

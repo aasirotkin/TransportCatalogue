@@ -26,7 +26,7 @@ public:
 
     detail::VirtualPair<bus_catalogue::Bus> GetBus(const std::string_view& name) const;
 
-    std::pair<std::set<std::string_view>, bool> GetBusesForStop(const std::string_view& name) const;
+    const stop_catalogue::BusesToStopNames& GetBusesForStop(const std::string_view& name) const;
 
     const detail::VirtualCatalogue<stop_catalogue::Stop>& GetStops() const;
 

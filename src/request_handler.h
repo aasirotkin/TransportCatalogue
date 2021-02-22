@@ -34,8 +34,13 @@ public:
     // Метод инициализирует переменную с значением карты маршрутов в svg формате
     void RenderMap(map_renderer::MapRendererSettings&& settings);
 
+    // Метод проверяет существует ли остановка с заданным именем
+    bool DoesStopExist(std::string_view name) const {
+        return catalogue_.GetStops().At(name).second;
+    }
+
     // Метод возвращает массив автобусов, проходящих через заданную остановку
-    const std::pair<std::set<std::string_view>, bool> GetStopBuses(std::string_view name) const {
+    const std::set<std::string_view>& GetStopBuses(std::string_view name) const {
         return catalogue_.GetBusesForStop(name);
     }
 

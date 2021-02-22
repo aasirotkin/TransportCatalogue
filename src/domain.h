@@ -104,7 +104,7 @@ public:
 
     void AddDistance(const Stop* stop_1, const Stop* stop_2, double distance);
 
-    const std::set<std::string_view>& GetBuses(const Stop* stop) const {
+    const BusesToStopNames& GetBuses(const Stop* stop) const {
         return stop_buses_.at(stop);
     }
 

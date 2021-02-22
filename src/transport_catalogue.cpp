@@ -24,19 +24,19 @@ void TransportCatalogue::AddStop(std::string&& name, Coordinates&& coord) {
 void TransportCatalogue::AddDistanceBetweenStops(const std::string_view& stop_from_name, const std::string_view& stop_to_name, double distance) {
     auto [stop_from_it, fist_stop_found] = virtual_stops_.At(stop_from_name);
     auto [stop_to_it, second_stop_found] = virtual_stops_.At(stop_to_name);
-    stops_.AddDistance((*stop_from_it).second, (*stop_to_it).second, distance);
+    stops_.AddDistance(stop_from_it->second, stop_to_it->second, distance);
 }
 
 detail::VirtualPair<bus_catalogue::Bus> TransportCatalogue::GetBus(const std::string_view& name) const {
     return virtual_buses_.At(name);
 }
 
-std::pair<std::set<std::string_view>, bool> TransportCatalogue::GetBusesForStop(const std::string_view& name) const {
+const stop_catalogue::BusesToStopNames& TransportCatalogue::GetBusesForStop(const std::string_view& name) const {
     static const std::set<std::string_view> empty_set = {};
     auto [it, stop_has_been_found] = virtual_stops_.At(name);
     return (stop_has_been_found)
-        ? std::make_pair(stops_.GetBuses((*it).second), stop_has_been_found)
-        : std::make_pair(empty_set, stop_has_been_found);
+        ? stops_.GetBuses(it->second)
+        : empty_set;
 }
 
 const detail::VirtualCatalogue<stop_catalogue::Stop>& TransportCatalogue::GetStops() const {
