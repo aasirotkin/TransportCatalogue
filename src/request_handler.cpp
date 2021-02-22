@@ -2,6 +2,7 @@
 
 #include "geo.h"
 #include "json_reader.h"
+//#include "log_duration.h"
 
 #include <algorithm>
 #include <stdexcept>
@@ -269,36 +270,55 @@ void RequestHandlerProcess(std::istream& input, std::ostream& output) {
         json::Builder builder;
         json::Reader reader(input);
 
-        // Добавляеме остановки
-        for (const json::Node* node : reader.StopRequests()) {
-            detail_base::RequestBaseStopProcess(request_handler, node, reader.RoadDistances());
-        }
-
-        // Добавляеме реальные расстояния между остановками
-        for (const auto& [name_from, distances] : reader.RoadDistances()) {
-            for (const auto& [name_to, distance] : *distances) {
-                request_handler.AddDistance(name_from, name_to, distance.AsDouble());
+        {
+            //LOG_DURATION("Stops"s);
+            // Добавляеме остановки
+            for (const json::Node* node : reader.StopRequests()) {
+                detail_base::RequestBaseStopProcess(request_handler, node);
             }
         }
 
-        // Добавляеме автобусные маршруты
-        for (const json::Node* node : reader.BusRequests()) {
-            detail_base::RequestBaseBusProcess(request_handler, node);
+        {
+            //LOG_DURATION("Distances"s);
+            // Добавляеме реальные расстояния между остановками
+            for (const auto& [name_from, distances] : reader.RoadDistances()) {
+                for (const auto& [name_to, distance] : *distances) {
+                    request_handler.AddDistance(name_from, name_to, distance.AsDouble());
+                }
+            }
         }
 
-        // Инициализируем карту маршрутов
-        if (!reader.RenderSettings().empty()) {
-            detail_base::RequestBaseMapProcess(request_handler, reader.RenderSettings());
+        {
+            //LOG_DURATION("Buses"s);
+            // Добавляеме автобусные маршруты
+            for (const json::Node* node : reader.BusRequests()) {
+                detail_base::RequestBaseBusProcess(request_handler, node);
+            }
         }
 
-        // Выводим результат
-        builder.StartArray();
-        for (const json::Node* node : reader.StatRequests()) {
-            detail_stat::RequestStatProcess(builder, request_handler, node);
+        {
+            //LOG_DURATION("Init map"s);
+            // Инициализируем карту маршрутов
+            if (!reader.RenderSettings().empty()) {
+                detail_base::RequestBaseMapProcess(request_handler, reader.RenderSettings());
+            }
         }
-        builder.EndArray();
 
-        json::Print(json::Document(builder.Build()), output);
+        {
+            //LOG_DURATION("Init builder"s); // Самая долгая операция, почти что всё время тратит
+            // Получаем результат
+            builder.StartArray();
+            for (const json::Node* node : reader.StatRequests()) {
+                detail_stat::RequestStatProcess(builder, request_handler, node);
+            }
+            builder.EndArray();
+        }
+
+        {
+            //LOG_DURATION("Print result"s);
+            // Выводим результат
+            json::Print(json::Document(builder.Build()), output);
+        }
     }
     catch (const json::ParsingError& error) {
         output << error.what();
