@@ -5,7 +5,7 @@
 #include <string>
 
 inline bool InTheVicinity(const double d1, const double d2, const double delta = 1e-6) {
-    return abs(d1 - d2) < delta;
+    return std::abs(d1 - d2) < delta;
 }
 
 Coordinates Coordinates::ParseFromStringView(const std::string_view& string_coord) {
