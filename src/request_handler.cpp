@@ -268,7 +268,7 @@ void RequestHandlerProcess(std::istream& input, std::ostream& output) {
 
         {
             //LOG_DURATION("Stops"s);
-            // Добавляеме остановки
+            // Добавляемые остановки
             for (const json::Node* node : reader.StopRequests()) {
                 detail_base::RequestBaseStopProcess(request_handler, node);
             }
@@ -276,7 +276,7 @@ void RequestHandlerProcess(std::istream& input, std::ostream& output) {
 
         {
             //LOG_DURATION("Distances"s);
-            // Добавляеме реальные расстояния между остановками
+            // Добавляемые реальные расстояния между остановками
             for (const auto& [name_from, distances] : reader.RoadDistances()) {
                 for (const auto& [name_to, distance] : *distances) {
                     request_handler.AddDistance(name_from, name_to, distance.AsDouble());
@@ -286,7 +286,7 @@ void RequestHandlerProcess(std::istream& input, std::ostream& output) {
 
         {
             //LOG_DURATION("Buses"s);
-            // Добавляеме автобусные маршруты
+            // Добавляемые автобусные маршруты
             for (const json::Node* node : reader.BusRequests()) {
                 detail_base::RequestBaseBusProcess(request_handler, node);
             }
@@ -320,11 +320,11 @@ void RequestHandlerProcess(std::istream& input, std::ostream& output) {
         output << error.what();
     }
     catch (const std::exception& error) {
-        output << std::string("Unknown error has occured") << std::endl;
+        output << std::string("Unknown error has occurred") << std::endl;
         output << error.what();
     }
     catch (...) {
-        output << std::string("Unknown error has occured") << std::endl;
+        output << std::string("Unknown error has occurred") << std::endl;
     }
 }
 
