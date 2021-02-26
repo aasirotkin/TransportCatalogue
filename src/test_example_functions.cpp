@@ -266,7 +266,7 @@ void TestFromFile() {
         if (value.program != value.expected) {
             SAVE_FILE("value.program.error.txt"s, value.program);
             SAVE_FILE("value.expected.error.txt"s, value.expected);
-            for (int i = 0; i < std::min(value.program.size(), value.expected.size()); ++i) {
+            for (size_t i = 0; i < std::min(value.program.size(), value.expected.size()); ++i) {
                 ASSERT_EQUAL_HINT(value.program.at(i), value.expected.at(i),
                     "Error in file with id = \""s + std::to_string(key) + "\" and in column = "s + std::to_string(i));
             }
@@ -363,9 +363,9 @@ std::vector<std::string> CreateBuses(std::mt19937& generator, const std::vector<
 std::string CreateBaseRequests(std::mt19937& generator, const std::vector<std::string>& buses, const std::vector<std::string>& stops) {
     std::string request;
 
-    int bus_counter = 0;
+    size_t bus_counter = 0;
     bool is_bus_valid = !buses.empty();
-    int stop_counter = 0;
+    size_t stop_counter = 0;
     bool is_stop_valid = !stops.empty();
 
     bool first = true;
