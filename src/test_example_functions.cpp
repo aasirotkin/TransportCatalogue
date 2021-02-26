@@ -195,19 +195,23 @@ std::filesystem::path operator""_p (const char* data, std::size_t sz) {
     return std::filesystem::path(data, data + sz);
 }
 
+#ifdef _WIN32
+static const std::filesystem::path file_path = "tests"_p;
+#else
 static const std::filesystem::path file_path = ".."_p / "tests"_p;
+#endif
 static const std::filesystem::path file_path_in = file_path / "input"_p;
 static const std::filesystem::path file_path_out = file_path / "output/"_p;
 
-void LoadFile(std::stringstream& in, const std::string& path, const std::string& file_name) {
-    std::ifstream file(path + file_name);
+void LoadFile(std::stringstream& in, const std::filesystem::path& path, const std::string& file_name) {
+    std::ifstream file(path / std::filesystem::path(file_name));
     in << file.rdbuf();
 }
 
 #define LOAD_FILE(in, file_name) (LoadFile(in, file_path_in, file_name))
 
-void SaveFile(const std::string& path, const std::string& file_name, const std::string& file_data) {
-    std::ofstream file(path + file_name);
+void SaveFile(const std::filesystem::path& path, const std::string& file_name, const std::string& file_data) {
+    std::ofstream file(path / file_name);
     file << file_data;
     file.close();
 }
@@ -225,7 +229,7 @@ void RemoveIndentInPlace(std::string& str) {
     str.erase(std::remove_if(str.begin(), str.end(), [](char c) { return c == ' ' || c == '\t' || c == '\n' || c == '\r'; }), str.end());
 }
 
-std::vector<std::string> GetFileNames(const std::string& path) {
+std::vector<std::string> GetFileNames(const std::filesystem::path& path) {
     std::vector<std::string> files;
     for (const auto& entry : std::filesystem::directory_iterator(path)) {
         files.push_back(entry.path().filename().string());
