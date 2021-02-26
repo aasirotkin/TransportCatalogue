@@ -191,9 +191,13 @@ void TestParseGeoFromStringView() {
 
 // ----------------------------------------------------------------------------
 
-static const std::string file_path = "C:\\Users\\aasir\\source\\repos\\aasirotkin\\TransportCatalogue\\Tests\\"s;
-static const std::string file_path_in = file_path + "input\\"s;
-static const std::string file_path_out = file_path + "output\\"s;
+std::filesystem::path operator""_p (const char* data, std::size_t sz) {
+    return std::filesystem::path(data, data + sz);
+}
+
+static const std::filesystem::path file_path = ".."_p / "tests"_p;
+static const std::filesystem::path file_path_in = file_path / "input"_p;
+static const std::filesystem::path file_path_out = file_path / "output/"_p;
 
 void LoadFile(std::stringstream& in, const std::string& path, const std::string& file_name) {
     std::ifstream file(path + file_name);
@@ -224,7 +228,7 @@ void RemoveIndentInPlace(std::string& str) {
 std::vector<std::string> GetFileNames(const std::string& path) {
     std::vector<std::string> files;
     for (const auto& entry : std::filesystem::directory_iterator(path)) {
-        files.push_back(entry.path().filename().u8string());
+        files.push_back(entry.path().filename().string());
     }
     return files;
 }
