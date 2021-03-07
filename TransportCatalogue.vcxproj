@@ -170,12 +170,15 @@
   <ItemGroup>
     <ClInclude Include="src\domain.h" />
     <ClInclude Include="src\geo.h" />
+    <ClInclude Include="src\graph.h" />
     <ClInclude Include="src\json.h" />
     <ClInclude Include="src\json_builder.h" />
     <ClInclude Include="src\json_reader.h" />
     <ClInclude Include="src\log_duration.h" />
     <ClInclude Include="src\map_renderer.h" />
+    <ClInclude Include="src\ranges.h" />
     <ClInclude Include="src\request_handler.h" />
+    <ClInclude Include="src\route.h" />
     <ClInclude Include="src\svg.h" />
     <ClInclude Include="src\test_example_functions.h" />
     <ClInclude Include="src\transport_catalogue.h" />

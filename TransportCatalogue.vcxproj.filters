@@ -83,5 +83,14 @@
     <ClInclude Include="src\json_builder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\graph.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ranges.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\route.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
