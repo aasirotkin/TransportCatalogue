@@ -141,6 +141,7 @@ struct Bus {
     double route_true_length = 0.0;
     size_t stops_on_route = 0;
     size_t unique_stops = 0;
+    RouteSettings route_settings = {};
 
     Bus() = default;
 };
@@ -162,6 +163,11 @@ public:
         return *this;
     }
 
+    BusHelper& SetRouteSettings(RouteSettings settings) {
+        settings_ = std::move(settings);
+        return *this;
+    }
+
     Bus Build(const detail::VirtualCatalogue<stop_catalogue::Stop>& stops_catalogue, const stop_catalogue::DistancesContainer& stops_distances);
 
 private:
@@ -172,6 +178,7 @@ private:
     std::string name_;
     RouteType route_type_;
     std::vector<std::string_view> stop_names_;
+    RouteSettings settings_;
 };
 
 std::ostream& operator<< (std::ostream& out, const Bus& bus);

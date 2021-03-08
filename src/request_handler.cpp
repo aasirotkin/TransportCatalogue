@@ -73,9 +73,7 @@ RouteSettings CreateRouteSettings(const std::unordered_map<std::string_view, con
     return settings;
 }
 
-void RequestBaseBusProcess(
-    RequestHandler& request_handler,
-    const json::Node* node) {
+transport_catalogue::bus_catalogue::BusHelper RequestBaseBusProcess(const json::Node* node) {
     using namespace std::literals;
     using namespace bus_catalogue;
 
@@ -92,7 +90,7 @@ void RequestBaseBusProcess(
         route.push_back(node_stops.AsString());
     }
 
-    request_handler.AddBus(std::move(BusHelper().SetName(std::move(name)).SetStopNames(std::move(route)).SetRouteType(type)));
+    return BusHelper().SetName(std::move(name)).SetStopNames(std::move(route)).SetRouteType(type);
 }
 
 svg::Color ParseColor(const json::Node* node) {
@@ -305,7 +303,8 @@ void RequestHandlerProcess(std::istream& input, std::ostream& output) {
 
             // Добавляемые автобусные маршруты
             for (const json::Node* node : reader.BusRequests()) {
-                detail_base::RequestBaseBusProcess(request_handler, node);
+                bus_catalogue::BusHelper helper = detail_base::RequestBaseBusProcess(node);
+                request_handler.AddBus(std::move(helper.SetRouteSettings(settings)));
             }
         }
 

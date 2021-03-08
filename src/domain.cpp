@@ -79,6 +79,7 @@ Bus BusHelper::Build(const VirtualCatalogue<Stop>& stops_catalogue, const Distan
     bus.route_geo_length = CalcRouteGeolength(bus.route, route_type_);
     bus.route_true_length = CalcRouteTruelength(bus.route, stops_distances, route_type_);
     bus.stops_on_route = bus.route.size();
+    bus.route_settings = std::move(settings_);
 
     std::unordered_set<std::string_view> unique_stops_names;
     for (const Stop* stop : bus.route) {

@@ -69,9 +69,7 @@ void RequestBaseStopProcess(
     const json::Node* node);
 
 // Функция обрабатывает запрос на создание автобусного маршрута
-void RequestBaseBusProcess(
-    RequestHandler& request_handler,
-    const json::Node* node);
+transport_catalogue::bus_catalogue::BusHelper RequestBaseBusProcess(const json::Node* node);
 
 // Функция преобразует json узел в цвет
 svg::Color ParseColor(const json::Node* node);
