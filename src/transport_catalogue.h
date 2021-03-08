@@ -106,35 +106,45 @@ private:
         const auto& stop_distances = catalogue.GetStopsCatalogue().GetDistances();
 
         for (const auto& [bus_name, bus_ptr] : catalogue.GetBuses()) {
-            for (auto it_from = bus_ptr->route.begin(); it_from != bus_ptr->route.end(); ++it_from) {
-                const stop_catalogue::Stop* stop_from = *it_from;
-                const stop_catalogue::Stop* previous_stop = stop_from;
-                double full_distance = 0.0;
+            CreateGraphForBus(bus_ptr->route.begin(), bus_ptr->route.end(), bus_ptr, catalogue);
 
-                for (auto it_to = it_from; it_to != bus_ptr->route.end(); ++it_to) {
-                    const stop_catalogue::Stop* stop_to = *it_to;
-                    graph::VertexId from{};
-                    graph::VertexId to{};
-                    double time{};
+            if (bus_ptr->route_type == RouteType::BackAndForth) {
+                CreateGraphForBus(bus_ptr->route.rbegin(), bus_ptr->route.rend(), bus_ptr, catalogue);
+            }
+        }
+    }
 
-                    if (stop_from == stop_to) {
-                        from = stop_to_vertex_id_exit_.at(stop_from);
-                        to = stop_to_vertex_id_.at(stop_to);
-                        time = bus_ptr->route_settings.bus_wait_time;
-                    }
-                    else {
-                        from = stop_to_vertex_id_.at(stop_from);
-                        to = stop_to_vertex_id_exit_.at(stop_to);
-                        full_distance += stop_distances.at({ previous_stop, stop_to });
-                        time = (full_distance / bus_ptr->route_settings.bus_velocity) * TO_MINUTES;
-                    }
+    template <typename ConstIterator>
+    void CreateGraphForBus(ConstIterator begin, ConstIterator end, const bus_catalogue::Bus* bus_ptr, const TransportCatalogue& catalogue) {
+        const auto& stop_distances = catalogue.GetStopsCatalogue().GetDistances();
 
-                    previous_stop = stop_to;
+        for (auto it_from = begin; it_from != end; ++it_from) {
+            const stop_catalogue::Stop* stop_from = *it_from;
+            const stop_catalogue::Stop* previous_stop = stop_from;
+            double full_distance = 0.0;
 
-                    graph::EdgeId id = AddEdge({ from, to, time });
+            for (auto it_to = it_from; it_to != end; ++it_to) {
+                const stop_catalogue::Stop* stop_to = *it_to;
+                graph::VertexId from{};
+                graph::VertexId to{};
+                double time{};
 
-                    edge_id_to_graph_data_.insert({ id, { stop_from, stop_to, bus_ptr } });
+                if (stop_from == stop_to) {
+                    from = stop_to_vertex_id_exit_.at(stop_from);
+                    to = stop_to_vertex_id_.at(stop_to);
+                    time = bus_ptr->route_settings.bus_wait_time;
                 }
+                else {
+                    from = stop_to_vertex_id_.at(stop_from);
+                    to = stop_to_vertex_id_exit_.at(stop_to);
+                    full_distance += stop_distances.at({ previous_stop, stop_to });
+                    time = (full_distance / bus_ptr->route_settings.bus_velocity) * TO_MINUTES;
+                }
+
+                previous_stop = stop_to;
+
+                graph::EdgeId id = AddEdge({ from, to, time });
+                edge_id_to_graph_data_.insert({ id, { stop_from, stop_to, bus_ptr } });
             }
         }
     }
