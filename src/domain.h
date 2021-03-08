@@ -121,6 +121,10 @@ public:
         return stop_buses_.count(stop) == 0 || stop_buses_.at(stop).empty();
     }
 
+    size_t Size() const {
+        return stops_.size();
+    }
+
 private:
     std::deque<Stop> stops_ = {};
     std::unordered_map<const Stop*, BusesToStopNames> stop_buses_ = {};
