@@ -7,6 +7,7 @@
 #include "transport_catalogue.h"
 
 #include <istream>
+#include <memory>
 #include <optional>
 #include <ostream>
 #include <set>
@@ -54,9 +55,13 @@ public:
         return map_renderer_value_;
     }
 
+    void GetRoute(std::string_view from, std::string_view to) const;
+
 private:
     transport_catalogue::TransportCatalogue& catalogue_;
     std::optional<std::string> map_renderer_value_;
+    mutable std::unique_ptr<transport_catalogue::transport_graph::TransportGraph> graph_;
+    mutable std::unique_ptr<transport_catalogue::transport_graph::TransportRouter> router_;
 };
 
 // ----------------------------------------------------------------------------
