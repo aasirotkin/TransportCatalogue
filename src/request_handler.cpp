@@ -27,8 +27,8 @@ void RequestHandler::AddDistance(std::string_view name_from, std::string_view na
     catalogue_.AddDistanceBetweenStops(name_from, name_to, distance);
 }
 
-void RequestHandler::AddBus(std::string&& name, std::vector<std::string_view>&& route, transport_catalogue::RouteType type) {
-    catalogue_.AddBus(std::move(name), std::move(route), type);
+void RequestHandler::AddBus(transport_catalogue::bus_catalogue::BusHelper&& bus_helper) {
+    catalogue_.AddBus(std::move(bus_helper.Build(catalogue_.GetStops(), catalogue_.GetStopsCatalogue().GetDistances())));
 }
 
 void RequestHandler::RenderMap(MapRendererSettings&& settings) {
@@ -60,10 +60,24 @@ void RequestBaseStopProcess(
     request_handler.AddStop(std::move(name), Coordinates{ request.at("latitude"s).AsDouble(), request.at("longitude"s).AsDouble() });
 }
 
+RouteSettings CreateRouteSettings(const std::unordered_map<std::string_view, const json::Node*> input_route_settings) {
+    using namespace std::literals;
+
+    RouteSettings settings{};
+
+    if (!input_route_settings.empty()) {
+        settings.bus_velocity = input_route_settings.at("bus_velocity"sv)->AsDouble();
+        settings.bus_wait_time = input_route_settings.at("bus_wait_time"sv)->AsInt();
+    }
+
+    return settings;
+}
+
 void RequestBaseBusProcess(
     RequestHandler& request_handler,
     const json::Node* node) {
     using namespace std::literals;
+    using namespace bus_catalogue;
 
     const json::Dict& request = node->AsMap();
 
@@ -78,7 +92,7 @@ void RequestBaseBusProcess(
         route.push_back(node_stops.AsString());
     }
 
-    request_handler.AddBus(std::string(name), std::move(route), type);
+    request_handler.AddBus(std::move(BusHelper().SetName(std::move(name)).SetStopNames(std::move(route)).SetRouteType(type)));
 }
 
 svg::Color ParseColor(const json::Node* node) {
@@ -286,6 +300,9 @@ void RequestHandlerProcess(std::istream& input, std::ostream& output) {
 
         {
             //LOG_DURATION("Buses"s);
+            // Создаём переменную с настройками маршрута
+            RouteSettings settings = detail_base::CreateRouteSettings(reader.RoutingSettings());
+
             // Добавляемые автобусные маршруты
             for (const json::Node* node : reader.BusRequests()) {
                 detail_base::RequestBaseBusProcess(request_handler, node);

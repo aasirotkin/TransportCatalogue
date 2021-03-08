@@ -19,6 +19,11 @@ enum class RouteType {
     Round
 };
 
+struct RouteSettings {
+    double bus_velocity = 0.0;
+    int bus_wait_time = 0;
+};
+
 // ----------------------------------------------------------------------------
 
 namespace detail {
@@ -138,8 +143,35 @@ struct Bus {
     size_t unique_stops = 0;
 
     Bus() = default;
+};
 
-    Bus(std::string&& name, std::deque<const stop_catalogue::Stop*>&& route, double route_geo_length, double route_true_length, RouteType route_type);
+class BusHelper {
+public:
+    BusHelper& SetName(std::string&& name) {
+        name_ = std::move(name);
+        return *this;
+    }
+
+    BusHelper& SetRouteType(RouteType route_type) {
+        route_type_ = route_type;
+        return *this;
+    }
+
+    BusHelper& SetStopNames(std::vector<std::string_view>&& stop_names) {
+        stop_names_ = std::move(stop_names);
+        return *this;
+    }
+
+    Bus Build(const detail::VirtualCatalogue<stop_catalogue::Stop>& stops_catalogue, const stop_catalogue::DistancesContainer& stops_distances);
+
+private:
+    double CalcRouteGeolength(const std::deque<const stop_catalogue::Stop*>& route, RouteType route_type) const;
+    double CalcRouteTruelength(const std::deque<const stop_catalogue::Stop*>& route, const stop_catalogue::DistancesContainer& stops_distances, RouteType route_type) const;
+
+private:
+    std::string name_;
+    RouteType route_type_;
+    std::vector<std::string_view> stop_names_;
 };
 
 std::ostream& operator<< (std::ostream& out, const Bus& bus);
@@ -148,12 +180,7 @@ class Catalogue {
 public:
     Catalogue() = default;
 
-    const Bus* Push(std::string&& name, std::vector<std::string_view>&& string_route, RouteType type,
-        const detail::VirtualCatalogue<stop_catalogue::Stop>& stops_catalogue, const stop_catalogue::DistancesContainer& stops_distances);
-
-private:
-    double CalcRouteGeolength(const std::deque<const stop_catalogue::Stop*>& route, RouteType route_type);
-    double CalcRouteTruelength(const std::deque<const stop_catalogue::Stop*>& route, const stop_catalogue::DistancesContainer& stops_distances, RouteType route_type);
+    const Bus* Push(Bus&& bus);
 
 private:
     std::deque<Bus> buses_ = {};

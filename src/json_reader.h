@@ -56,10 +56,15 @@ public:
         return road_distances_;
     }
 
+    const std::unordered_map<std::string_view, const json::Node*>& RoutingSettings() const {
+        return routing_settings_;
+    }
+
 private:
     void InitBaseRequests(const json::Array& base_requests);
     void InitStatRequests(const json::Array& stat_requests);
     void InitRenderSettings(const json::Dict& input_requests);
+    void InitRoutingSettings(const json::Dict& routing_settings);
 
 private:
     json::Document doc_;
@@ -78,6 +83,9 @@ private:
 
     // Дополнительная переменная к запросам на создание остановок, содержит значения реальных расстояний между остановками
     std::unordered_map<std::string_view, const json::Dict*> road_distances_;
+
+    // Переменная, содержащая настройки маршрута
+    std::unordered_map<std::string_view, const json::Node*> routing_settings_;
 };
 
 } // namespace json

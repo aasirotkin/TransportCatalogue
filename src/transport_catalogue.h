@@ -16,7 +16,7 @@ class TransportCatalogue {
 public:
     TransportCatalogue() = default;
 
-    void AddBus(std::string&& name, std::vector<std::string_view>&& route, RouteType type);
+    void AddBus(bus_catalogue::Bus&& add_bus);
 
     void AddStop(std::string&& name, std::string&& string_coord);
 

@@ -289,6 +289,7 @@ Reader::Reader(std::istream& input)
     InitBaseRequests(input_requests.at("base_requests"s).AsArray());
     InitStatRequests(input_requests.at("stat_requests"s).AsArray());
     InitRenderSettings(input_requests);
+    InitRoutingSettings(input_requests);
 }
 
 void Reader::InitBaseRequests(const json::Array& base_requests) {
@@ -327,6 +328,17 @@ void Reader::InitRenderSettings(const json::Dict& input_requests) {
 
     for (const auto& [name, node] : (is_render_settings) ? input_requests.at("render_settings"s).AsMap() : empty_dict) {
         render_settings_.emplace(name, &node);
+    }
+}
+
+void Reader::InitRoutingSettings(const json::Dict& routing_settings) {
+    using namespace std::literals;
+    static const json::Dict empty_dict{};
+
+    bool is_routing_settings = (routing_settings.count("routing_settings"s) > 0);
+
+    for (const auto& [name, node] : (is_routing_settings) ? routing_settings.at("routing_settings"s).AsMap() : empty_dict) {
+        routing_settings_.emplace(name, &node);
     }
 }
 

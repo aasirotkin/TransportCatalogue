@@ -2,8 +2,8 @@
 
 namespace transport_catalogue {
 
-void TransportCatalogue::AddBus(std::string&& name, std::vector<std::string_view>&& route, RouteType type) {
-    const bus_catalogue::Bus* bus = buses_.Push(std::move(name), std::move(route), type, virtual_stops_, stops_.GetDistances());
+void TransportCatalogue::AddBus(bus_catalogue::Bus&& add_bus) {
+    const bus_catalogue::Bus* bus = buses_.Push(std::move(add_bus));
     virtual_buses_.Push(bus->name, bus);
 
     for (const stop_catalogue::Stop* stop : bus->route) {

@@ -29,7 +29,7 @@ public:
     void AddDistance(std::string_view name_from, std::string_view name_to, double distance);
 
     // Метод добавляет новый маршрут
-    void AddBus(std::string&& name, std::vector<std::string_view>&& route, transport_catalogue::RouteType type);
+    void AddBus(transport_catalogue::bus_catalogue::BusHelper&& bus_helper);
 
     // Метод инициализирует переменную с значением карты маршрутов в svg формате
     void RenderMap(map_renderer::MapRendererSettings&& settings);
