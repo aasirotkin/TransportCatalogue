@@ -4,6 +4,7 @@
 #include "router.h"
 #include "transport_catalogue.h"
 
+#include <optional>
 #include <unordered_map>
 
 namespace transport_graph {
@@ -121,7 +122,7 @@ public:
         , transport_graph_(transport_graph) {
     }
 
-    TransportRouterData GetRoute(const stop_catalogue::Stop* from, const stop_catalogue::Stop* to) const;
+    std::optional<TransportRouterData> GetRoute(const stop_catalogue::Stop* from, const stop_catalogue::Stop* to) const;
 
 private:
     const TransportGraph transport_graph_;

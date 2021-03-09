@@ -60,7 +60,7 @@ public:
     }
 
     // Метод возвращает данные маршрута от остановки from до остановки to
-    RouteData GetRoute(std::string_view from, std::string_view to) const;
+    std::optional<RouteData> GetRoute(std::string_view from, std::string_view to) const;
 
 private:
     transport_catalogue::TransportCatalogue& catalogue_;

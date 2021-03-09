@@ -44,7 +44,7 @@ void RequestHandler::RenderMap(MapRendererSettings&& settings) {
     map_renderer_value_ = oss.str();
 }
 
-RequestHandler::RouteData RequestHandler::GetRoute(std::string_view from, std::string_view to) const {
+std::optional<RequestHandler::RouteData> RequestHandler::GetRoute(std::string_view from, std::string_view to) const {
     using namespace transport_graph;
 
     if (!graph_ && !router_) {
@@ -55,11 +55,10 @@ RequestHandler::RouteData RequestHandler::GetRoute(std::string_view from, std::s
     const auto& [stop_from, from_found] = catalogue_.GetStops().At(from);
     const auto& [stop_to, to_found] = catalogue_.GetStops().At(to);
 
-    static const TransportRouter::TransportRouterData empty_data{};
     if (from_found && to_found) {
         return router_->GetRoute(stop_from->second, stop_to->second);
     } else {
-        return empty_data;
+        return std::nullopt;
     }
 }
 
@@ -273,12 +272,12 @@ void RequestRouteProcess(
 
     const auto route_data = request_handler.GetRoute(name_from, name_to);
 
-    if (!route_data.route.empty()) {
+    if (route_data) {
         builder.StartDict()
                    .Key("items"s)
                        .StartArray();
         // --------------------------------------------------------------------
-        for (const auto& [from, to, bus, span, time] : route_data.route) {
+        for (const auto& [from, to, bus, span, time] : route_data->route) {
             if (from == to) {
                 builder.StartDict()
                            .Key("stop_name"s).Value(from->name)
@@ -297,7 +296,7 @@ void RequestRouteProcess(
         // --------------------------------------------------------------------
                        builder.EndArray()
                    .Key("request_id"s).Value(id)
-                   .Key("total_time"s).Value(route_data.time)
+                   .Key("total_time"s).Value(route_data->time)
                .EndDict();
     }
     else {
