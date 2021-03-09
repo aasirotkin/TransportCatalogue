@@ -5,6 +5,7 @@
 #include "geo.h"
 #include "map_renderer.h"
 #include "transport_catalogue.h"
+#include "transport_router.h"
 
 #include <istream>
 #include <memory>
@@ -21,7 +22,7 @@ namespace request_handler {
 
 class RequestHandler {
 private:
-    using RouteData = transport_catalogue::transport_graph::TransportRouter::TransportRouterData;
+    using RouteData = transport_graph::TransportRouter::TransportRouterData;
 
 public:
     RequestHandler(transport_catalogue::TransportCatalogue& catalogue);
@@ -64,8 +65,8 @@ public:
 private:
     transport_catalogue::TransportCatalogue& catalogue_;
     std::optional<std::string> map_renderer_value_;
-    mutable std::unique_ptr<transport_catalogue::transport_graph::TransportGraph> graph_;
-    mutable std::unique_ptr<transport_catalogue::transport_graph::TransportRouter> router_;
+    mutable std::unique_ptr<transport_graph::TransportGraph> graph_;
+    mutable std::unique_ptr<transport_graph::TransportRouter> router_;
 };
 
 // ----------------------------------------------------------------------------

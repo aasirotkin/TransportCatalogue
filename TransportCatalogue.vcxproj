@@ -166,6 +166,7 @@
     <ClCompile Include="src\svg.cpp" />
     <ClCompile Include="src\test_example_functions.cpp" />
     <ClCompile Include="src\transport_catalogue.cpp" />
+    <ClCompile Include="src\transport_router.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\domain.h" />
@@ -178,10 +179,11 @@
     <ClInclude Include="src\map_renderer.h" />
     <ClInclude Include="src\ranges.h" />
     <ClInclude Include="src\request_handler.h" />
-    <ClInclude Include="src\route.h" />
+    <ClInclude Include="src\router.h" />
     <ClInclude Include="src\svg.h" />
     <ClInclude Include="src\test_example_functions.h" />
     <ClInclude Include="src\transport_catalogue.h" />
+    <ClInclude Include="src\transport_router.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

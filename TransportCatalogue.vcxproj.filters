@@ -48,6 +48,9 @@
     <ClCompile Include="src\json_builder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\transport_router.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\domain.h">
@@ -89,7 +92,10 @@
     <ClInclude Include="src\ranges.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\route.h">
+    <ClInclude Include="src\router.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\transport_router.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
