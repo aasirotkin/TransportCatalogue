@@ -253,10 +253,6 @@ void TestFromFile() {
 
         int id = GetId(file_name);
 
-        if (id != 4) {
-            continue;
-        }
-
         if (file_name.front() == 'i') {
             std::stringstream output;
             request_handler::RequestHandlerProcess(input, output);
