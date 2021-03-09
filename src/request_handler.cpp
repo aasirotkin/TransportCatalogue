@@ -44,17 +44,22 @@ void RequestHandler::RenderMap(MapRendererSettings&& settings) {
     map_renderer_value_ = oss.str();
 }
 
-void RequestHandler::GetRoute(std::string_view from, std::string_view to) const {
+RequestHandler::RouteData RequestHandler::GetRoute(std::string_view from, std::string_view to) const {
+    using namespace transport_catalogue::transport_graph;
+    
     if (!graph_ && !router_) {
-        graph_ = std::make_unique<transport_catalogue::transport_graph::TransportGraph>(catalogue_);
-        router_ = std::make_unique<transport_catalogue::transport_graph::TransportRouter>(*graph_);
+        graph_ = std::make_unique<TransportGraph>(catalogue_);
+        router_ = std::make_unique<TransportRouter>(*graph_);
     }
 
     const auto& [stop_from, from_found] = catalogue_.GetStops().At(from);
     const auto& [stop_to, to_found] = catalogue_.GetStops().At(to);
 
+    static const TransportRouter::TransportRouterData empty_data{};
     if (from_found && to_found) {
-        auto res = router_->GetRoute(stop_from->second, stop_to->second);
+        return router_->GetRoute(stop_from->second, stop_to->second);
+    } else {
+        return empty_data;
     }
 }
 
@@ -264,21 +269,20 @@ void RequestRouteProcess(
     std::string_view name_from = request.at("from"s).AsString();
     std::string_view name_to = request.at("to"s).AsString();
 
-    request_handler.GetRoute(name_from, name_to);
-
     int id = request.at("id"s).AsInt();
 
-    //if (bus_has_been_found_from && bus_has_been_found_to) {
-    //    const bus_catalogue::Bus* bus_from = (*it_from).second;
-    //    const bus_catalogue::Bus* bus_to = (*it_to).second;
-    //}
-    //else {
-    //    builder
-    //        .StartDict()
-    //        .Key("error_message"s).Value("not found"s)
-    //        .Key("request_id"s).Value(id)
-    //        .EndDict();
-    //}
+    const auto route_data = request_handler.GetRoute(name_from, name_to);
+
+    if (!route_data.route.empty()) {
+        //
+    }
+    else {
+       builder
+           .StartDict()
+               .Key("error_message"s).Value("not found"s)
+               .Key("request_id"s).Value(id)
+           .EndDict();
+    }
 }
 
 void RequestStatProcess(

@@ -103,8 +103,6 @@ private:
     }
 
     void CreateGraph(const TransportCatalogue& catalogue) {
-        const auto& stop_distances = catalogue.GetStopsCatalogue().GetDistances();
-
         for (const auto& [bus_name, bus_ptr] : catalogue.GetBuses()) {
             CreateGraphForBus(bus_ptr->route.begin(), bus_ptr->route.end(), bus_ptr, catalogue);
 
@@ -169,9 +167,9 @@ public:
     };
 
 public:
-    TransportRouter(const TransportGraph& transport_graph)
-        : transport_graph_(transport_graph)
-        , graph::Router<TransportTime>(transport_graph) {
+    explicit TransportRouter(const TransportGraph& transport_graph)
+        : graph::Router<TransportTime>(transport_graph)
+        , transport_graph_(transport_graph) {
     }
 
     TransportRouterData GetRoute(const stop_catalogue::Stop* from, const stop_catalogue::Stop* to) const {

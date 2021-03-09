@@ -20,6 +20,9 @@ namespace request_handler {
 // ---------- RequestHandler --------------------------------------------------
 
 class RequestHandler {
+private:
+    using RouteData = transport_catalogue::transport_graph::TransportRouter::TransportRouterData;
+
 public:
     RequestHandler(transport_catalogue::TransportCatalogue& catalogue);
 
@@ -55,7 +58,8 @@ public:
         return map_renderer_value_;
     }
 
-    void GetRoute(std::string_view from, std::string_view to) const;
+    // Метод возвращает данные маршрута от остановки from до остановки to
+    RouteData GetRoute(std::string_view from, std::string_view to) const;
 
 private:
     transport_catalogue::TransportCatalogue& catalogue_;
