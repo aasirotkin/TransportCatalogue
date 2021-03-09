@@ -1,6 +1,6 @@
 [
   {
-	  "curvature": 1.63413,
+	  "curvature": 1.63414,
 	  "request_id": 1,
 	  "route_length": 24490,
 	  "stop_count": 7,
