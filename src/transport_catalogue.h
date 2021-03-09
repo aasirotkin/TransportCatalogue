@@ -117,11 +117,11 @@ private:
     template <typename ConstIterator>
     void CreateGraphForBus(ConstIterator begin, ConstIterator end, const bus_catalogue::Bus* bus_ptr, const TransportCatalogue& catalogue) {
         const auto& stop_distances = catalogue.GetStopsCatalogue().GetDistances();
-        int stop_count = 0;
         for (auto it_from = begin; it_from != end; ++it_from) {
             const stop_catalogue::Stop* stop_from = *it_from;
             const stop_catalogue::Stop* previous_stop = stop_from;
             double full_distance = 0.0;
+            int stop_count = 0;
 
             for (auto it_to = it_from; it_to != end; ++it_to) {
                 const stop_catalogue::Stop* stop_to = *it_to;
