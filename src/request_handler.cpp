@@ -274,7 +274,31 @@ void RequestRouteProcess(
     const auto route_data = request_handler.GetRoute(name_from, name_to);
 
     if (!route_data.route.empty()) {
-        //
+        builder.StartDict()
+                   .Key("items"s)
+                       .StartArray();
+        // --------------------------------------------------------------------
+        for (const auto& [from, to, bus, span, time] : route_data.route) {
+            if (from == to) {
+                builder.StartDict()
+                           .Key("stop_name"s).Value(from->name)
+                           .Key("time"s).Value(time)
+                           .Key("type"s).Value("Wait"s)
+                       .EndDict();
+            } else {
+                builder.StartDict()
+                           .Key("bus"s).Value(bus->name)
+                           .Key("span_count"s).Value(span)
+                           .Key("time"s).Value(time)
+                           .Key("type"s).Value("Bus"s)
+                       .EndDict();
+            }
+        }
+        // --------------------------------------------------------------------
+                       builder.EndArray()
+                   .Key("request_id"s).Value(id)
+                   .Key("total_time"s).Value(route_data.time)
+               .EndDict();
     }
     else {
        builder

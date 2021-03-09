@@ -201,7 +201,7 @@ static const std::filesystem::path file_path = "tests"_p;
 static const std::filesystem::path file_path = ".."_p / "tests"_p;
 #endif
 static const std::filesystem::path file_path_in = file_path / "input"_p;
-static const std::filesystem::path file_path_out = file_path / "output/"_p;
+static const std::filesystem::path file_path_out = file_path / "output"_p;
 
 void LoadFile(std::stringstream& in, const std::filesystem::path& path, const std::string& file_name) {
     std::ifstream file(path / std::filesystem::path(file_name));
@@ -211,7 +211,7 @@ void LoadFile(std::stringstream& in, const std::filesystem::path& path, const st
 #define LOAD_FILE(in, file_name) (LoadFile(in, file_path_in, file_name))
 
 void SaveFile(const std::filesystem::path& path, const std::string& file_name, const std::string& file_data) {
-    std::ofstream file(path / file_name);
+    std::ofstream file(path / std::filesystem::path(file_name));
     file << file_data;
     file.close();
 }
@@ -252,6 +252,10 @@ void TestFromFile() {
         LOAD_FILE(input, file_name);
 
         int id = GetId(file_name);
+
+        if (id != 4) {
+            continue;
+        }
 
         if (file_name.front() == 'i') {
             std::stringstream output;

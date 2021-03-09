@@ -59,6 +59,8 @@ public:
         const stop_catalogue::Stop* from;
         const stop_catalogue::Stop* to;
         const bus_catalogue::Bus* bus;
+        int stop_count;
+        double time;
     };
 
 public:
@@ -115,7 +117,7 @@ private:
     template <typename ConstIterator>
     void CreateGraphForBus(ConstIterator begin, ConstIterator end, const bus_catalogue::Bus* bus_ptr, const TransportCatalogue& catalogue) {
         const auto& stop_distances = catalogue.GetStopsCatalogue().GetDistances();
-
+        int stop_count = 0;
         for (auto it_from = begin; it_from != end; ++it_from) {
             const stop_catalogue::Stop* stop_from = *it_from;
             const stop_catalogue::Stop* previous_stop = stop_from;
@@ -133,6 +135,7 @@ private:
                     time = bus_ptr->route_settings.bus_wait_time;
                 }
                 else {
+                    stop_count++;
                     from = stop_to_vertex_id_.at(stop_from);
                     to = stop_to_vertex_id_exit_.at(stop_to);
                     full_distance += stop_distances.at({ previous_stop, stop_to });
@@ -142,7 +145,7 @@ private:
                 previous_stop = stop_to;
 
                 graph::EdgeId id = AddEdge({ from, to, time });
-                edge_id_to_graph_data_.insert({ id, { stop_from, stop_to, bus_ptr } });
+                edge_id_to_graph_data_.insert({ id, { stop_from, stop_to, bus_ptr, stop_count, time } });
             }
         }
     }
