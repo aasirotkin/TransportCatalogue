@@ -46,7 +46,7 @@ void RequestHandler::RenderMap(MapRendererSettings&& settings) {
 
 RequestHandler::RouteData RequestHandler::GetRoute(std::string_view from, std::string_view to) const {
     using namespace transport_catalogue::transport_graph;
-    
+
     if (!graph_ && !router_) {
         graph_ = std::make_unique<TransportGraph>(catalogue_);
         router_ = std::make_unique<TransportRouter>(*graph_);
