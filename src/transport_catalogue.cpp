@@ -51,4 +51,12 @@ const stop_catalogue::Catalogue& TransportCatalogue::GetStopsCatalogue() const {
     return stops_;
 }
 
+const bus_catalogue::Catalogue& TransportCatalogue::GetBusCatalogue() const {
+    return buses_;
+}
+
+void TransportCatalogue::SetBusRouteCommonSettings(RouteSettings&& settings) {
+    buses_.SetRouteSettings(std::move(settings));
+}
+
 }

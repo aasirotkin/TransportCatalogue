@@ -35,6 +35,10 @@ public:
 
     const stop_catalogue::Catalogue& GetStopsCatalogue() const;
 
+    const bus_catalogue::Catalogue& GetBusCatalogue() const;
+
+    void SetBusRouteCommonSettings(RouteSettings&& settings);
+
 private:
     bus_catalogue::Catalogue buses_;
     detail::VirtualCatalogue<bus_catalogue::Bus> virtual_buses_;

@@ -193,8 +193,17 @@ public:
 
     const Bus* Push(Bus&& bus);
 
+    void SetRouteSettings(RouteSettings&& settings) {
+        settings_ = std::move(settings);
+    }
+
+    const RouteSettings& GetRouteSettings() const {
+        return settings_;
+    }
+
 private:
     std::deque<Bus> buses_ = {};
+    RouteSettings settings_ = {};
 };
 
 } // namespace bus_catalogue

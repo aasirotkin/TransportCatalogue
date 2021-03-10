@@ -4,14 +4,18 @@ namespace transport_graph {
 
 void TransportGraph::InitVertexId(const TransportCatalogue& catalogue) {
     const auto& stops = catalogue.GetStops();
+    const double time = static_cast<double>(catalogue.GetBusCatalogue().GetRouteSettings().bus_wait_time);
 
     graph::VertexId vertex_id{};
     for (const auto& [stop_name, stop_ptr] : stops) {
-        vertex_id_to_stop_.insert({ vertex_id, stop_ptr });
-        stop_to_vertex_id_.insert({ stop_ptr, vertex_id++ });
+        stop_to_vertex_id_.insert({ stop_ptr, vertex_id });
+        stop_to_vertex_id_exit_.insert({ stop_ptr, vertex_id + 1 });
 
-        vertex_id_to_stop_exit_.insert({ vertex_id, stop_ptr });
-        stop_to_vertex_id_exit_.insert({ stop_ptr, vertex_id++ });
+        graph::EdgeId id = AddEdge({ vertex_id + 1, vertex_id, time });
+
+        edge_id_to_graph_data_.insert({ id, { stop_ptr, stop_ptr, nullptr, 0, time } });
+
+        vertex_id += 2;
     }
 }
 

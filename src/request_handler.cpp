@@ -58,19 +58,14 @@ bool RequestHandler::IsRouteGood(
         const transport_catalogue::stop_catalogue::Stop* to,
         const transport_catalogue::bus_catalogue::Bus* bus,
         int span, double time) const {
-    auto IsEqual = [](double d1, double d2) {
-        return std::abs(d1 - d2) < 1e-6;
-    };
+    (void)span;
+    (void)time;
 
-    if (from == to) {
-        if (!IsEqual(time, bus->route_settings.bus_wait_time)) {
+    if (from != to) {
+        if (!bus) {
             return false;
         }
-        if (span != 0) {
-            return false;
-        }
-    }
-    else {
+
         auto it_from = std::find(bus->route.rbegin(), bus->route.rend(), from);
         if (it_from == bus->route.rend()) {
             return false;
@@ -419,12 +414,12 @@ void RequestHandlerProcess(std::istream& input, std::ostream& output) {
         {
             //LOG_DURATION("Buses"s);
             // Создаём переменную с настройками маршрута
-            RouteSettings settings = detail_base::CreateRouteSettings(reader.RoutingSettings());
+            catalogue.SetBusRouteCommonSettings(detail_base::CreateRouteSettings(reader.RoutingSettings()));
 
             // Добавляемые автобусные маршруты
             for (const json::Node* node : reader.BusRequests()) {
                 bus_catalogue::BusHelper helper = detail_base::RequestBaseBusProcess(node);
-                request_handler.AddBus(std::move(helper.SetRouteSettings(settings)));
+                request_handler.AddBus(std::move(helper));
             }
         }
 
