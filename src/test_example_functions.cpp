@@ -1,6 +1,7 @@
 #include "test_example_functions.h"
 
 #include "geo.h"
+#include "json_reader.h"
 #include "request_handler.h"
 
 #include <algorithm>
@@ -237,7 +238,7 @@ std::vector<std::string> GetFileNames(const std::filesystem::path& path) {
     return files;
 }
 
-void TestFromFile() {
+std::map<int, TestDataResult> TestFromFileInitData(int first_file_id, int last_file_id) {
     std::map<int, TestDataResult> test_data;
 
     auto GetId = [](const std::string& name) {
@@ -253,6 +254,10 @@ void TestFromFile() {
 
         int id = GetId(file_name);
 
+        if (id < first_file_id || id > last_file_id) {
+            continue;
+        }
+
         if (file_name.front() == 'i') {
             std::stringstream output;
             request_handler::RequestHandlerProcess(input, output);
@@ -264,13 +269,14 @@ void TestFromFile() {
         }
     }
 
+    return test_data;
+}
+
+void TestFromFile() {
+    std::map<int, TestDataResult> test_data = TestFromFileInitData(0, 3);
+
     // Проверяем результат работы программы с ожидаемым
     for (auto& [key, value] : test_data) {
-        if (key > 3) {
-            // Остальные тесты, содержащие запросы Route проверяются на месте
-            break;
-        }
-
         // Удаляем все возможные специальные символы, чтобы легче было проверять
         // Это может привести к неправильному результату, если пробелы в названиях остановок и автобусных маршрутах важны
         RemoveIndentInPlace(value.program);
@@ -282,6 +288,60 @@ void TestFromFile() {
             for (size_t i = 0; i < std::min(value.program.size(), value.expected.size()); ++i) {
                 ASSERT_EQUAL_HINT(value.program.at(i), value.expected.at(i),
                     "Error in file with id = \""s + std::to_string(key) + "\" and in column = "s + std::to_string(i));
+            }
+        }
+    }
+}
+
+struct TotalTimeData {
+    int id;
+    double time;
+
+    bool operator== (const TotalTimeData& other) {
+        return id == other.id && std::abs(time - other.time) < 1e-2;
+    }
+};
+
+vector<TotalTimeData> GetAllTotalTime(const json::Array& arr) {
+    vector<TotalTimeData> times;
+
+    for (const json::Node& node : arr) {
+        const json::Dict& dic = node.AsDict();
+        if (dic.count("total_time"s)) {
+            times.push_back(
+                { dic.at("request_id"s).AsInt(),
+                  dic.at("total_time"s).AsDouble() });
+        }
+    }
+
+    return times;
+}
+
+void TestFromFileRouteEdition() {
+    std::map<int, TestDataResult> test_data = TestFromFileInitData(4, 7);
+
+    for (auto& [key, value] : test_data) {
+        istringstream iss_expected(value.expected);
+        istringstream iss_program(value.program);
+
+        auto exp_doc = json::Load(iss_expected);
+        auto pro_doc = json::Load(iss_program);
+
+        const json::Array& exp_res = exp_doc.GetRoot().AsArray();
+        const json::Array& pro_res = pro_doc.GetRoot().AsArray();
+
+        vector<TotalTimeData> exp_times = GetAllTotalTime(exp_res);
+        vector<TotalTimeData> pro_times = GetAllTotalTime(pro_res);
+
+        ASSERT(exp_times.size() == pro_times.size());
+        for (size_t i = 0; i < exp_times.size(); ++i) {
+            if (!(exp_times.at(i) == pro_times.at(i))) {
+                ASSERT_HINT(
+                    false,
+                    "Error in file with id = \""s +
+                    std::to_string(key) +
+                    "\" and with request id = "s +
+                    std::to_string(exp_times.at(i).id));
             }
         }
     }
@@ -494,6 +554,7 @@ void TestRandomValues() {
 void TestTransportCatalogue() {
     RUN_TEST(TestParseGeoFromStringView);
     RUN_TEST(TestFromFile);
+    RUN_TEST(TestFromFileRouteEdition);
 
 #ifndef _DEBUG
     RUN_TEST(TestRandomValues);

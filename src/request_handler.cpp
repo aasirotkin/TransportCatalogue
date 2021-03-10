@@ -12,6 +12,8 @@
 #endif
 
 #include <algorithm>
+#include <cmath>
+#include <iterator>
 #include <stdexcept>
 #include <utility>
 
@@ -56,12 +58,30 @@ bool RequestHandler::IsRouteGood(
         const transport_catalogue::stop_catalogue::Stop* to,
         const transport_catalogue::bus_catalogue::Bus* bus,
         int span, double time) const {
-    (void)from;
-    (void)to;
-    (void)bus;
-    (void)span;
-    (void)time;
-    return false;
+    auto IsEqual = [](double d1, double d2) {
+        return std::abs(d1 - d2) < 1e-6;
+    };
+
+    if (from == to) {
+        if (!IsEqual(time, bus->route_settings.bus_wait_time)) {
+            return false;
+        }
+        if (span != 0) {
+            return false;
+        }
+    }
+    else {
+        auto it_from = std::find(bus->route.rbegin(), bus->route.rend(), from);
+        if (it_from == bus->route.rend()) {
+            return false;
+        }
+
+        auto it_to = std::find(bus->route.rbegin(), bus->route.rend(), to);
+        if (it_to == bus->route.rend()) {
+            return false;
+        }
+    }
+    return true;
 }
 
 std::optional<RequestHandler::RouteData> RequestHandler::GetRoute(std::string_view from, std::string_view to) const {
@@ -321,7 +341,7 @@ void RequestRouteProcess(
             }
         }
 #ifdef _SIROTKIN_HOME_TESTS_
-            assert(check_total_time == route_data->time);
+            assert(std::abs(check_total_time - route_data->time) < 1e-6);
 #endif
         // --------------------------------------------------------------------
                        builder.EndArray()
