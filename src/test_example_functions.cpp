@@ -333,7 +333,7 @@ void TestFromFileRouteEdition() {
         vector<TotalTimeData> exp_times = GetAllTotalTime(exp_res);
         vector<TotalTimeData> pro_times = GetAllTotalTime(pro_res);
 
-        ASSERT(exp_times.size() == pro_times.size());
+        ASSERT_EQUAL(exp_times.size(), pro_times.size());
         for (size_t i = 0; i < exp_times.size(); ++i) {
             if (!(exp_times.at(i) == pro_times.at(i))) {
                 ASSERT_HINT(

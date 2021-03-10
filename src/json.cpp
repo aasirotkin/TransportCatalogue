@@ -8,6 +8,7 @@ namespace json {
 
 void NodePrinter::operator() (std::nullptr_t) const {
     using namespace std::literals;
+    helper.PrintIndent();
     out << "null"sv;
 }
 
@@ -22,7 +23,7 @@ void NodePrinter::operator() (const std::string& value) const {
         {'\n', "\\n"s}
     };
 
-    out << "\""sv;
+    helper.StartString();
     for (char c : value) {
         if (escapes.count(c)) {
             out << escapes.at(c);
@@ -31,51 +32,52 @@ void NodePrinter::operator() (const std::string& value) const {
             out << c;
         }
     }
-    out << "\""sv;
+    helper.FinishString();
 }
 
 void NodePrinter::operator() (bool value) const {
+    helper.PrintIndent();
     out << std::boolalpha << value;
 }
 
 void NodePrinter::operator() (int value) const {
+    helper.PrintIndent();
     out << value;
 }
 
 void NodePrinter::operator() (double value) const {
+    helper.PrintIndent();
     out << value;
 }
 
 void NodePrinter::operator() (const Array& value) const {
     using namespace std::literals;
-
-    out << "[ "sv;
     bool first = true;
+    helper.StartArray();
     for (const Node& node : value) {
         if (!first) {
-            out << ", "sv;
+            helper.NextArrayValue();
         }
         std::visit(*this, node.Data());
         first = false;
     }
-    out << " ]"sv;
+    helper.FinishArray();
 }
 
 void NodePrinter::operator() (const Dict& value) const {
     using namespace std::literals;
-
-    out << "{ "sv;
     bool first = true;
+    helper.StartMap();
     for (const auto& [name, node] : value) {
         if (!first) {
-            out << ", "sv;
+            helper.NextMapPair();
         }
         this->operator()(name);
-        out << ": "sv;
+        helper.NextMapValue();
         std::visit(*this, node.Data());
         first = false;
     }
-    out << " }"sv;
+    helper.FinishMap();
 }
 
 // ---------- Node ------------------------------------------------------------
