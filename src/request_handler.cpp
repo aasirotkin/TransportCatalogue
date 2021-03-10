@@ -2,7 +2,14 @@
 
 #include "geo.h"
 #include "json_reader.h"
-//#include "log_duration.h"
+
+#ifdef _SIROTKIN_HOME_TESTS_
+
+#include "log_duration.h"
+
+#include "cassert"
+
+#endif
 
 #include <algorithm>
 #include <stdexcept>
@@ -42,6 +49,19 @@ void RequestHandler::RenderMap(MapRendererSettings&& settings) {
     render.Render(oss);
 
     map_renderer_value_ = oss.str();
+}
+
+bool RequestHandler::IsRouteGood(
+        const transport_catalogue::stop_catalogue::Stop* from,
+        const transport_catalogue::stop_catalogue::Stop* to,
+        const transport_catalogue::bus_catalogue::Bus* bus,
+        int span, double time) const {
+    (void)from;
+    (void)to;
+    (void)bus;
+    (void)span;
+    (void)time;
+    return false;
 }
 
 std::optional<RequestHandler::RouteData> RequestHandler::GetRoute(std::string_view from, std::string_view to) const {
@@ -273,11 +293,18 @@ void RequestRouteProcess(
     const auto route_data = request_handler.GetRoute(name_from, name_to);
 
     if (route_data) {
+#ifdef _SIROTKIN_HOME_TESTS_
+        double check_total_time = 0.0;
+#endif
         builder.StartDict()
                    .Key("items"s)
                        .StartArray();
         // --------------------------------------------------------------------
         for (const auto& [from, to, bus, span, time] : route_data->route) {
+#ifdef _SIROTKIN_HOME_TESTS_
+            assert(request_handler.IsRouteGood(from, to, bus, span, time));
+            check_total_time += time;
+#endif
             if (from == to) {
                 builder.StartDict()
                            .Key("stop_name"s).Value(from->name)
@@ -293,6 +320,9 @@ void RequestRouteProcess(
                        .EndDict();
             }
         }
+#ifdef _SIROTKIN_HOME_TESTS_
+            assert(check_total_time == route_data->time);
+#endif
         // --------------------------------------------------------------------
                        builder.EndArray()
                    .Key("request_id"s).Value(id)

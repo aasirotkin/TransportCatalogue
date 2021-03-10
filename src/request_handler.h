@@ -39,6 +39,13 @@ public:
     // Метод инициализирует переменную с значением карты маршрутов в svg формате
     void RenderMap(map_renderer::MapRendererSettings&& settings);
 
+    // Метод проверяет правильность маршрута
+    bool IsRouteGood(
+        const transport_catalogue::stop_catalogue::Stop* from,
+        const transport_catalogue::stop_catalogue::Stop* to,
+        const transport_catalogue::bus_catalogue::Bus* bus,
+        int span, double time) const;
+
     // Метод проверяет существует ли остановка с заданным именем
     bool DoesStopExist(std::string_view name) const {
         return catalogue_.GetStops().At(name).second;
