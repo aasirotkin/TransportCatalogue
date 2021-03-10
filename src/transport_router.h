@@ -52,6 +52,9 @@ private:
     void CreateGraph(const TransportCatalogue& catalogue);
 
     template <typename ConstIterator>
+    std::unordered_map<graph::VertexId, std::unordered_map<graph::VertexId, TransportGraphData>> CreateEdges(ConstIterator begin, ConstIterator end, const bus_catalogue::Bus* bus_ptr, const TransportCatalogue& catalogue);
+
+    template <typename ConstIterator>
     void CreateGraphForBus(ConstIterator begin, ConstIterator end, const bus_catalogue::Bus* bus_ptr, const TransportCatalogue& catalogue);
 
 private:
@@ -62,10 +65,11 @@ private:
 };
 
 template<typename ConstIterator>
-inline void TransportGraph::CreateGraphForBus(ConstIterator begin, ConstIterator end, const bus_catalogue::Bus* bus_ptr, const TransportCatalogue& catalogue) {
+inline std::unordered_map<graph::VertexId, std::unordered_map<graph::VertexId, TransportGraph::TransportGraphData>> TransportGraph::CreateEdges(ConstIterator begin, ConstIterator end, const bus_catalogue::Bus* bus_ptr, const TransportCatalogue& catalogue) {
     const auto& stop_distances = catalogue.GetStopsCatalogue().GetDistances();
     const double bus_velocity = catalogue.GetBusCatalogue().GetRouteSettings().bus_velocity;
-    std::unordered_map<graph::VertexId, std::unordered_set<graph::VertexId>> edges;
+
+    std::unordered_map<graph::VertexId, std::unordered_map<graph::VertexId, TransportGraphData>> edges;
 
     for (auto it_from = begin; it_from != end; ++it_from) {
         const stop_catalogue::Stop* stop_from = *it_from;
@@ -73,27 +77,48 @@ inline void TransportGraph::CreateGraphForBus(ConstIterator begin, ConstIterator
         double full_distance = 0.0;
         int stop_count = 0;
 
+        graph::VertexId from = stop_to_vertex_id_.at(stop_from);
+        if (edges.count(from) == 0) {
+            edges[from] = {};
+        }
+
         for (auto it_to = it_from + 1; it_to != end; ++it_to) {
             const stop_catalogue::Stop* stop_to = *it_to;
+            if (stop_from == stop_to) {
+                previous_stop = stop_to;
+                continue;
+            }
 
             stop_count++;
             full_distance += stop_distances.at({ previous_stop, stop_to });
             previous_stop = stop_to;
 
-            graph::VertexId from = stop_to_vertex_id_.at(stop_from);
+            const double time = (full_distance / bus_velocity) * TO_MINUTES;
+
             graph::VertexId to = stop_to_vertex_id_exit_.at(stop_to);
 
-            if (edges.count(from) > 0 && edges.at(from).count(to) > 0) {
+            TransportGraphData data{ stop_from, stop_to, bus_ptr, stop_count, time };
+
+            if (edges.at(from).count(to) > 0) {
+                if (edges.at(from).at(to).time > time) {
+                    edges.at(from).at(to) = data;
+                }
                 continue;
             }
 
-            const double time = (full_distance / bus_velocity) * TO_MINUTES;
+            edges[from].insert({ to, data });
+        }
+    }
 
-            edges[from].insert(to);
+    return edges;
+}
 
-            graph::EdgeId id = AddEdge({ from, to, time });
-
-            edge_id_to_graph_data_.insert({ id, { stop_from, stop_to, bus_ptr, stop_count, time } });
+template<typename ConstIterator>
+inline void TransportGraph::CreateGraphForBus(ConstIterator begin, ConstIterator end, const bus_catalogue::Bus* bus_ptr, const TransportCatalogue& catalogue) {
+    for (const auto& [from, to_map] : CreateEdges(begin, end, bus_ptr, catalogue)) {
+        for (const auto& [to, data] : to_map) {
+            graph::EdgeId id = AddEdge({ from, to, data.time });
+            edge_id_to_graph_data_.insert({ id, data });
         }
     }
 }

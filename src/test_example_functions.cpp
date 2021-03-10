@@ -318,7 +318,11 @@ vector<TotalTimeData> GetAllTotalTime(const json::Array& arr) {
 }
 
 void TestFromFileRouteEdition() {
+#ifdef _DEBUG
+    std::map<int, TestDataResult> test_data = TestFromFileInitData(4, 6);
+#else
     std::map<int, TestDataResult> test_data = TestFromFileInitData(4, 7);
+#endif
 
     for (auto& [key, value] : test_data) {
         istringstream iss_expected(value.expected);
