@@ -33,10 +33,9 @@ std::ostream& operator<<(std::ostream& out, const Coordinates& coord) {
 }
 
 double ComputeDistance(Coordinates from, Coordinates to) {
-    using namespace std;
-    static const double dr = 3.1415926535 / 180.0;
+    static const double dr = 3.14159265358979323846 / 180.0;
     static const double rz = 6371000.0;
-    return acos(
-        sin(from.lat * dr) * sin(to.lat * dr) +
-        cos(from.lat * dr) * cos(to.lat * dr) * cos(abs(from.lng - to.lng) * dr)) * rz;
+    return std::acos(
+        std::sin(from.lat * dr) * std::sin(to.lat * dr) +
+        std::cos(from.lat * dr) * std::cos(to.lat * dr) * cos(std::abs(from.lng - to.lng) * dr)) * rz;
 }

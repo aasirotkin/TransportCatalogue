@@ -4,8 +4,8 @@
 #include <string_view>
 
 struct Coordinates {
-    double lat = 0;
-    double lng = 0;
+    double lat = 0.0;
+    double lng = 0.0;
 
     static Coordinates ParseFromStringView(const std::string_view& string_coord);
 };
