@@ -15,9 +15,6 @@ using namespace transport_catalogue;
 using TransportTime = double;
 
 class TransportGraph : public graph::DirectedWeightedGraph<TransportTime> {
-private:
-    static constexpr double TO_MINUTES = (3.6 / 60.0);
-
 public:
     struct TransportGraphData {
         const stop_catalogue::Stop* from;
@@ -47,15 +44,19 @@ public:
     }
 
 private:
+    using EdgesData = std::unordered_map<graph::VertexId, std::unordered_map<graph::VertexId, TransportGraphData>>;
+
+    static constexpr double TO_MINUTES = (3.6 / 60.0);
+
+private:
     void InitVertexId(const TransportCatalogue& catalogue);
 
     void CreateGraph(const TransportCatalogue& catalogue);
 
     template <typename ConstIterator>
-    std::unordered_map<graph::VertexId, std::unordered_map<graph::VertexId, TransportGraphData>> CreateEdges(ConstIterator begin, ConstIterator end, const bus_catalogue::Bus* bus_ptr, const TransportCatalogue& catalogue);
+    void UpdateEdges(EdgesData& edges, ConstIterator begin, ConstIterator end, const bus_catalogue::Bus* bus_ptr, const TransportCatalogue& catalogue);
 
-    template <typename ConstIterator>
-    void CreateGraphForBus(ConstIterator begin, ConstIterator end, const bus_catalogue::Bus* bus_ptr, const TransportCatalogue& catalogue);
+    void AddEdgesToGraph(const EdgesData& edges);
 
 private:
     std::unordered_map<graph::EdgeId, TransportGraphData> edge_id_to_graph_data_;
@@ -65,11 +66,9 @@ private:
 };
 
 template<typename ConstIterator>
-inline std::unordered_map<graph::VertexId, std::unordered_map<graph::VertexId, TransportGraph::TransportGraphData>> TransportGraph::CreateEdges(ConstIterator begin, ConstIterator end, const bus_catalogue::Bus* bus_ptr, const TransportCatalogue& catalogue) {
+inline void TransportGraph::UpdateEdges(EdgesData& edges, ConstIterator begin, ConstIterator end, const bus_catalogue::Bus* bus_ptr, const TransportCatalogue& catalogue) {
     const auto& stop_distances = catalogue.GetStopsCatalogue().GetDistances();
     const double bus_velocity = catalogue.GetBusCatalogue().GetRouteSettings().bus_velocity;
-
-    std::unordered_map<graph::VertexId, std::unordered_map<graph::VertexId, TransportGraphData>> edges;
 
     for (auto it_from = begin; it_from != end; ++it_from) {
         const stop_catalogue::Stop* stop_from = *it_from;
@@ -107,18 +106,6 @@ inline std::unordered_map<graph::VertexId, std::unordered_map<graph::VertexId, T
             }
 
             edges[from].insert({ to, data });
-        }
-    }
-
-    return edges;
-}
-
-template<typename ConstIterator>
-inline void TransportGraph::CreateGraphForBus(ConstIterator begin, ConstIterator end, const bus_catalogue::Bus* bus_ptr, const TransportCatalogue& catalogue) {
-    for (const auto& [from, to_map] : CreateEdges(begin, end, bus_ptr, catalogue)) {
-        for (const auto& [to, data] : to_map) {
-            graph::EdgeId id = AddEdge({ from, to, data.time });
-            edge_id_to_graph_data_.insert({ id, data });
         }
     }
 }

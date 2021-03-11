@@ -20,11 +20,24 @@ void TransportGraph::InitVertexId(const TransportCatalogue& catalogue) {
 }
 
 void TransportGraph::CreateGraph(const TransportCatalogue& catalogue) {
+    std::unordered_map<graph::VertexId, std::unordered_map<graph::VertexId, TransportGraphData>> edges;
+
     for (const auto& [bus_name, bus_ptr] : catalogue.GetBuses()) {
-        CreateGraphForBus(bus_ptr->route.begin(), bus_ptr->route.end(), bus_ptr, catalogue);
+        UpdateEdges(edges, bus_ptr->route.begin(), bus_ptr->route.end(), bus_ptr, catalogue);
 
         if (bus_ptr->route_type == RouteType::BackAndForth) {
-            CreateGraphForBus(bus_ptr->route.rbegin(), bus_ptr->route.rend(), bus_ptr, catalogue);
+            UpdateEdges(edges, bus_ptr->route.rbegin(), bus_ptr->route.rend(), bus_ptr, catalogue);
+        }
+    }
+
+    AddEdgesToGraph(edges);
+}
+
+void TransportGraph::AddEdgesToGraph(const EdgesData& edges) {
+    for (const auto& [from, to_map] : edges) {
+        for (const auto& [to, data] : to_map) {
+            graph::EdgeId id = AddEdge({ from, to, data.time });
+            edge_id_to_graph_data_.insert({ id, data });
         }
     }
 }

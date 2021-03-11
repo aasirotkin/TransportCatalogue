@@ -2,6 +2,7 @@
 
 #include "geo.h"
 #include "json_reader.h"
+#include "log_duration.h"
 #include "request_handler.h"
 
 #include <algorithm>
@@ -321,6 +322,7 @@ void TestFromFileRouteEdition() {
 #ifdef _DEBUG
     std::map<int, TestDataResult> test_data = TestFromFileInitData(4, 6);
 #else
+    //LOG_DURATION("TestFromFileRouteEdition"s);
     std::map<int, TestDataResult> test_data = TestFromFileInitData(4, 7);
 #endif
 
