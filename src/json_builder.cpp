@@ -52,18 +52,14 @@ Builder& Builder::Value(Node::Value&& value) {
         nodes_stack_.emplace_back(std::make_unique<Node>(std::move(node)));
     }
     else if (nodes_stack_.back()->IsArray() && array_counter_ > 0) {
-        Array value = nodes_stack_.back()->AsArray();
+        Array& value = nodes_stack_.back()->AsArray();
         value.push_back(std::move(node));
-        nodes_stack_.pop_back();
-        nodes_stack_.emplace_back(std::make_unique<Node>(std::move(value)));
     }
     else if (nodes_stack_.back()->IsString() && dict_counter_ > 0) {
         Node key_node = *nodes_stack_.back();
         nodes_stack_.pop_back();
-        Dict value = nodes_stack_.back()->AsDict();
+        Dict& value = nodes_stack_.back()->AsDict();
         value.insert({ key_node.AsString(), std::move(node) });
-        nodes_stack_.pop_back();
-        nodes_stack_.emplace_back(std::make_unique<Node>(std::move(value)));
     }
     else {
         throw std::logic_error("All objects have been done");

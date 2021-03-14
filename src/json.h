@@ -134,6 +134,11 @@ public:
     const Dict& AsMap() const;
     const Dict& AsDict() const;
 
+    std::string& AsString();
+    Array& AsArray();
+    Dict& AsMap();
+    Dict& AsDict();
+
     bool IsNull() const;
     bool IsString() const;
     bool IsBool() const;
@@ -145,6 +150,7 @@ public:
     bool IsDict() const;
 
     const NodeData& Data() const;
+    NodeData& Data();
 };
 
 bool operator== (const Node& lhs, const Node& rhs);

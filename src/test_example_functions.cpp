@@ -322,8 +322,11 @@ void TestFromFileRouteEdition() {
 #ifdef _DEBUG
     std::map<int, TestDataResult> test_data = TestFromFileInitData(4, 6);
 #else
-    //LOG_DURATION("TestFromFileRouteEdition"s);
-    std::map<int, TestDataResult> test_data = TestFromFileInitData(4, 7);
+    std::map<int, TestDataResult> test_data;
+    {
+        ASSERT_DURATION_SECONDS(2);
+        test_data = TestFromFileInitData(4, 7);
+    }
 #endif
 
     for (auto& [key, value] : test_data) {
@@ -521,7 +524,7 @@ void TestRandomValues() {
     int stop_count = 100;
     int bus_count = 100;
     int stops_in_route_count = 100;
-    int request_count = 2000;
+    int request_count = 20000;
 
     std::vector<std::string> stops = std::move(CreateStops(generator, stop_count));
     std::vector<std::string> buses = std::move(CreateBuses(generator, stops, bus_count, stops_in_route_count));
@@ -547,7 +550,7 @@ void TestRandomValues() {
     in << request;
 
     {
-        ASSERT_DURATION_SECONDS(5);
+        ASSERT_DURATION_SECONDS(2);
         request_handler::RequestHandlerProcess(in, out);
     }
 

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "domain.h"
-#include "router.h"
 
 #include <set>
 #include <string>

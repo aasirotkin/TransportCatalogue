@@ -128,6 +128,31 @@ const Dict& Node::AsDict() const {
     return AsMap();
 }
 
+std::string& Node::AsString() {
+    if (!IsString()) {
+        throw std::logic_error("Node data is not string format");
+    }
+    return std::get<std::string>(Data());
+}
+
+Array& Node::AsArray() {
+    if (!IsArray()) {
+        throw std::logic_error("Node data is not Array format");
+    }
+    return std::get<Array>(Data());
+}
+
+Dict& Node::AsMap() {
+    if (!IsMap()) {
+        throw std::logic_error("Node data is not Dict format");
+    }
+    return std::get<Dict>(Data());
+}
+
+Dict& Node::AsDict() {
+    return AsMap();
+}
+
 bool Node::IsNull() const {
     return std::holds_alternative<std::nullptr_t>(Data());
 }
@@ -165,6 +190,10 @@ bool Node::IsDict() const {
 }
 
 const Node::NodeData& Node::Data() const {
+    return *this;
+}
+
+Node::NodeData& Node::Data() {
     return *this;
 }
 
