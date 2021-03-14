@@ -213,6 +213,7 @@ void LoadFile(std::stringstream& in, const std::filesystem::path& path, const st
 #define LOAD_FILE(in, file_name) (LoadFile(in, file_path_in, file_name))
 
 void SaveFile(const std::filesystem::path& path, const std::string& file_name, const std::string& file_data) {
+    std::filesystem::create_directories(path);
     std::ofstream file(path / std::filesystem::path(file_name));
     file << file_data;
     file.close();
@@ -239,7 +240,7 @@ std::vector<std::string> GetFileNames(const std::filesystem::path& path) {
     return files;
 }
 
-std::map<int, TestDataResult> TestFromFileInitData(int first_file_id, int last_file_id) {
+std::map<int, TestDataResult> TestFromFileInitData(const std::set<int>& ids) {
     std::map<int, TestDataResult> test_data;
 
     auto GetId = [](const std::string& name) {
@@ -255,7 +256,7 @@ std::map<int, TestDataResult> TestFromFileInitData(int first_file_id, int last_f
 
         int id = GetId(file_name);
 
-        if (id < first_file_id || id > last_file_id) {
+        if (!ids.count(id)) {
             continue;
         }
 
@@ -263,7 +264,7 @@ std::map<int, TestDataResult> TestFromFileInitData(int first_file_id, int last_f
             std::stringstream output;
             request_handler::RequestHandlerProcess(input, output);
             test_data[id].program = output.str();
-            SAVE_FILE(file_name, test_data[id].program);
+            SAVE_FILE("output_program_"s + std::to_string(id) + ".txt"s, test_data[id].program);
         }
         else {
             test_data[id].expected = input.str();
@@ -274,7 +275,7 @@ std::map<int, TestDataResult> TestFromFileInitData(int first_file_id, int last_f
 }
 
 void TestFromFile() {
-    std::map<int, TestDataResult> test_data = TestFromFileInitData(0, 3);
+    std::map<int, TestDataResult> test_data = TestFromFileInitData({1, 2, 3});
 
     // Проверяем результат работы программы с ожидаемым
     for (auto& [key, value] : test_data) {
@@ -318,16 +319,8 @@ vector<TotalTimeData> GetAllTotalTime(const json::Array& arr) {
     return times;
 }
 
-void TestFromFileRouteEdition() {
-#ifdef _DEBUG
-    std::map<int, TestDataResult> test_data = TestFromFileInitData(4, 6);
-#else
-    std::map<int, TestDataResult> test_data;
-    {
-        ASSERT_DURATION_SECONDS(2);
-        test_data = TestFromFileInitData(4, 7);
-    }
-#endif
+void TestFromFileRouteEdition(const std::set<int>& ids) {
+    std::map<int, TestDataResult> test_data = TestFromFileInitData(ids);
 
     for (auto& [key, value] : test_data) {
         istringstream iss_expected(value.expected);
@@ -354,6 +347,15 @@ void TestFromFileRouteEdition() {
             }
         }
     }
+}
+
+void TestFromFileRouteEditionDebug() {
+    TestFromFileRouteEdition({ 4, 5, 6 });
+}
+
+void TestFromFileRouteEditionRelease() {
+    ASSERT_DURATION_SECONDS(2);
+    TestFromFileRouteEdition({ 7 });
 }
 
 // ----------------------------------------------------------------------------
@@ -563,9 +565,10 @@ void TestRandomValues() {
 void TestTransportCatalogue() {
     RUN_TEST(TestParseGeoFromStringView);
     RUN_TEST(TestFromFile);
-    RUN_TEST(TestFromFileRouteEdition);
+    RUN_TEST(TestFromFileRouteEditionDebug);
 
 #ifndef _DEBUG
+    RUN_TEST(TestFromFileRouteEditionRelease);
     RUN_TEST(TestRandomValues);
 #endif
 }
