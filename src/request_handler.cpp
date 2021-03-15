@@ -53,7 +53,7 @@ void RequestHandler::RenderMap(MapRendererSettings&& settings) {
     map_renderer_value_ = oss.str();
 }
 
-bool RequestHandler::IsRouteGood(
+bool RequestHandler::IsRouteValid(
         const transport_catalogue::stop_catalogue::Stop* from,
         const transport_catalogue::stop_catalogue::Stop* to,
         const transport_catalogue::bus_catalogue::Bus* bus,
@@ -317,7 +317,7 @@ void RequestRouteProcess(
         // --------------------------------------------------------------------
         for (const auto& [from, to, bus, span, time] : route_data->route) {
 #ifdef _SIROTKIN_HOME_TESTS_
-            assert(request_handler.IsRouteGood(from, to, bus, span, time));
+            assert(request_handler.IsRouteValid(from, to, bus, span, time));
             check_total_time += time;
 #endif
             if (from == to) {

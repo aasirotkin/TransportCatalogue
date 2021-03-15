@@ -40,7 +40,7 @@ public:
     void RenderMap(map_renderer::MapRendererSettings&& settings);
 
     // Метод проверяет правильность маршрута
-    bool IsRouteGood(
+    bool IsRouteValid(
         const transport_catalogue::stop_catalogue::Stop* from,
         const transport_catalogue::stop_catalogue::Stop* to,
         const transport_catalogue::bus_catalogue::Bus* bus,
