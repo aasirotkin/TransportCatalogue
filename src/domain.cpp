@@ -76,8 +76,8 @@ Bus BusHelper::Build(const VirtualCatalogue<Stop>& stops_catalogue, const Distan
 
     bus.name = std::move(name_);
     bus.route_type = route_type_;
-    bus.route_geo_length = CalcRouteGeolength(bus.route, route_type_);
-    bus.route_true_length = CalcRouteTruelength(bus.route, stops_distances, route_type_);
+    bus.route_geo_length = CalcRouteGeoLength(bus.route, route_type_);
+    bus.route_true_length = CalcRouteTrueLength(bus.route, stops_distances, route_type_);
     bus.stops_on_route = bus.route.size();
     bus.route_settings = std::move(settings_);
 
@@ -94,7 +94,7 @@ Bus BusHelper::Build(const VirtualCatalogue<Stop>& stops_catalogue, const Distan
     return bus;
 }
 
-double BusHelper::CalcRouteGeolength(const std::deque<const Stop*>& route, RouteType route_type) const {
+double BusHelper::CalcRouteGeoLength(const std::deque<const Stop*>& route, RouteType route_type) const {
     double length = 0.0;
     if (route.size() > 0) {
         std::vector<double> distance(route.size());
@@ -113,7 +113,7 @@ double BusHelper::CalcRouteGeolength(const std::deque<const Stop*>& route, Route
     return length;
 }
 
-double BusHelper::CalcRouteTruelength(const std::deque<const Stop*>& route, const DistancesContainer& stops_distances, RouteType route_type) const {
+double BusHelper::CalcRouteTrueLength(const std::deque<const Stop*>& route, const DistancesContainer& stops_distances, RouteType route_type) const {
     double length = 0.0;
     if (route.size() > 0) {
         std::vector<double> distance(route.size());

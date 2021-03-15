@@ -54,7 +54,7 @@ private:
     void CreateGraph(const TransportCatalogue& catalogue);
 
     template <typename ConstIterator>
-    void UpdateEdges(EdgesData& edges, ConstIterator begin, ConstIterator end, const bus_catalogue::Bus* bus_ptr, const TransportCatalogue& catalogue);
+    void UpdateEdges(EdgesData& edges, const ConstIterator& begin, const ConstIterator& end, const bus_catalogue::Bus* bus_ptr, const TransportCatalogue& catalogue);
 
     void AddEdgesToGraph(const EdgesData& edges);
 
@@ -66,7 +66,7 @@ private:
 };
 
 template<typename ConstIterator>
-inline void TransportGraph::UpdateEdges(EdgesData& edges, ConstIterator begin, ConstIterator end, const bus_catalogue::Bus* bus_ptr, const TransportCatalogue& catalogue) {
+inline void TransportGraph::UpdateEdges(EdgesData& edges, const ConstIterator& begin, const ConstIterator& end, const bus_catalogue::Bus* bus_ptr, const TransportCatalogue& catalogue) {
     const auto& stop_distances = catalogue.GetStopsCatalogue().GetDistances();
     const double bus_velocity = catalogue.GetBusCatalogue().GetRouteSettings().bus_velocity;
 

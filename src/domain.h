@@ -175,8 +175,8 @@ public:
     Bus Build(const detail::VirtualCatalogue<stop_catalogue::Stop>& stops_catalogue, const stop_catalogue::DistancesContainer& stops_distances);
 
 private:
-    double CalcRouteGeolength(const std::deque<const stop_catalogue::Stop*>& route, RouteType route_type) const;
-    double CalcRouteTruelength(const std::deque<const stop_catalogue::Stop*>& route, const stop_catalogue::DistancesContainer& stops_distances, RouteType route_type) const;
+    double CalcRouteGeoLength(const std::deque<const stop_catalogue::Stop*>& route, RouteType route_type) const;
+    double CalcRouteTrueLength(const std::deque<const stop_catalogue::Stop*>& route, const stop_catalogue::DistancesContainer& stops_distances, RouteType route_type) const;
 
 private:
     std::string name_;

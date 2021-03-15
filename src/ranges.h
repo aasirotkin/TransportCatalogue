@@ -12,22 +12,22 @@ namespace ranges {
     public:
         using ValueType = typename std::iterator_traits<It>::value_type;
 
-        Range(It begin, It end)
+        Range(const It& begin, const It& end)
             : begin_(begin)
             , end_(end) {
         }
 
-        It begin() const {
+        const It& begin() const {
             return begin_;
         }
 
-        It end() const {
+        const It& end() const {
             return end_;
         }
 
     private:
-        It begin_;
-        It end_;
+        const It& begin_;
+        const It& end_;
     };
 
     template <typename C>
