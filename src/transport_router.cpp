@@ -33,6 +33,17 @@ void TransportGraph::CreateGraph(const TransportCatalogue& catalogue) {
     AddEdgesToGraph(edges);
 }
 
+void TransportGraph::UpdateEdge(EdgesData& edges, graph::VertexId from, graph::VertexId to, TransportGraphData&& data) {
+    if (edges.at(from).count(to) > 0) {
+        if (edges.at(from).at(to).time > data.time) {
+            edges.at(from).at(to) = data;
+        }
+    }
+    else {
+        edges[from].insert({ to, data });
+    }
+}
+
 void TransportGraph::AddEdgesToGraph(const EdgesData& edges) {
     for (const auto& [from, to_map] : edges) {
         for (const auto& [to, data] : to_map) {

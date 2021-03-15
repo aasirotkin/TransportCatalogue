@@ -56,6 +56,11 @@ private:
     template <typename ConstIterator>
     void UpdateEdges(EdgesData& edges, const ConstIterator& begin, const ConstIterator& end, const bus_catalogue::Bus* bus_ptr, const TransportCatalogue& catalogue);
 
+    template <typename ConstIterator>
+    void UpdateEdge(EdgesData& edges, graph::VertexId from, TransportGraphData&& data);
+
+    void UpdateEdge(EdgesData& edges, graph::VertexId from, graph::VertexId to, TransportGraphData&& data);
+
     void AddEdgesToGraph(const EdgesData& edges);
 
 private:
@@ -83,30 +88,33 @@ inline void TransportGraph::UpdateEdges(EdgesData& edges, const ConstIterator& b
 
         for (auto it_to = it_from + 1; it_to != end; ++it_to) {
             const stop_catalogue::Stop* stop_to = *it_to;
-            if (stop_from == stop_to) {
-                previous_stop = stop_to;
-                continue;
+
+            if (stop_from != stop_to) {
+                stop_count++;
+                full_distance += stop_distances.at({ previous_stop, stop_to });
+
+                const double time = (full_distance / bus_velocity) * TO_MINUTES;
+
+                graph::VertexId to = stop_to_vertex_id_exit_.at(stop_to);
+
+                UpdateEdge(edges, from, to, { stop_from, stop_to, bus_ptr, stop_count, time });
             }
 
-            stop_count++;
-            full_distance += stop_distances.at({ previous_stop, stop_to });
             previous_stop = stop_to;
-
-            const double time = (full_distance / bus_velocity) * TO_MINUTES;
-
-            graph::VertexId to = stop_to_vertex_id_exit_.at(stop_to);
-
-            TransportGraphData data{ stop_from, stop_to, bus_ptr, stop_count, time };
-
-            if (edges.at(from).count(to) > 0) {
-                if (edges.at(from).at(to).time > time) {
-                    edges.at(from).at(to) = data;
-                }
-                continue;
-            }
-
-            edges[from].insert({ to, data });
         }
+    }
+}
+
+template<typename ConstIterator>
+inline void TransportGraph::UpdateEdge(EdgesData& edges, graph::VertexId from, TransportGraphData&& data) {
+    graph::VertexId to = stop_to_vertex_id_exit_.at(data.from);
+
+    if (edges.at(from).count(to) > 0) {
+        if (edges.at(from).at(to).time > data.time) {
+            edges.at(from).at(to) = data;
+        }
+    } else {
+        edges[from].insert({ to, data });
     }
 }
 
