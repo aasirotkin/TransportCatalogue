@@ -4,18 +4,20 @@ namespace transport_graph {
 
 void TransportGraph::InitVertexId(const TransportCatalogue& catalogue) {
     const auto& stops = catalogue.GetStops();
+
+    for (const auto& [stop_name, stop_ptr] : stops) {
+        VertexIdLoop vertex_id = { stop_to_vertex_id_.size(), stop_to_vertex_id_.size() + 1 };
+        stop_to_vertex_id_.insert({ stop_ptr, vertex_id });
+    }
+}
+
+void TransportGraph::CreateDiagonalEdges(const TransportCatalogue& catalogue) {
     const double time = static_cast<double>(catalogue.GetBusCatalogue().GetRouteSettings().bus_wait_time);
 
-    graph::VertexId vertex_id{};
-    for (const auto& [stop_name, stop_ptr] : stops) {
-        stop_to_vertex_id_.insert({ stop_ptr, vertex_id });
-        stop_to_vertex_id_exit_.insert({ stop_ptr, vertex_id + 1 });
-
-        graph::EdgeId id = AddEdge({ vertex_id + 1, vertex_id, time });
-
+    for (const auto& [stop_ptr, vertex_id] : stop_to_vertex_id_) {
+        graph::EdgeId id = AddEdge({ vertex_id.exit_id, vertex_id.id, time });
+       
         edge_id_to_graph_data_.insert({ id, { stop_ptr, stop_ptr, nullptr, 0, time } });
-
-        vertex_id += 2;
     }
 }
 
@@ -23,39 +25,46 @@ void TransportGraph::CreateGraph(const TransportCatalogue& catalogue) {
     std::unordered_map<graph::VertexId, std::unordered_map<graph::VertexId, TransportGraphData>> edges;
 
     for (const auto& [bus_name, bus_ptr] : catalogue.GetBuses()) {
-        UpdateEdges(edges, bus_ptr->route.begin(), bus_ptr->route.end(), bus_ptr, catalogue);
+        
+        CreateEdges(edges, CreateTransportGraphData(BusRangeDirect(bus_ptr, bus_ptr->route), catalogue));
 
         if (bus_ptr->route_type == RouteType::BackAndForth) {
-            UpdateEdges(edges, bus_ptr->route.rbegin(), bus_ptr->route.rend(), bus_ptr, catalogue);
+            CreateEdges(edges, CreateTransportGraphData(BusRangeReversed(bus_ptr, bus_ptr->route), catalogue));
         }
     }
 
     AddEdgesToGraph(edges);
 }
 
-void TransportGraph::UpdateEdge(EdgesData& edges, graph::VertexId from, graph::VertexId to, TransportGraphData&& data) {
-    if (edges.at(from).count(to) > 0) {
-        if (edges.at(from).at(to).time > data.time) {
-            edges.at(from).at(to) = data;
+void TransportGraph::CreateEdges(EdgesData& edges, std::vector<TransportGraphData>&& data) {
+    for (TransportGraphData& data_i : data) {
+        graph::VertexId from = stop_to_vertex_id_.at(data_i.from).id;
+        graph::VertexId to = stop_to_vertex_id_.at(data_i.to).exit_id;
+        
+        if (edges.at(from).count(to) > 0) {
+            if (edges.at(from).at(to).time > data_i.time) {
+                edges.at(from).at(to).time = data_i.time;
+                edges.at(from).at(to).stop_count = data_i.stop_count;
+            }
         }
-    }
-    else {
-        edges[from].insert({ to, data });
+        else {
+            edges[from].emplace(to, std::move(data_i));
+        }
     }
 }
 
-void TransportGraph::AddEdgesToGraph(const EdgesData& edges) {
+void TransportGraph::AddEdgesToGraph(EdgesData& edges) {
     for (const auto& [from, to_map] : edges) {
-        for (const auto& [to, data] : to_map) {
-            graph::EdgeId id = AddEdge({ from, to, data.time });
-            edge_id_to_graph_data_.insert({ id, data });
+        for (const auto& [to, data_i] : to_map) {
+            graph::EdgeId id = AddEdge({ from, to, data_i.time });
+            edge_id_to_graph_data_.emplace(id, std::move(data_i));
         }
     }
 }
 
 std::optional<TransportRouter::TransportRouterData> TransportRouter::GetRoute(const stop_catalogue::Stop* from, const stop_catalogue::Stop* to) const {
-    const auto& stop_to_vertex_id_exit = transport_graph_.GetStopToVertexIdExit();
-    auto route = BuildRoute(stop_to_vertex_id_exit.at(from), stop_to_vertex_id_exit.at(to));
+    const auto& stop_to_vertex_id = transport_graph_.GetStopToVertexId();
+    auto route = BuildRoute(stop_to_vertex_id.at(from).exit_id, stop_to_vertex_id.at(to).exit_id);
     if (route) {
         TransportRouterData output_data;
         output_data.time = (*route).weight;

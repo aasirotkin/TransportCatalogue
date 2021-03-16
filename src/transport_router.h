@@ -23,11 +23,17 @@ public:
         int stop_count;
         double time;
     };
+    
+    struct VertexIdLoop {
+        graph::VertexId id{};
+        graph::VertexId exit_id{};
+    };
 
 public:
     explicit TransportGraph(const TransportCatalogue& catalogue)
         : graph::DirectedWeightedGraph<TransportTime>(2 * catalogue.GetStopsCatalogue().Size()) {
         InitVertexId(catalogue);
+        CreateDiagonalEdges(catalogue);
         CreateGraph(catalogue);
     }
 
@@ -35,87 +41,94 @@ public:
         return edge_id_to_graph_data_;
     }
 
-    const std::unordered_map<const stop_catalogue::Stop*, graph::VertexId>& GetStopToVertexId() const {
+    const std::unordered_map<const stop_catalogue::Stop*, VertexIdLoop>& GetStopToVertexId() const {
         return stop_to_vertex_id_;
     }
 
-    const std::unordered_map<const stop_catalogue::Stop*, graph::VertexId>& GetStopToVertexIdExit() const {
-        return stop_to_vertex_id_exit_;
+private:
+    static constexpr double TO_MINUTES = (3.6 / 60.0);
+
+    template <typename ConstIterator>
+    struct GraphBusRange {
+        const bus_catalogue::Bus* bus_ptr;
+        const ConstIterator& route_begin;
+        const ConstIterator& route_end;
+
+        GraphBusRange(
+            const bus_catalogue::Bus* bus,
+            const ConstIterator& begin,
+            const ConstIterator& end)
+            : bus_ptr(bus)
+            , route_begin(begin)
+            , route_end(end) {
+            }
+    };
+
+    template <typename RouteContainer>
+    auto BusRangeDirect(const bus_catalogue::Bus* bus, const RouteContainer& route) {
+        return GraphBusRange {
+            bus, route.begin(), route.end()
+        };
     }
 
-private:
-    using EdgesData = std::unordered_map<graph::VertexId, std::unordered_map<graph::VertexId, TransportGraphData>>;
+    template <typename RouteContainer>
+    auto BusRangeReversed(const bus_catalogue::Bus* bus, const RouteContainer& route) {
+        return GraphBusRange {
+            bus, route.rbegin(), route.rend()
+        };
+    }
 
-    static constexpr double TO_MINUTES = (3.6 / 60.0);
+    using EdgesData = std::unordered_map<graph::VertexId, std::unordered_map<graph::VertexId, TransportGraphData>>;
 
 private:
     void InitVertexId(const TransportCatalogue& catalogue);
 
+    void CreateDiagonalEdges(const TransportCatalogue& catalogue);
+
     void CreateGraph(const TransportCatalogue& catalogue);
 
     template <typename ConstIterator>
-    void UpdateEdges(EdgesData& edges, const ConstIterator& begin, const ConstIterator& end, const bus_catalogue::Bus* bus_ptr, const TransportCatalogue& catalogue);
+    std::vector<TransportGraphData> CreateTransportGraphData(GraphBusRange<ConstIterator> bus_range, const TransportCatalogue& catalogue);
 
-    template <typename ConstIterator>
-    void UpdateEdge(EdgesData& edges, graph::VertexId from, TransportGraphData&& data);
+    void CreateEdges(EdgesData& edges, std::vector<TransportGraphData>&& data);
 
-    void UpdateEdge(EdgesData& edges, graph::VertexId from, graph::VertexId to, TransportGraphData&& data);
-
-    void AddEdgesToGraph(const EdgesData& edges);
+    void AddEdgesToGraph(EdgesData& edges);
 
 private:
     std::unordered_map<graph::EdgeId, TransportGraphData> edge_id_to_graph_data_;
 
-    std::unordered_map<const stop_catalogue::Stop*, graph::VertexId> stop_to_vertex_id_;
-    std::unordered_map<const stop_catalogue::Stop*, graph::VertexId> stop_to_vertex_id_exit_;
+    std::unordered_map<const stop_catalogue::Stop*, VertexIdLoop> stop_to_vertex_id_;
 };
 
-template<typename ConstIterator>
-inline void TransportGraph::UpdateEdges(EdgesData& edges, const ConstIterator& begin, const ConstIterator& end, const bus_catalogue::Bus* bus_ptr, const TransportCatalogue& catalogue) {
+template <typename ConstIterator>
+inline std::vector<TransportGraph::TransportGraphData> TransportGraph::CreateTransportGraphData(GraphBusRange<ConstIterator> bus_range, const TransportCatalogue& catalogue) {
     const auto& stop_distances = catalogue.GetStopsCatalogue().GetDistances();
     const double bus_velocity = catalogue.GetBusCatalogue().GetRouteSettings().bus_velocity;
 
-    for (auto it_from = begin; it_from != end; ++it_from) {
+    std::vector<TransportGraph::TransportGraphData> data;
+    
+    for (auto it_from = bus_range.route_begin; it_from != bus_range.route_begin; ++it_from) {
         const stop_catalogue::Stop* stop_from = *it_from;
         const stop_catalogue::Stop* previous_stop = stop_from;
+
         double full_distance = 0.0;
         int stop_count = 0;
 
-        graph::VertexId from = stop_to_vertex_id_.at(stop_from);
-        if (edges.count(from) == 0) {
-            edges[from] = {};
-        }
-
-        for (auto it_to = it_from + 1; it_to != end; ++it_to) {
+        for (auto it_to = it_from + 1; it_to != bus_range.route_begin; ++it_to) {
             const stop_catalogue::Stop* stop_to = *it_to;
 
             if (stop_from != stop_to) {
-                stop_count++;
                 full_distance += stop_distances.at({ previous_stop, stop_to });
+                stop_count++;
 
-                const double time = (full_distance / bus_velocity) * TO_MINUTES;
-
-                graph::VertexId to = stop_to_vertex_id_exit_.at(stop_to);
-
-                UpdateEdge(edges, from, to, { stop_from, stop_to, bus_ptr, stop_count, time });
+                data.push_back({ stop_from, stop_to, bus_range.bus_ptr, stop_count, (full_distance / bus_velocity) * TO_MINUTES });
             }
 
             previous_stop = stop_to;
         }
     }
-}
 
-template<typename ConstIterator>
-inline void TransportGraph::UpdateEdge(EdgesData& edges, graph::VertexId from, TransportGraphData&& data) {
-    graph::VertexId to = stop_to_vertex_id_exit_.at(data.from);
-
-    if (edges.at(from).count(to) > 0) {
-        if (edges.at(from).at(to).time > data.time) {
-            edges.at(from).at(to) = data;
-        }
-    } else {
-        edges[from].insert({ to, data });
-    }
+    return data;
 }
 
 // ----------------------------------------------------------------------------
