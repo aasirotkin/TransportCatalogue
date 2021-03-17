@@ -48,36 +48,6 @@ public:
 private:
     static constexpr double TO_MINUTES = (3.6 / 60.0);
 
-    template <typename ConstIterator>
-    struct GraphBusRange {
-        const bus_catalogue::Bus* bus_ptr;
-        const ConstIterator& route_begin;
-        const ConstIterator& route_end;
-
-        GraphBusRange(
-            const bus_catalogue::Bus* bus,
-            const ConstIterator& begin,
-            const ConstIterator& end)
-            : bus_ptr(bus)
-            , route_begin(begin)
-            , route_end(end) {
-        }
-    };
-
-    template <typename RouteContainer>
-    auto BusRangeDirect(const bus_catalogue::Bus* bus, const RouteContainer& route) {
-        return GraphBusRange {
-            bus, route.begin(), route.end()
-        };
-    }
-
-    template <typename RouteContainer>
-    auto BusRangeReversed(const bus_catalogue::Bus* bus, const RouteContainer& route) {
-        return GraphBusRange {
-            bus, route.rbegin(), route.rend()
-        };
-    }
-
     using EdgesData = std::unordered_map<graph::VertexId, std::unordered_map<graph::VertexId, TransportGraphData>>;
 
 private:
@@ -88,7 +58,7 @@ private:
     void CreateGraph(const TransportCatalogue& catalogue);
 
     template <typename ConstIterator>
-    std::vector<TransportGraphData> CreateTransportGraphData(GraphBusRange<ConstIterator> bus_range, const TransportCatalogue& catalogue);
+    std::vector<TransportGraphData> CreateTransportGraphData(ranges::GraphBusRange<ConstIterator> bus_range, const TransportCatalogue& catalogue);
 
     void CreateEdges(EdgesData& edges, std::vector<TransportGraphData>&& data);
 
@@ -101,7 +71,7 @@ private:
 };
 
 template <typename ConstIterator>
-inline std::vector<TransportGraph::TransportGraphData> TransportGraph::CreateTransportGraphData(GraphBusRange<ConstIterator> bus_range, const TransportCatalogue& catalogue) {
+inline std::vector<TransportGraph::TransportGraphData> TransportGraph::CreateTransportGraphData(ranges::GraphBusRange<ConstIterator> bus_range, const TransportCatalogue& catalogue) {
     const auto& stop_distances = catalogue.GetStopsCatalogue().GetDistances();
     const double bus_velocity = catalogue.GetBusCatalogue().GetRouteSettings().bus_velocity;
 
