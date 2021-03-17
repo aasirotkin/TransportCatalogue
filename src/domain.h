@@ -28,38 +28,6 @@ struct RouteSettings {
 
 namespace detail {
 
-template <typename VirtualStruct>
-using ConstIterator = typename std::unordered_map<std::string_view, const VirtualStruct*>::const_iterator;
-
-template <typename VirtualStruct>
-using VirtualPair = std::pair<ConstIterator<VirtualStruct>, bool>;
-
-template <typename VirtualStruct>
-class VirtualCatalogue {
-public:
-    VirtualCatalogue() = default;
-
-    VirtualPair<VirtualStruct> At(const std::string_view& name) const {
-        auto it = data_.find(name);
-        return std::make_pair(it, (it == data_.end() ? false : true));
-    }
-
-    VirtualPair<VirtualStruct> Push(const std::string_view& name, const VirtualStruct* data) {
-        return data_.emplace(name, data);
-    }
-
-    ConstIterator<VirtualStruct> begin() const {
-        return data_.begin();
-    }
-
-    ConstIterator<VirtualStruct> end() const {
-        return data_.end();
-    }
-
-private:
-    std::unordered_map<std::string_view, const VirtualStruct*> data_;
-};
-
 template <typename Pointer>
 using PointerPair = std::pair<const Pointer*, const Pointer*>;
 
@@ -125,8 +93,24 @@ public:
         return stops_.size();
     }
 
+    std::optional<const Stop*> At(std::string_view name) const {
+        if (name_to_stop_.count(name) > 0) {
+            return name_to_stop_.at(name);
+        }
+        return std::nullopt;
+    }
+
+    auto begin() const {
+        return name_to_stop_.begin();
+    }
+
+    auto end() const {
+        return name_to_stop_.end();
+    }
+
 private:
     std::deque<Stop> stops_ = {};
+    std::unordered_map<std::string_view, const Stop*> name_to_stop_ = {};
     std::unordered_map<const Stop*, BusesToStopNames> stop_buses_ = {};
     DistancesContainer distances_between_stops_ = {};
 };
@@ -172,7 +156,7 @@ public:
         return *this;
     }
 
-    Bus Build(const detail::VirtualCatalogue<stop_catalogue::Stop>& stops_catalogue, const stop_catalogue::DistancesContainer& stops_distances);
+    Bus Build(const stop_catalogue::Catalogue& stops_catalogue);
 
 private:
     double CalcRouteGeoLength(const std::deque<const stop_catalogue::Stop*>& route, RouteType route_type) const;
@@ -201,8 +185,28 @@ public:
         return settings_;
     }
 
+    std::optional<const Bus*> At(std::string_view name) const {
+        if (name_to_bus_.count(name) > 0) {
+            return name_to_bus_.at(name);
+        }
+        return std::nullopt;
+    }
+
+    auto begin() const {
+        return name_to_bus_.begin();
+    }
+
+    auto end() const {
+        return name_to_bus_.end();
+    }
+
+    size_t Size() const {
+        return buses_.size();
+    }
+
 private:
     std::deque<Bus> buses_ = {};
+    std::unordered_map<std::string_view, const Bus*> name_to_bus_ = {};
     RouteSettings settings_ = {};
 };
 

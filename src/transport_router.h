@@ -31,7 +31,7 @@ public:
 
 public:
     explicit TransportGraph(const TransportCatalogue& catalogue)
-        : graph::DirectedWeightedGraph<TransportTime>(2 * catalogue.GetStopsCatalogue().Size()) {
+        : graph::DirectedWeightedGraph<TransportTime>(2 * catalogue.GetStops().Size()) {
         InitVertexId(catalogue);
         CreateDiagonalEdges(catalogue);
         CreateGraph(catalogue);
@@ -72,8 +72,8 @@ private:
 
 template <typename ConstIterator>
 inline std::vector<TransportGraph::TransportGraphData> TransportGraph::CreateTransportGraphData(ranges::GraphBusRange<ConstIterator> bus_range, const TransportCatalogue& catalogue) {
-    const auto& stop_distances = catalogue.GetStopsCatalogue().GetDistances();
-    const double bus_velocity = catalogue.GetBusCatalogue().GetRouteSettings().bus_velocity;
+    const auto& stop_distances = catalogue.GetStops().GetDistances();
+    const double bus_velocity = catalogue.GetBuses().GetRouteSettings().bus_velocity;
 
     std::vector<TransportGraph::TransportGraphData> data;
     

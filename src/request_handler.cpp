@@ -37,13 +37,12 @@ void RequestHandler::AddDistance(std::string_view name_from, std::string_view na
 }
 
 void RequestHandler::AddBus(transport_catalogue::bus_catalogue::BusHelper&& bus_helper) {
-    catalogue_.AddBus(std::move(bus_helper.Build(catalogue_.GetStops(), catalogue_.GetStopsCatalogue().GetDistances())));
+    catalogue_.AddBus(std::move(bus_helper.Build(catalogue_.GetStops())));
 }
 
 void RequestHandler::RenderMap(MapRendererSettings&& settings) {
     MapRenderer render(
         std::move(settings),
-        catalogue_.GetStopsCatalogue(),
         catalogue_.GetStops(),
         catalogue_.GetBuses());
 
@@ -87,11 +86,11 @@ std::optional<RequestHandler::RouteData> RequestHandler::GetRoute(std::string_vi
         router_ = std::make_unique<TransportRouter>(*graph_);
     }
 
-    const auto& [stop_from, from_found] = catalogue_.GetStops().At(from);
-    const auto& [stop_to, to_found] = catalogue_.GetStops().At(to);
+    const auto& stop_from = catalogue_.GetStops().At(from);
+    const auto& stop_to = catalogue_.GetStops().At(to);
 
-    if (from_found && to_found) {
-        return router_->GetRoute(stop_from->second, stop_to->second);
+    if (stop_from && stop_to) {
+        return router_->GetRoute(*stop_from, *stop_to);
     } else {
         return std::nullopt;
     }
@@ -250,11 +249,10 @@ void RequestStatBusProcess(
     std::string_view name = request.at("name"s).AsString();
     int id = request.at("id"s).AsInt();
 
-    const auto [it, bus_has_been_found] = request_handler.GetBus(name);
+    const auto opt_bus = request_handler.GetBus(name);
 
-    const bus_catalogue::Bus* bus = (bus_has_been_found) ? (*it).second : nullptr;
-
-    if (bus_has_been_found) {
+    if (opt_bus) {
+        const transport_catalogue::bus_catalogue::Bus* bus = *opt_bus;
         double curvature = (std::abs(bus->route_geo_length) > 1e-6) ? bus->route_true_length / bus->route_geo_length : 0.0;
 
         builder

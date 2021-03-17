@@ -29,15 +29,14 @@ std::ostream& operator<<(std::ostream& out, const BusesToStopNames& buses) {
 }
 
 const Stop* Catalogue::Push(std::string&& name, std::string&& string_coord) {
-    stops_.push_back({ std::move(name), Coordinates::ParseFromStringView(string_coord) });
-    stop_buses_.insert({ &stops_.back(), {} });
-    return &stops_.back();
+    return Push(std::move(name), Coordinates::ParseFromStringView(string_coord));
 }
 
 const Stop* Catalogue::Push(std::string&& name, Coordinates&& coord) {
-    stops_.push_back({ std::move(name), std::move(coord) });
-    stop_buses_.insert({ &stops_.back(), {} });
-    return &stops_.back();
+    const Stop& emplaced_stop = stops_.emplace_back(Stop{ std::move(name), std::move(coord) });
+    name_to_stop_.emplace(emplaced_stop.name, &emplaced_stop);
+    stop_buses_.insert({ &emplaced_stop, {} });
+    return &emplaced_stop;
 }
 
 void Catalogue::PushBusToStop(const Stop* stop, const std::string_view& bus_name) {
@@ -64,20 +63,20 @@ namespace bus_catalogue {
 using namespace detail;
 using namespace stop_catalogue;
 
-Bus BusHelper::Build(const VirtualCatalogue<Stop>& stops_catalogue, const DistancesContainer& stops_distances) {
+Bus BusHelper::Build(const stop_catalogue::Catalogue& stops_catalogue) {
     Bus bus;
 
     for (const std::string_view& stop_name : stop_names_) {
-        auto [it, res] = stops_catalogue.At(stop_name);
-        if (res) {
-            bus.route.push_back((*it).second);
+        auto stop = stops_catalogue.At(stop_name);
+        if (stop) {
+            bus.route.push_back(*stop);
         }
     }
 
     bus.name = std::move(name_);
     bus.route_type = route_type_;
     bus.route_geo_length = CalcRouteGeoLength(bus.route, route_type_);
-    bus.route_true_length = CalcRouteTrueLength(bus.route, stops_distances, route_type_);
+    bus.route_true_length = CalcRouteTrueLength(bus.route, stops_catalogue.GetDistances(), route_type_);
     bus.stops_on_route = bus.route.size();
     bus.route_settings = std::move(settings_);
 
@@ -160,8 +159,9 @@ std::ostream& operator<<(std::ostream& out, const Bus& bus) {
 }
 
 const Bus* Catalogue::Push(Bus&& bus) {
-    buses_.emplace_back(bus);
-    return &buses_.back();
+    const Bus& emplaced_bus = buses_.emplace_back(bus);
+    name_to_bus_.emplace(emplaced_bus.name, &emplaced_bus);
+    return &emplaced_bus;
 }
 
 } // namespace bus_catalogue

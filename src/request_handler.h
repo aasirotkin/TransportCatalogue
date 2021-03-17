@@ -48,7 +48,7 @@ public:
 
     // Метод проверяет существует ли остановка с заданным именем
     bool DoesStopExist(std::string_view name) const {
-        return catalogue_.GetStops().At(name).second;
+        return catalogue_.GetStops().At(name) != std::nullopt;
     }
 
     // Метод возвращает массив автобусов, проходящих через заданную остановку
@@ -57,8 +57,8 @@ public:
     }
 
     // Метод возвращает заданный маршрут
-    const transport_catalogue::detail::VirtualPair<transport_catalogue::bus_catalogue::Bus> GetBus(std::string_view name) const {
-        return catalogue_.GetBus(name);
+    const std::optional<const transport_catalogue::bus_catalogue::Bus*> GetBus(std::string_view name) const {
+        return catalogue_.GetBuses().At(name);
     }
 
     // Метод возвращает инициализированную ранее переменную с картой маршрутов в svg формате

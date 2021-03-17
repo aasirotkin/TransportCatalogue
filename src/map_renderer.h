@@ -94,19 +94,17 @@ class MapRenderer : public svg::Document, private MapRendererCreator {
 public:
     MapRenderer(
         MapRendererSettings&& render_settings,
-        const transport_catalogue::stop_catalogue::Catalogue& stop_catalogue,
-        const transport_catalogue::detail::VirtualCatalogue<transport_catalogue::stop_catalogue::Stop>& stops,
-        const transport_catalogue::detail::VirtualCatalogue<transport_catalogue::bus_catalogue::Bus>& buses);
+        const transport_catalogue::stop_catalogue::Catalogue& stops,
+        const transport_catalogue::bus_catalogue::Catalogue& buses);
 
 private:
     // инициализации массива остановок, через которые проходит хотя бы один маршрут
     void InitNotEmptyStops(
-        const transport_catalogue::stop_catalogue::Catalogue& catalogue,
-        const transport_catalogue::detail::VirtualCatalogue<transport_catalogue::stop_catalogue::Stop>& stops);
+        const transport_catalogue::stop_catalogue::Catalogue& stops);
 
     // инициализации массива автобусов, которые имеют хотя бы одну остановку
     void InitNotEmptyBuses(
-        const transport_catalogue::detail::VirtualCatalogue<transport_catalogue::bus_catalogue::Bus>& buses);
+        const transport_catalogue::bus_catalogue::Catalogue& buses);
 
     // вычисление значения коэффициета масштабирования
     void CalculateZoomCoef();

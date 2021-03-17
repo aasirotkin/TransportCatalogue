@@ -14,7 +14,7 @@ void TransportGraph::InitVertexId(const TransportCatalogue& catalogue) {
 }
 
 void TransportGraph::CreateDiagonalEdges(const TransportCatalogue& catalogue) {
-    const double time = static_cast<double>(catalogue.GetBusCatalogue().GetRouteSettings().bus_wait_time);
+    const double time = static_cast<double>(catalogue.GetBuses().GetRouteSettings().bus_wait_time);
 
     for (const auto& [stop_ptr, vertex_id] : stop_to_vertex_id_) {
         graph::EdgeId id = AddEdge({ vertex_id.transfer_id, vertex_id.id, time });

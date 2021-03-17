@@ -84,11 +84,10 @@ svg::Circle MapRendererCreator::CreateCircle(const svg::Point& center) {
 
 MapRenderer::MapRenderer(
     MapRendererSettings&& render_settings,
-    const transport_catalogue::stop_catalogue::Catalogue& stop_catalogue,
-    const transport_catalogue::detail::VirtualCatalogue<transport_catalogue::stop_catalogue::Stop>& stops,
-    const transport_catalogue::detail::VirtualCatalogue<transport_catalogue::bus_catalogue::Bus>& buses)
+    const transport_catalogue::stop_catalogue::Catalogue& stops,
+    const transport_catalogue::bus_catalogue::Catalogue& buses)
     : MapRendererCreator(std::move(render_settings)) {
-    InitNotEmptyStops(stop_catalogue, stops);
+    InitNotEmptyStops(stops);
     InitNotEmptyBuses(buses);
     CalculateZoomCoef();
     CalculateStopZoomedCoords();
@@ -99,10 +98,9 @@ MapRenderer::MapRenderer(
 }
 
 void MapRenderer::InitNotEmptyStops(
-    const transport_catalogue::stop_catalogue::Catalogue& catalogue,
-    const transport_catalogue::detail::VirtualCatalogue<transport_catalogue::stop_catalogue::Stop>& stops) {
+    const transport_catalogue::stop_catalogue::Catalogue& stops) {
     for (const auto& [name, stop] : stops) {
-        if (!catalogue.IsEmpty(stop)) {
+        if (!stops.IsEmpty(stop)) {
             stop_point_.emplace(stop, svg::Point{});
             stops_.emplace(name, stop);
         }
@@ -110,7 +108,7 @@ void MapRenderer::InitNotEmptyStops(
 }
 
 void MapRenderer::InitNotEmptyBuses(
-    const transport_catalogue::detail::VirtualCatalogue<transport_catalogue::bus_catalogue::Bus>& buses) {
+    const transport_catalogue::bus_catalogue::Catalogue& buses) {
     for (const auto& [name, bus] : buses) {
         if (bus->stops_on_route > 0) {
             buses_.emplace(name, bus);
