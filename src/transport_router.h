@@ -26,7 +26,7 @@ public:
     
     struct VertexIdLoop {
         graph::VertexId id{};
-        graph::VertexId exit_id{};
+        graph::VertexId transfer_id{};
     };
 
 public:
@@ -61,7 +61,7 @@ private:
             : bus_ptr(bus)
             , route_begin(begin)
             , route_end(end) {
-            }
+        }
     };
 
     template <typename RouteContainer>
@@ -107,14 +107,14 @@ inline std::vector<TransportGraph::TransportGraphData> TransportGraph::CreateTra
 
     std::vector<TransportGraph::TransportGraphData> data;
     
-    for (auto it_from = bus_range.route_begin; it_from != bus_range.route_begin; ++it_from) {
+    for (auto it_from = bus_range.route_begin; it_from != bus_range.route_end; ++it_from) {
         const stop_catalogue::Stop* stop_from = *it_from;
         const stop_catalogue::Stop* previous_stop = stop_from;
 
         double full_distance = 0.0;
         int stop_count = 0;
 
-        for (auto it_to = it_from + 1; it_to != bus_range.route_begin; ++it_to) {
+        for (auto it_to = it_from + 1; it_to != bus_range.route_end; ++it_to) {
             const stop_catalogue::Stop* stop_to = *it_to;
 
             if (stop_from != stop_to) {
