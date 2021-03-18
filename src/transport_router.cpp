@@ -45,9 +45,7 @@ void TransportGraph::CreateEdges(EdgesData& edges, std::vector<TransportGraphDat
 
         if (edges.count(from) > 0 && edges.at(from).count(to) > 0) {
             if (edges.at(from).at(to).time > data_i.time) {
-                edges.at(from).at(to).bus = data_i.bus;
-                edges.at(from).at(to).time = data_i.time;
-                edges.at(from).at(to).stop_count = data_i.stop_count;
+                edges.at(from).at(to) = std::move(data_i);
             }
         }
         else {
@@ -57,8 +55,8 @@ void TransportGraph::CreateEdges(EdgesData& edges, std::vector<TransportGraphDat
 }
 
 void TransportGraph::AddEdgesToGraph(EdgesData& edges) {
-    for (const auto& [from, to_map] : edges) {
-        for (const auto& [to, data_i] : to_map) {
+    for (auto& [from, to_map] : edges) {
+        for (auto& [to, data_i] : to_map) {
             graph::EdgeId id = AddEdge({ from, to, data_i.time });
             edge_id_to_graph_data_.emplace(id, std::move(data_i));
         }

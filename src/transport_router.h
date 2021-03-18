@@ -116,7 +116,7 @@ public:
         , transport_graph_(transport_graph) {
     }
 
-    std::optional<TransportRouterData> GetRoute(const stop_catalogue::Stop* from, const stop_catalogue::Stop* to) const;
+    std::optional<TransportRouter::TransportRouterData> GetRoute(const stop_catalogue::Stop* from, const stop_catalogue::Stop* to) const;
 
 private:
     const TransportGraph transport_graph_;
