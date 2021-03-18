@@ -23,7 +23,7 @@ public:
         int stop_count;
         double time;
     };
-    
+
     struct VertexIdLoop {
         graph::VertexId id{};
         graph::VertexId transfer_id{};
@@ -76,7 +76,7 @@ inline std::vector<TransportGraph::TransportGraphData> TransportGraph::CreateTra
     const double bus_velocity = catalogue.GetBuses().GetRouteSettings().bus_velocity;
 
     std::vector<TransportGraph::TransportGraphData> data;
-    
+
     for (auto it_from = bus_range.route_begin; it_from != bus_range.route_end; ++it_from) {
         const stop_catalogue::Stop* stop_from = *it_from;
         const stop_catalogue::Stop* previous_stop = stop_from;

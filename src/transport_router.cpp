@@ -18,7 +18,7 @@ void TransportGraph::CreateDiagonalEdges(const TransportCatalogue& catalogue) {
 
     for (const auto& [stop_ptr, vertex_id] : stop_to_vertex_id_) {
         graph::EdgeId id = AddEdge({ vertex_id.transfer_id, vertex_id.id, time });
-       
+
         edge_id_to_graph_data_.insert({ id, { stop_ptr, stop_ptr, nullptr, 0, time } });
     }
 }
@@ -27,11 +27,11 @@ void TransportGraph::CreateGraph(const TransportCatalogue& catalogue) {
     std::unordered_map<graph::VertexId, std::unordered_map<graph::VertexId, TransportGraphData>> edges;
 
     for (const auto& [bus_name, bus_ptr] : catalogue.GetBuses()) {
-        
-        CreateEdges(edges, CreateTransportGraphData(ranges::BusRangeDirect(bus_ptr, bus_ptr->route), catalogue));
+
+        CreateEdges(edges, CreateTransportGraphData(ranges::BusRangeDirect(bus_ptr), catalogue));
 
         if (bus_ptr->route_type == RouteType::BackAndForth) {
-            CreateEdges(edges, CreateTransportGraphData(ranges::BusRangeReversed(bus_ptr, bus_ptr->route), catalogue));
+            CreateEdges(edges, CreateTransportGraphData(ranges::BusRangeReversed(bus_ptr), catalogue));
         }
     }
 
@@ -42,7 +42,7 @@ void TransportGraph::CreateEdges(EdgesData& edges, std::vector<TransportGraphDat
     for (TransportGraphData& data_i : data) {
         graph::VertexId from = stop_to_vertex_id_.at(data_i.from).id;
         graph::VertexId to = stop_to_vertex_id_.at(data_i.to).transfer_id;
-        
+
         if (edges.count(from) > 0 && edges.at(from).count(to) > 0) {
             if (edges.at(from).at(to).time > data_i.time) {
                 edges.at(from).at(to).bus = data_i.bus;

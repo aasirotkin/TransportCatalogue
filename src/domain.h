@@ -4,6 +4,7 @@
 
 #include <deque>
 #include <functional>
+#include <optional>
 #include <set>
 #include <string_view>
 #include <unordered_map>

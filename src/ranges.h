@@ -14,7 +14,7 @@ namespace ranges {
     public:
         using ValueType = typename std::iterator_traits<It>::value_type;
 
-        Range(const It& begin, const It& end)
+        Range(It begin, It end)
             : begin_(begin)
             , end_(end) {
         }
@@ -28,12 +28,12 @@ namespace ranges {
         }
 
     private:
-        const It& begin_;
-        const It& end_;
+        It begin_;
+        It end_;
     };
 
     template <typename C>
-    auto AsRange(const C& container) {
+    inline auto AsRange(const C& container) {
         return Range{ container.begin(), container.end() };
     }
 
@@ -42,30 +42,28 @@ namespace ranges {
     template <typename ConstIterator>
     struct GraphBusRange {
         const transport_catalogue::bus_catalogue::Bus* bus_ptr;
-        const ConstIterator& route_begin;
-        const ConstIterator& route_end;
+        ConstIterator route_begin;
+        ConstIterator route_end;
 
         GraphBusRange(
             const transport_catalogue::bus_catalogue::Bus* bus,
-            const ConstIterator& begin,
-            const ConstIterator& end)
+            ConstIterator begin,
+            ConstIterator end)
             : bus_ptr(bus)
             , route_begin(begin)
             , route_end(end) {
         }
     };
 
-    template <typename RouteContainer>
-    auto BusRangeDirect(const transport_catalogue::bus_catalogue::Bus* bus, const RouteContainer& route) {
+    inline auto BusRangeDirect(const transport_catalogue::bus_catalogue::Bus* bus) {
         return GraphBusRange {
-            bus, route.begin(), route.end()
+            bus, bus->route.begin(), bus->route.end()
         };
     }
 
-    template <typename RouteContainer>
-    auto BusRangeReversed(const transport_catalogue::bus_catalogue::Bus* bus, const RouteContainer& route) {
+    inline auto BusRangeReversed(const transport_catalogue::bus_catalogue::Bus* bus) {
         return GraphBusRange {
-            bus, route.rbegin(), route.rend()
+            bus, bus->route.rbegin(), bus->route.rend()
         };
     }
 
