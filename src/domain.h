@@ -29,6 +29,41 @@ struct RouteSettings {
 
 namespace detail {
 
+template <typename Type>
+class CatalogueTemplate {
+public:
+    CatalogueTemplate() = default;
+
+    const Type* Push(Type&& data) {
+        const Type& emplaced = data_.emplace_back(data);
+        name_to_data_.emplace(emplaced.name, &emplaced);
+        return &emplaced;
+    }
+
+    size_t Size() const {
+        return data_.size();
+    }
+
+    std::optional<const Type*> At(std::string_view name) const {
+        if (name_to_data_.count(name) > 0) {
+            return name_to_data_.at(name);
+        }
+        return std::nullopt;
+    }
+
+    auto begin() const {
+        return name_to_data_.begin();
+    }
+
+    auto end() const {
+        return name_to_data_.end();
+    }
+
+private:
+    std::deque<Type> data_ = {};
+    std::unordered_map<std::string_view, const Type*> name_to_data_ = {};
+};
+
 template <typename Pointer>
 using PointerPair = std::pair<const Pointer*, const Pointer*>;
 
@@ -66,7 +101,7 @@ using DistancesContainer = std::unordered_map<detail::PointerPair<Stop>, double,
 
 std::ostream& operator<< (std::ostream& out, const BusesToStopNames& buses);
 
-class Catalogue {
+class Catalogue : public detail::CatalogueTemplate<Stop> {
 public:
     Catalogue() = default;
 
@@ -90,28 +125,7 @@ public:
         return stop_buses_.count(stop) == 0 || stop_buses_.at(stop).empty();
     }
 
-    size_t Size() const {
-        return stops_.size();
-    }
-
-    std::optional<const Stop*> At(std::string_view name) const {
-        if (name_to_stop_.count(name) > 0) {
-            return name_to_stop_.at(name);
-        }
-        return std::nullopt;
-    }
-
-    auto begin() const {
-        return name_to_stop_.begin();
-    }
-
-    auto end() const {
-        return name_to_stop_.end();
-    }
-
 private:
-    std::deque<Stop> stops_ = {};
-    std::unordered_map<std::string_view, const Stop*> name_to_stop_ = {};
     std::unordered_map<const Stop*, BusesToStopNames> stop_buses_ = {};
     DistancesContainer distances_between_stops_ = {};
 };
@@ -172,11 +186,9 @@ private:
 
 std::ostream& operator<< (std::ostream& out, const Bus& bus);
 
-class Catalogue {
+class Catalogue : public detail::CatalogueTemplate<Bus> {
 public:
     Catalogue() = default;
-
-    const Bus* Push(Bus&& bus);
 
     void SetRouteSettings(RouteSettings&& settings) {
         settings_ = std::move(settings);
@@ -186,28 +198,7 @@ public:
         return settings_;
     }
 
-    std::optional<const Bus*> At(std::string_view name) const {
-        if (name_to_bus_.count(name) > 0) {
-            return name_to_bus_.at(name);
-        }
-        return std::nullopt;
-    }
-
-    auto begin() const {
-        return name_to_bus_.begin();
-    }
-
-    auto end() const {
-        return name_to_bus_.end();
-    }
-
-    size_t Size() const {
-        return buses_.size();
-    }
-
 private:
-    std::deque<Bus> buses_ = {};
-    std::unordered_map<std::string_view, const Bus*> name_to_bus_ = {};
     RouteSettings settings_ = {};
 };
 

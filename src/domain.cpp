@@ -33,10 +33,9 @@ const Stop* Catalogue::Push(std::string&& name, std::string&& string_coord) {
 }
 
 const Stop* Catalogue::Push(std::string&& name, Coordinates&& coord) {
-    const Stop& emplaced_stop = stops_.emplace_back(Stop{ std::move(name), std::move(coord) });
-    name_to_stop_.emplace(emplaced_stop.name, &emplaced_stop);
-    stop_buses_.insert({ &emplaced_stop, {} });
-    return &emplaced_stop;
+    const Stop* stop = CatalogueTemplate::Push(Stop{ std::move(name), std::move(coord) });
+    stop_buses_.insert({ stop, {} });
+    return stop;
 }
 
 void Catalogue::PushBusToStop(const Stop* stop, const std::string_view& bus_name) {
@@ -156,12 +155,6 @@ std::ostream& operator<<(std::ostream& out, const Bus& bus) {
     out << std::setprecision(6) << curvature << str_space << str_curvature;
 
     return out;
-}
-
-const Bus* Catalogue::Push(Bus&& bus) {
-    const Bus& emplaced_bus = buses_.emplace_back(bus);
-    name_to_bus_.emplace(emplaced_bus.name, &emplaced_bus);
-    return &emplaced_bus;
 }
 
 } // namespace bus_catalogue

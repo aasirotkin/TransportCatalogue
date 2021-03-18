@@ -86,8 +86,8 @@ std::optional<RequestHandler::RouteData> RequestHandler::GetRoute(std::string_vi
         router_ = std::make_unique<TransportRouter>(*graph_);
     }
 
-    const auto& stop_from = catalogue_.GetStops().At(from);
-    const auto& stop_to = catalogue_.GetStops().At(to);
+    auto stop_from = catalogue_.GetStops().At(from);
+    auto stop_to = catalogue_.GetStops().At(to);
 
     if (stop_from && stop_to) {
         return router_->GetRoute(*stop_from, *stop_to);
