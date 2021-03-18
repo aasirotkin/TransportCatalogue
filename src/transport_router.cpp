@@ -28,10 +28,10 @@ void TransportGraph::CreateGraph(const TransportCatalogue& catalogue) {
 
     for (const auto& [bus_name, bus_ptr] : catalogue.GetBuses()) {
 
-        CreateEdges(edges, CreateTransportGraphData(ranges::BusRangeDirect(bus_ptr), catalogue));
+        CreateEdges(edges, CreateTransportGraphData(ranges::AsBusRangeDirect(bus_ptr), catalogue));
 
         if (bus_ptr->route_type == RouteType::BackAndForth) {
-            CreateEdges(edges, CreateTransportGraphData(ranges::BusRangeReversed(bus_ptr), catalogue));
+            CreateEdges(edges, CreateTransportGraphData(ranges::AsBusRangeReversed(bus_ptr), catalogue));
         }
     }
 

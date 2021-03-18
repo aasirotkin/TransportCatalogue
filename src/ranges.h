@@ -9,14 +9,15 @@
 
 namespace ranges {
 
-    template <typename It>
+    template <typename It, typename Ptr = void>
     class Range {
     public:
         using ValueType = typename std::iterator_traits<It>::value_type;
 
-        Range(It begin, It end)
+        Range(It begin, It end, const Ptr* ptr = nullptr)
             : begin_(begin)
-            , end_(end) {
+            , end_(end)
+            , ptr_(ptr) {
         }
 
         const It& begin() const {
@@ -27,44 +28,37 @@ namespace ranges {
             return end_;
         }
 
+        const Ptr* GetPtr() const {
+            return ptr_;
+        }
+
     private:
         It begin_;
         It end_;
+        const Ptr* ptr_ = nullptr;
     };
 
-    template <typename C>
-    inline auto AsRange(const C& container) {
-        return Range{ container.begin(), container.end() };
+    template <typename C, typename Ptr = void>
+    inline auto AsRange(const C& container, const Ptr* ptr = nullptr) {
+        return Range{ container.begin(), container.end(), ptr };
     }
 
 // ----------------------------------------------------------------------------
 
-    template <typename ConstIterator>
-    struct GraphBusRange {
-        const transport_catalogue::bus_catalogue::Bus* bus_ptr;
-        ConstIterator route_begin;
-        ConstIterator route_end;
-
-        GraphBusRange(
-            const transport_catalogue::bus_catalogue::Bus* bus,
-            ConstIterator begin,
-            ConstIterator end)
-            : bus_ptr(bus)
-            , route_begin(begin)
-            , route_end(end) {
+    template <typename It>
+    class BusRange : public Range<It, transport_catalogue::bus_catalogue::Bus> {
+    public:
+        explicit BusRange(It begin, It end, const transport_catalogue::bus_catalogue::Bus* ptr)
+            : Range<It, transport_catalogue::bus_catalogue::Bus>(begin, end, ptr) {
         }
     };
 
-    inline auto BusRangeDirect(const transport_catalogue::bus_catalogue::Bus* bus) {
-        return GraphBusRange {
-            bus, bus->route.begin(), bus->route.end()
-        };
+    inline auto AsBusRangeDirect(const transport_catalogue::bus_catalogue::Bus* bus) {
+        return BusRange{ bus->route.begin(), bus->route.end(), bus };
     }
 
-    inline auto BusRangeReversed(const transport_catalogue::bus_catalogue::Bus* bus) {
-        return GraphBusRange {
-            bus, bus->route.rbegin(), bus->route.rend()
-        };
+    inline auto AsBusRangeReversed(const transport_catalogue::bus_catalogue::Bus* bus) {
+        return BusRange{ bus->route.rbegin(), bus->route.rend(), bus };
     }
 
 }  // namespace ranges

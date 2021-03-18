@@ -57,8 +57,8 @@ private:
 
     void CreateGraph(const TransportCatalogue& catalogue);
 
-    template <typename ConstIterator>
-    std::vector<TransportGraphData> CreateTransportGraphData(ranges::GraphBusRange<ConstIterator> bus_range, const TransportCatalogue& catalogue);
+    template <typename It>
+    std::vector<TransportGraphData> CreateTransportGraphData(ranges::BusRange<It> bus_range, const TransportCatalogue& catalogue);
 
     void CreateEdges(EdgesData& edges, std::vector<TransportGraphData>&& data);
 
@@ -70,28 +70,28 @@ private:
     std::unordered_map<const stop_catalogue::Stop*, VertexIdLoop> stop_to_vertex_id_;
 };
 
-template <typename ConstIterator>
-inline std::vector<TransportGraph::TransportGraphData> TransportGraph::CreateTransportGraphData(ranges::GraphBusRange<ConstIterator> bus_range, const TransportCatalogue& catalogue) {
+template <typename It>
+inline std::vector<TransportGraph::TransportGraphData> TransportGraph::CreateTransportGraphData(ranges::BusRange<It> bus_range, const TransportCatalogue& catalogue) {
     const auto& stop_distances = catalogue.GetStops().GetDistances();
     const double bus_velocity = catalogue.GetBuses().GetRouteSettings().bus_velocity;
 
     std::vector<TransportGraph::TransportGraphData> data;
 
-    for (auto it_from = bus_range.route_begin; it_from != bus_range.route_end; ++it_from) {
+    for (auto it_from = bus_range.begin(); it_from != bus_range.end(); ++it_from) {
         const stop_catalogue::Stop* stop_from = *it_from;
         const stop_catalogue::Stop* previous_stop = stop_from;
 
         double full_distance = 0.0;
         int stop_count = 0;
 
-        for (auto it_to = it_from + 1; it_to != bus_range.route_end; ++it_to) {
+        for (auto it_to = it_from + 1; it_to != bus_range.end(); ++it_to) {
             const stop_catalogue::Stop* stop_to = *it_to;
 
             if (stop_from != stop_to) {
                 full_distance += stop_distances.at({ previous_stop, stop_to });
                 stop_count++;
 
-                data.push_back({ stop_from, stop_to, bus_range.bus_ptr, stop_count, (full_distance / bus_velocity) * TO_MINUTES });
+                data.push_back({ stop_from, stop_to, bus_range.GetPtr(), stop_count, (full_distance / bus_velocity) * TO_MINUTES });
             }
 
             previous_stop = stop_to;
