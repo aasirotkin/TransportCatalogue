@@ -22,6 +22,22 @@ namespace request_handler {
 using namespace transport_catalogue;
 using namespace map_renderer;
 
+ProgrammType ParseProgrammType(int argc, const char** argv) {
+    using namespace std::literals;
+
+    if (argc == 2) {
+        std::string argument = argv[1];
+        if (argument == "make_base"sv) {
+            return ProgrammType::MAKE_BASE;
+        }
+        else if (argument == "process_requests"sv) {
+            return ProgrammType::PROCESS_REQUEST;
+        }
+    }
+
+    return ProgrammType::UNKNOWN;
+}
+
 // ---------- RequestHandler --------------------------------------------------
 
 RequestHandler::RequestHandler(transport_catalogue::TransportCatalogue& catalogue)
@@ -381,6 +397,20 @@ void RequestStatProcess(
 
 // ----------------------------------------------------------------------------
 
+namespace detail_proto {
+
+void MakeBase() {
+
+}
+
+void ProcessRequests() {
+
+}
+
+} // namespace detail_proto
+
+// ----------------------------------------------------------------------------
+
 void RequestHandlerProcess(std::istream& input, std::ostream& output) {
     try {
         using namespace std::literals;
@@ -455,6 +485,19 @@ void RequestHandlerProcess(std::istream& input, std::ostream& output) {
     catch (...) {
         output << std::string("Unknown error has occurred") << std::endl;
     }
+}
+
+// ----------------------------------------------------------------------------
+
+void RequestHandlerMakeBaseProcess(std::istream& input) {
+    (void)input;
+}
+
+// ----------------------------------------------------------------------------
+
+void RequestHandlerProcessRequestProcess(std::istream& input, std::ostream& output) {
+    (void)input;
+    (void)output;
 }
 
 } // namespace request_handler

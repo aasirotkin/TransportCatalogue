@@ -18,6 +18,14 @@
 
 namespace request_handler {
 
+enum class ProgrammType {
+    MAKE_BASE,
+    PROCESS_REQUEST,
+    UNKNOWN
+};
+
+ProgrammType ParseProgrammType(int argc, const char** argv);
+
 // ---------- RequestHandler --------------------------------------------------
 
 class RequestHandler {
@@ -137,5 +145,9 @@ void RequestStatProcess(
 // ----------------------------------------------------------------------------
 
 void RequestHandlerProcess(std::istream& input, std::ostream& output);
+
+void RequestHandlerMakeBaseProcess(std::istream& input);
+
+void RequestHandlerProcessRequestProcess(std::istream& input, std::ostream& output);
 
 } // namespace request_handler

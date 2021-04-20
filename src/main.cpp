@@ -1,36 +1,35 @@
 #include "request_handler.h"
 
+#ifdef _SIROTKIN_HOME_TESTS_
+
+#include "test_example_functions.h"
+
+#endif // _SIROTKIN_HOME_TESTS_
+
 #include <iostream>
-#include <string>
 #include <string_view>
 
 using namespace std::literals;
 
-void MakeBase() {
-
-}
-
-void ProcessRequests() {
-
-}
-
 int main(int argc, const char** argv) {
-    if (argc != 2) {
-        std::cerr << "Usage: "sv << argv[0] << " <argument>"sv << std::endl;
-        return 1;
-    }
+    request_handler::ProgrammType type = request_handler::ParseProgrammType(argc, argv);
 
-    std::string argument = argv[1];
-    if (argument == "make_base"sv) {
-        MakeBase();
+    if (type == request_handler::ProgrammType::MAKE_BASE) {
+#ifdef _SIROTKIN_HOME_TESTS_
+        TestTransportCatalogueMakeBase();
+#else
+        request_handler::RequestHandlerMakeBaseProcess(std::cin);
+#endif
     }
-    else if (argument == "process_requests"sv) {
-        ProcessRequests();
+    else if (type == request_handler::ProgrammType::PROCESS_REQUEST) {
+#ifdef _SIROTKIN_HOME_TESTS_
+        TestTransportCatalogueProcessRequest();
+#else
+        request_handler::RequestHandlerProcessRequestProcess(std::cin, std::cout);
+#endif
     }
     else {
-        std::cerr << "Usage: Argument can't be "sv << argument << std::endl;
-        std::cerr << "Usage: Argument can only be 'make_base' or 'process_requests'"sv << std::endl;
-        return 2;
+        return 1;
     }
 
     return 0;

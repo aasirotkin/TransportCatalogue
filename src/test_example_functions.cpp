@@ -3,7 +3,6 @@
 #include "geo.h"
 #include "json_reader.h"
 #include "log_duration.h"
-#include "request_handler.h"
 
 #include <algorithm>
 #include <chrono>
@@ -571,4 +570,10 @@ void TestTransportCatalogue() {
     RUN_TEST(TestFromFileRouteEditionRelease);
     RUN_TEST(TestRandomValues);
 #endif
+}
+
+void TestTransportCatalogueMakeBase() {
+}
+
+void TestTransportCatalogueProcessRequest() {
 }
