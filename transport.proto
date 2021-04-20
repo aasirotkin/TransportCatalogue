@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package transport_proto;
+
+message Stop {
+    string name = 1;
+}
+
+message Bus {
+    string name = 1;
+}
+
