@@ -24,7 +24,13 @@ add_executable(${PROJECT_NAME} ${SRC_LIST})
 target_link_libraries(${PROJECT_NAME} -ltbb -lpthread)
 
 # CXXFLAGS - This is a CMake Environment Variable
-set (CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic")
+set (CMAKE_CXX_FLAGS "-Wall")
+
+if (NOT CMAKE_SYSTEM_NAME MATCHES ".*WIN.*")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra -Wpedantic")
+endif()
+message(STATUS "${CMAKE_SYSTEM_NAME} operation system")
+message(STATUS "CMAKE_CXX_FLAGS is ${CMAKE_CXX_FLAGS}")
 
 # Adds -D define flags to the compilation of source files
 add_definitions(-D_DEBUG -D_SIROTKIN_HOME_TESTS_)
