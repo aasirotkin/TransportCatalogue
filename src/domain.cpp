@@ -33,7 +33,7 @@ const Stop* Catalogue::Push(std::string&& name, std::string&& string_coord) {
 }
 
 const Stop* Catalogue::Push(std::string&& name, Coordinates&& coord) {
-    const Stop* stop = CatalogueTemplate::Push(Stop{ std::move(name), std::move(coord) });
+    const Stop* stop = CatalogueTemplate::Push(StopHelper(std::move(name), std::move(coord)));
     stop_buses_.insert({ stop, {} });
     return stop;
 }

@@ -2,11 +2,60 @@ syntax = "proto3";
 
 package transport_proto;
 
+message Coordinates {
+    double x = 1;
+    double y = 2;
+}
+
 message Stop {
-    string name = 1;
+    uint64 id = 1;
+    string name = 2;
+    Coordinates coord = 3;
 }
 
 message Bus {
     string name = 1;
+    repeated uint64 route = 2;
+    uint32 type = 3;
+    double route_geo_length = 4;
+    double route_true_length = 5;
+    uint32 stops_on_route = 6;
+    uint32 unique_stops = 7;
+}
+
+message RouteSettings {
+    double bus_velocity = 1;
+    uint32 bus_waiting_time = 2;
+}
+
+message Point {
+    double x = 1;
+    double y = 2;
+}
+
+message Color {
+    string name = 1;
+}
+
+message RenderSettings {
+    double width = 1;
+    double height = 2;
+    double padding = 3;
+    double line_width = 4;
+    double stop_radius = 5;
+    uint32 bus_label_font_size = 6;
+    Point bus_label_offset = 7;
+    uint32 stop_label_font_size = 8;
+    Point stop_label_offset = 9;
+    Color underlayer_color = 10;
+    double underlayer_width = 11;
+    repeated Color color_palette = 12;
+}
+
+message TransportCatalogue {
+    repeated Stop stop = 1;
+    repeated Bus bus = 2;
+    RouteSettings route_settings = 3;
+    RenderSettings render_setting = 4;
 }
 

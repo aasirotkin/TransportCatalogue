@@ -84,6 +84,7 @@ private:
 namespace stop_catalogue {
 
 struct Stop {
+    size_t id;
     std::string name;
     Coordinates coord;
 
@@ -95,6 +96,11 @@ struct Stop {
         return !(*this == other);
     }
 };
+
+inline Stop StopHelper(std::string&& name, Coordinates&& coord) {
+    static size_t id_auto_increment = 0;
+    return { id_auto_increment++, std::move(name), std::move(coord) };
+}
 
 using BusesToStopNames = std::set<std::string_view>;
 using DistancesContainer = std::unordered_map<detail::PointerPair<Stop>, double, detail::PointerPairHasher<Stop>>;
