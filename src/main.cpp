@@ -14,23 +14,36 @@ using namespace std::literals;
 int main(int argc, const char** argv) {
     request_handler::ProgrammType type = request_handler::ParseProgrammType(argc, argv);
 
-    if (type == request_handler::ProgrammType::MAKE_BASE) {
 #ifdef _SIROTKIN_HOME_TESTS_
-        TestTransportCatalogueMakeBase();
-#else
-        request_handler::RequestHandlerMakeBaseProcess(std::cin);
-#endif
+
+    if (argc != 3) {
+        return 2;
     }
-    else if (type == request_handler::ProgrammType::PROCESS_REQUEST) {
-#ifdef _SIROTKIN_HOME_TESTS_
-        TestTransportCatalogueProcessRequest();
-#else
-        request_handler::RequestHandlerProcessRequestProcess(std::cin, std::cout);
-#endif
+    std::string_view file_name(argv[2]);
+
+    if (type == request_handler::ProgrammType::MAKE_BASE) {
+        TestTransportCatalogueMakeBase(file_name);
+    }
+    else if (type == request_handler::ProgrammType::PROCESS_REQUESTS) {
+        TestTransportCatalogueProcessRequests(file_name);
     }
     else {
         return 1;
     }
+
+#else
+
+    if (type == request_handler::ProgrammType::MAKE_BASE) {
+        request_handler::RequestHandlerMakeBaseProcess(std::cin);
+    }
+    else if (type == request_handler::ProgrammType::PROCESS_REQUESTS) {
+        request_handler::RequestHandlerProcessRequestProcess(std::cin, std::cout);
+    }
+    else {
+        return 1;
+    }
+
+#endif
 
     return 0;
 }

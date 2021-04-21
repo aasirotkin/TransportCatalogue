@@ -20,7 +20,7 @@ namespace request_handler {
 
 enum class ProgrammType {
     MAKE_BASE,
-    PROCESS_REQUEST,
+    PROCESS_REQUESTS,
     UNKNOWN
 };
 

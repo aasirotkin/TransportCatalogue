@@ -204,12 +204,19 @@ static const std::filesystem::path file_path = ".."_p / "tests"_p;
 static const std::filesystem::path file_path_in = file_path / "input"_p;
 static const std::filesystem::path file_path_out = file_path / "output"_p;
 
+static const std::filesystem::path file_path_in_make_base = file_path / "make_base"_p;
+static const std::filesystem::path file_path_in_process_requests = file_path / "process_requests"_p;
+static const std::filesystem::path file_path_out_process_requests = file_path / "output_process_requests"_p;
+
 void LoadFile(std::stringstream& in, const std::filesystem::path& path, const std::string& file_name) {
     std::ifstream file(path / std::filesystem::path(file_name));
     in << file.rdbuf();
 }
 
 #define LOAD_FILE(in, file_name) (LoadFile(in, file_path_in, file_name))
+
+#define LOAD_FILE_MAKE_BASE(in, file_name) (LoadFile(in, file_path_in_make_base, file_name))
+#define LOAD_FILE_PROCESS_REQUESTS(in, file_name) (LoadFile(in, file_path_in_process_requests, file_name))
 
 void SaveFile(const std::filesystem::path& path, const std::string& file_name, const std::string& file_data) {
     std::filesystem::create_directories(path);
@@ -219,6 +226,8 @@ void SaveFile(const std::filesystem::path& path, const std::string& file_name, c
 }
 
 #define SAVE_FILE(name, file_data) (SaveFile(file_path_out, name, file_data))
+
+#define SAVE_FILE_PROCESS_REQUESTS(name, file_data) (SaveFile(file_path_out_process_requests, name, file_data))
 
 // ----------------------------------------------------------------------------
 
@@ -572,8 +581,16 @@ void TestTransportCatalogue() {
 #endif
 }
 
-void TestTransportCatalogueMakeBase() {
+void TestTransportCatalogueMakeBase(std::string_view file_name) {
+    std::stringstream in;
+    LOAD_FILE_MAKE_BASE(in, std::string(file_name));
+    request_handler::RequestHandlerMakeBaseProcess(in);
 }
 
-void TestTransportCatalogueProcessRequest() {
+void TestTransportCatalogueProcessRequests(std::string_view file_name) {
+    std::stringstream in;
+    std::stringstream out;
+    LOAD_FILE_PROCESS_REQUESTS(in, std::string(file_name));
+    request_handler::RequestHandlerProcessRequestProcess(in, out);
+    SAVE_FILE_PROCESS_REQUESTS(std::string(file_name), out.str());
 }

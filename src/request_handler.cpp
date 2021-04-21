@@ -25,13 +25,13 @@ using namespace map_renderer;
 ProgrammType ParseProgrammType(int argc, const char** argv) {
     using namespace std::literals;
 
-    if (argc == 2) {
-        std::string argument = argv[1];
+    if (argc >= 2) {
+        const std::string_view argument(argv[1]);
         if (argument == "make_base"sv) {
             return ProgrammType::MAKE_BASE;
         }
         else if (argument == "process_requests"sv) {
-            return ProgrammType::PROCESS_REQUEST;
+            return ProgrammType::PROCESS_REQUESTS;
         }
     }
 
