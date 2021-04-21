@@ -1,5 +1,7 @@
 #include "serialization.h"
 
+#include <iostream>
+
 #include "map_renderer.h"
 #include "svg.h"
 #include "variant"
@@ -104,10 +106,73 @@ void Serialization(std::ofstream& out, const request_handler::RequestHandler& re
     tc.SerializeToOstream(&out);
 }
 
+Coordinates CreateCoord(const transport_proto::Coordinates& proto_coord) {
+    Coordinates coord;
+
+    coord.lat = proto_coord.lat();
+    coord.lng = proto_coord.lng();
+
+    return coord;
+}
+
+transport_catalogue::stop_catalogue::Stop CreateStop(const transport_proto::Stop& proto_stop) {
+    transport_catalogue::stop_catalogue::Stop stop;
+
+    stop.id = proto_stop.id();
+    stop.name = proto_stop.name();
+    stop.coord = CreateCoord(proto_stop.coord());
+
+    return stop;
+}
+
+transport_catalogue::RouteType CreateRouteType(uint32_t type) {
+    if (type == 0) {
+        return transport_catalogue::RouteType::Direct;
+    }
+    else if (type == 1) {
+        return transport_catalogue::RouteType::BackAndForth;
+    }
+    else {
+        return transport_catalogue::RouteType::Round;
+    }
+}
+
+transport_catalogue::bus_catalogue::Bus CreateBus(const transport_proto::Bus& proto_bus, const request_handler::RequestHandler& request_handler) {
+    transport_catalogue::bus_catalogue::Bus bus;
+
+    bus.name = proto_bus.name();
+    std::cerr << bus.name << " route size is " << proto_bus.route_size() << std::endl;
+    for (int i = 0; i < proto_bus.route_size(); ++i) {
+        const transport_catalogue::stop_catalogue::Stop* stop = request_handler.GetStopById(proto_bus.route(i));
+        std::cerr << stop->id << ' ' << stop->name << std::endl;
+        bus.route.push_back(stop);
+    }
+    bus.route_type = CreateRouteType(proto_bus.type());
+    bus.route_geo_length = proto_bus.route_geo_length();
+    bus.route_true_length = proto_bus.route_true_length();
+    bus.stops_on_route = proto_bus.stops_on_route();
+    bus.unique_stops = proto_bus.unique_stops();
+
+    return bus;
+}
+
 void Deserialization(request_handler::RequestHandler& request_handler, std::ifstream& in) {
     transport_proto::TransportCatalogue tc;
     tc.ParseFromIstream(&in);
-    (void)request_handler;
+    
+    for (int i = 0; i < tc.stop_size(); ++i) {
+        const transport_proto::Stop& stop = tc.stop(i);
+        std::string name = stop.name();
+        Coordinates coord = CreateCoord(stop.coord());
+        std::cerr << stop.id() << ' ' << name << std::endl;
+        request_handler.AddStop(stop.id(), std::move(name), std::move(coord));
+    }
+
+    std::cerr << "Bus size is " << tc.bus_size() << std::endl;
+    for (int i = 0; i < tc.bus_size(); ++i) {
+        transport_catalogue::bus_catalogue::Bus bus = CreateBus(tc.bus(i), request_handler);
+        request_handler.AddBus(std::move(bus));
+    }
 }
 
 } // namespace transport_serialization

@@ -18,6 +18,10 @@ void TransportCatalogue::AddStop(std::string&& name, Coordinates&& coord) {
     stops_.Push(std::move(name), std::move(coord));
 }
 
+void TransportCatalogue::AddStop(size_t id, std::string&& name, Coordinates&& coord) {
+    stops_.Push(id, std::move(name), std::move(coord));
+}
+
 void TransportCatalogue::AddDistanceBetweenStops(const std::string_view& stop_from_name, const std::string_view& stop_to_name, double distance) {
     auto stop_from = stops_.At(stop_from_name);
     auto stop_to = stops_.At(stop_to_name);

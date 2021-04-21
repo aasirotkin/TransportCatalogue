@@ -38,11 +38,17 @@ public:
     // Метод добавляет новую остановку
     void AddStop(std::string&& name, Coordinates&& coord);
 
+    void AddStop(size_t id, std::string&& name, Coordinates&& coord);
+
     // Метод добавляет реальную дистанцию между двумя остановками
     void AddDistance(std::string_view name_from, std::string_view name_to, double distance);
 
     // Метод добавляет новый маршрут
     void AddBus(transport_catalogue::bus_catalogue::BusHelper&& bus_helper);
+
+    void AddBus(transport_catalogue::bus_catalogue::Bus&& bus) {
+        catalogue_.AddBus(std::move(bus));
+    }
 
     // Метод инициализирует переменную с значением карты маршрутов в svg формате
     void RenderMap(map_renderer::MapRendererSettings&& settings);
@@ -107,6 +113,11 @@ public:
     // Метод возвращает настройки маршрута
     const transport_catalogue::RouteSettings& GetRouteSettings() const {
         return catalogue_.GetBuses().GetRouteSettings();
+    }
+
+    // Метод возвращает указатель на остановку через уникальный номер
+    const transport_catalogue::stop_catalogue::Stop* GetStopById(size_t id) const {
+        return catalogue_.GetStops().GetStopById(id);
     }
 
 private:

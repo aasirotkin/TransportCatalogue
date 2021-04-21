@@ -22,6 +22,8 @@ public:
 
     void AddStop(std::string&& name, Coordinates&& coord);
 
+    void AddStop(size_t id, std::string&& name, Coordinates&& coord);
+
     void AddDistanceBetweenStops(const std::string_view& stop_from_name, const std::string_view& stop_to_name, double distance);
 
     const stop_catalogue::BusesToStopNames& GetBusesForStop(const std::string_view& name) const;

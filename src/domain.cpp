@@ -14,6 +14,8 @@ namespace stop_catalogue {
 
 using namespace detail;
 
+size_t Catalogue::id_auto_increment = 0;
+
 std::ostream& operator<<(std::ostream& out, const BusesToStopNames& buses) {
     bool first = true;
     for (const std::string_view& bus : buses) {
@@ -33,7 +35,12 @@ const Stop* Catalogue::Push(std::string&& name, std::string&& string_coord) {
 }
 
 const Stop* Catalogue::Push(std::string&& name, Coordinates&& coord) {
-    const Stop* stop = CatalogueTemplate::Push(StopHelper(std::move(name), std::move(coord)));
+    return Push(id_auto_increment++, std::move(name), std::move(coord));
+}
+
+const Stop* Catalogue::Push(size_t id, std::string&& name, Coordinates&& coord) {
+    const Stop* stop = CatalogueTemplate::Push({id, std::move(name), std::move(coord)});
+    id_to_stop_.emplace(id, stop);
     stop_buses_.insert({ stop, {} });
     return stop;
 }

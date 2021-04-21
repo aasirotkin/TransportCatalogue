@@ -2,6 +2,7 @@
 
 #include "geo.h"
 
+#include <cassert>
 #include <deque>
 #include <functional>
 #include <optional>
@@ -15,9 +16,9 @@ namespace transport_catalogue {
 // ----------------------------------------------------------------------------
 
 enum class RouteType {
-    Direct,
-    BackAndForth,
-    Round
+    Direct = 0,
+    BackAndForth = 1,
+    Round = 2
 };
 
 struct RouteSettings {
@@ -97,11 +98,6 @@ struct Stop {
     }
 };
 
-inline Stop StopHelper(std::string&& name, Coordinates&& coord) {
-    static size_t id_auto_increment = 0;
-    return { id_auto_increment++, std::move(name), std::move(coord) };
-}
-
 using BusesToStopNames = std::set<std::string_view>;
 using DistancesContainer = std::unordered_map<detail::PointerPair<Stop>, double, detail::PointerPairHasher<Stop>>;
 
@@ -114,6 +110,8 @@ public:
     const Stop* Push(std::string&& name, std::string&& string_coord);
 
     const Stop* Push(std::string&& name, Coordinates&& coord);
+
+    const Stop* Push(size_t id,  std::string&& name, Coordinates&& coord);
 
     void PushBusToStop(const Stop* stop, const std::string_view& bus_name);
 
@@ -131,9 +129,20 @@ public:
         return stop_buses_.count(stop) == 0 || stop_buses_.at(stop).empty();
     }
 
+    const Stop* GetStopById(size_t id) const {
+        if (id_to_stop_.count(id) == 0) {
+            assert(false);
+        }
+        return id_to_stop_.at(id);
+    }
+
 private:
+    std::unordered_map<size_t, const Stop*> id_to_stop_ = {};
     std::unordered_map<const Stop*, BusesToStopNames> stop_buses_ = {};
     DistancesContainer distances_between_stops_ = {};
+
+private:
+    static size_t id_auto_increment;
 };
 
 } // namespace stop_catalogue
