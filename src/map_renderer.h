@@ -93,7 +93,7 @@ protected:
 class MapRenderer : public svg::Document, private MapRendererCreator {
 public:
     MapRenderer(
-        MapRendererSettings&& render_settings,
+        MapRendererSettings render_settings,
         const transport_catalogue::stop_catalogue::Catalogue& stops,
         const transport_catalogue::bus_catalogue::Catalogue& buses);
 

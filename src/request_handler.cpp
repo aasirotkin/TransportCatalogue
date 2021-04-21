@@ -58,8 +58,10 @@ void RequestHandler::AddBus(transport_catalogue::bus_catalogue::BusHelper&& bus_
 }
 
 void RequestHandler::RenderMap(MapRendererSettings&& settings) {
+    map_render_settings_ = std::move(settings);
+
     MapRenderer render(
-        std::move(settings),
+        map_render_settings_.value(),
         catalogue_.GetStops(),
         catalogue_.GetBuses());
 
@@ -398,20 +400,6 @@ void RequestStatProcess(
 
 // ----------------------------------------------------------------------------
 
-namespace detail_proto {
-
-void MakeBase() {
-
-}
-
-void ProcessRequests() {
-
-}
-
-} // namespace detail_proto
-
-// ----------------------------------------------------------------------------
-
 void RequestHandlerProcess(std::istream& input, std::ostream& output) {
     try {
         using namespace std::literals;
@@ -523,7 +511,7 @@ void RequestHandlerMakeBaseProcess(std::istream& input) {
         reader.SerializationSettings().at("file"sv)->AsString(),
         std::ofstream::out | std::ofstream::binary | std::ofstream::trunc);
 
-    transport_serialization::Serialization(out, catalogue);
+    transport_serialization::Serialization(out, request_handler);
 }
 
 // ----------------------------------------------------------------------------
@@ -532,6 +520,7 @@ void RequestHandlerProcessRequestProcess(std::istream& input, std::ostream& outp
     using namespace std::literals;
 
     TransportCatalogue catalogue;
+    RequestHandler request_handler(catalogue);
 
     json::Reader reader(input);
 
@@ -539,9 +528,8 @@ void RequestHandlerProcessRequestProcess(std::istream& input, std::ostream& outp
         reader.SerializationSettings().at("file"sv)->AsString(),
         std::ofstream::in | std::ofstream::binary);
 
-    transport_serialization::Deserialization(catalogue, in);
+    transport_serialization::Deserialization(request_handler, in);
 
-    RequestHandler request_handler(catalogue);
     json::Builder builder;
 
     builder.StartArray();

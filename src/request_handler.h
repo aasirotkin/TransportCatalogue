@@ -74,12 +74,18 @@ public:
         return map_renderer_value_;
     }
 
+    // Метод возвращает настройки отображения карты маршрутов
+    const std::optional<map_renderer::MapRendererSettings>& GetMapRenderSettings() const {
+        return map_render_settings_;
+    }
+
     // Метод возвращает данные маршрута от остановки from до остановки to
     std::optional<RouteData> GetRoute(std::string_view from, std::string_view to) const;
 
 private:
     transport_catalogue::TransportCatalogue& catalogue_;
     std::optional<std::string> map_renderer_value_;
+    std::optional<map_renderer::MapRendererSettings> map_render_settings_;
     mutable std::unique_ptr<transport_graph::TransportGraph> graph_;
     mutable std::unique_ptr<transport_graph::TransportRouter> router_;
 };

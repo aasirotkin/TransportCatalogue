@@ -3,8 +3,8 @@ syntax = "proto3";
 package transport_proto;
 
 message Coordinates {
-    double x = 1;
-    double y = 2;
+    double lat = 1;
+    double lng = 2;
 }
 
 message Stop {
@@ -37,7 +37,7 @@ message Color {
     string name = 1;
 }
 
-message RenderSettings {
+message MapRenderSettings {
     double width = 1;
     double height = 2;
     double padding = 3;
@@ -56,6 +56,6 @@ message TransportCatalogue {
     repeated Stop stop = 1;
     repeated Bus bus = 2;
     RouteSettings route_settings = 3;
-    RenderSettings render_setting = 4;
+    MapRenderSettings map_render_setting = 4;
 }
 

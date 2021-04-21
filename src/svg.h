@@ -161,6 +161,12 @@ struct ColorPrinter {
 
 #define PRINT_COLOR(out, color) (std::visit(ColorPrinter{out}, color))
 
+inline std::string GetColorStringName(const Color& color) {
+    std::stringstream ss;
+    PRINT_COLOR(ss, color);
+    return ss.str();
+}
+
 // ---------- PathProps -------------------------------------------------------
 
 /*

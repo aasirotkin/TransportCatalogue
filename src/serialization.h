@@ -2,12 +2,12 @@
 
 #include <fstream>
 
-#include "transport_catalogue.h"
+#include "request_handler.h"
 
 namespace transport_serialization {
 
-void Serialization(std::ofstream& out, const transport_catalogue::TransportCatalogue& catalogue);
+void Serialization(std::ofstream& out, const request_handler::RequestHandler& request_handler);
 
-void Deserialization(transport_catalogue::TransportCatalogue& catalogue, std::ifstream& in);
+void Deserialization(request_handler::RequestHandler& request_handler, std::ifstream& in);
 
 } // namespace transport_serialization

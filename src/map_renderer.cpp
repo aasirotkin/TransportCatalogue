@@ -83,7 +83,7 @@ svg::Circle MapRendererCreator::CreateCircle(const svg::Point& center) {
 // ----------------------------------------------------------------------------
 
 MapRenderer::MapRenderer(
-    MapRendererSettings&& render_settings,
+    MapRendererSettings render_settings,
     const transport_catalogue::stop_catalogue::Catalogue& stops,
     const transport_catalogue::bus_catalogue::Catalogue& buses)
     : MapRendererCreator(std::move(render_settings)) {
