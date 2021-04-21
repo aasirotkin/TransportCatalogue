@@ -2,6 +2,7 @@
 
 #include "geo.h"
 #include "json_reader.h"
+#include "serialization.h"
 
 #ifdef _SIROTKIN_HOME_TESTS_
 
@@ -490,14 +491,66 @@ void RequestHandlerProcess(std::istream& input, std::ostream& output) {
 // ----------------------------------------------------------------------------
 
 void RequestHandlerMakeBaseProcess(std::istream& input) {
-    (void)input;
+    using namespace std::literals;
+
+    TransportCatalogue catalogue;
+    RequestHandler request_handler(catalogue);
+
+    json::Reader reader(input);
+
+    for (const json::Node* node : reader.StopRequests()) {
+        detail_base::RequestBaseStopProcess(request_handler, node);
+    }
+
+    for (const auto& [name_from, distances] : reader.RoadDistances()) {
+        for (const auto& [name_to, distance] : *distances) {
+            request_handler.AddDistance(name_from, name_to, distance.AsDouble());
+        }
+    }
+
+    catalogue.SetBusRouteCommonSettings(detail_base::CreateRouteSettings(reader.RoutingSettings()));
+
+    for (const json::Node* node : reader.BusRequests()) {
+        bus_catalogue::BusHelper helper = detail_base::RequestBaseBusProcess(node);
+        request_handler.AddBus(std::move(helper));
+    }
+
+    if (!reader.RenderSettings().empty()) {
+        detail_base::RequestBaseMapProcess(request_handler, reader.RenderSettings());
+    }
+
+    std::ofstream out(
+        reader.SerializationSettings().at("file"sv)->AsString(),
+        std::ofstream::out | std::ofstream::binary | std::ofstream::trunc);
+
+    transport_serialization::Serialization(out, catalogue);
 }
 
 // ----------------------------------------------------------------------------
 
 void RequestHandlerProcessRequestProcess(std::istream& input, std::ostream& output) {
-    (void)input;
-    (void)output;
+    using namespace std::literals;
+
+    TransportCatalogue catalogue;
+
+    json::Reader reader(input);
+
+    std::ifstream in(
+        reader.SerializationSettings().at("file"sv)->AsString(),
+        std::ofstream::in | std::ofstream::binary);
+
+    transport_serialization::Deserialization(catalogue, in);
+
+    RequestHandler request_handler(catalogue);
+    json::Builder builder;
+
+    builder.StartArray();
+    for (const json::Node* node : reader.StatRequests()) {
+        detail_stat::RequestStatProcess(builder, request_handler, node);
+    }
+    builder.EndArray();
+
+    json::Print(json::Document(builder.Build()), output);
 }
 
 } // namespace request_handler

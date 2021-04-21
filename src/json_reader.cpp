@@ -286,10 +286,15 @@ Reader::Reader(std::istream& input)
 
     const json::Dict& input_requests = doc_.GetRoot().AsMap();
 
-    InitBaseRequests(input_requests.at("base_requests"s).AsArray());
-    InitStatRequests(input_requests.at("stat_requests"s).AsArray());
+    if (input_requests.count("base_requests"s) > 0) {
+        InitBaseRequests(input_requests.at("base_requests"s).AsArray());
+    }
+    if (input_requests.count("stat_requests"s) > 0) {
+        InitStatRequests(input_requests.at("stat_requests"s).AsArray());
+    }
     InitRenderSettings(input_requests);
     InitRoutingSettings(input_requests);
+    InitSerializationSettings(input_requests);
 }
 
 void Reader::InitBaseRequests(const json::Array& base_requests) {
@@ -339,6 +344,17 @@ void Reader::InitRoutingSettings(const json::Dict& routing_settings) {
 
     for (const auto& [name, node] : (is_routing_settings) ? routing_settings.at("routing_settings"s).AsMap() : empty_dict) {
         routing_settings_.emplace(name, &node);
+    }
+}
+
+void Reader::InitSerializationSettings(const json::Dict& serialization_settings) {
+    using namespace std::literals;
+    static const json::Dict empty_dict{};
+
+    bool is_serialization_settings = (serialization_settings.count("serialization_settings"s) > 0);
+
+    for (const auto& [name, node] : (is_serialization_settings) ? serialization_settings.at("serialization_settings"s).AsMap() : empty_dict) {
+        serialization_settings_.emplace(name, &node);
     }
 }
 

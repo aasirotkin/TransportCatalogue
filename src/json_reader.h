@@ -60,11 +60,16 @@ public:
         return routing_settings_;
     }
 
+    const std::unordered_map<std::string_view, const json::Node*>& SerializationSettings() const {
+        return serialization_settings_;
+    }
+
 private:
     void InitBaseRequests(const json::Array& base_requests);
     void InitStatRequests(const json::Array& stat_requests);
     void InitRenderSettings(const json::Dict& input_requests);
     void InitRoutingSettings(const json::Dict& routing_settings);
+    void InitSerializationSettings(const json::Dict& serialization_settings);
 
 private:
     json::Document doc_;
@@ -86,6 +91,9 @@ private:
 
     // Переменная, содержащая настройки маршрута
     std::unordered_map<std::string_view, const json::Node*> routing_settings_;
+
+    // Переменная, содержащая настройки сериализации
+    std::unordered_map<std::string_view, const json::Node*> serialization_settings_;
 };
 
 } // namespace json
