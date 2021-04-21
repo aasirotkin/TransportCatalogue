@@ -82,6 +82,33 @@ public:
     // Метод возвращает данные маршрута от остановки from до остановки to
     std::optional<RouteData> GetRoute(std::string_view from, std::string_view to) const;
 
+    // Метод возвращает все существующие остановки
+    std::vector<const transport_catalogue::stop_catalogue::Stop*> GetStops() const {
+        std::vector<const transport_catalogue::stop_catalogue::Stop*> stops;
+
+        for (const auto& [name, stop] : catalogue_.GetStops()) {
+            stops.push_back(stop);
+        }
+
+        return stops;
+    }
+
+    // Метод возвращает все существующие автобусные маршруты
+    std::vector<const transport_catalogue::bus_catalogue::Bus*> GetBuses() const {
+        std::vector<const transport_catalogue::bus_catalogue::Bus*> buses;
+
+        for (const auto& [name, bus] : catalogue_.GetBuses()) {
+            buses.push_back(bus);
+        }
+
+        return buses;
+    }
+
+    // Метод возвращает настройки маршрута
+    const transport_catalogue::RouteSettings& GetRouteSettings() const {
+        return catalogue_.GetBuses().GetRouteSettings();
+    }
+
 private:
     transport_catalogue::TransportCatalogue& catalogue_;
     std::optional<std::string> map_renderer_value_;

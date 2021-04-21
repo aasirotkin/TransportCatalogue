@@ -489,12 +489,14 @@ void RequestHandlerMakeBaseProcess(std::istream& input) {
     for (const json::Node* node : reader.StopRequests()) {
         detail_base::RequestBaseStopProcess(request_handler, node);
     }
+    //std::cerr << "Add stops"sv << std::endl;
 
     for (const auto& [name_from, distances] : reader.RoadDistances()) {
         for (const auto& [name_to, distance] : *distances) {
             request_handler.AddDistance(name_from, name_to, distance.AsDouble());
         }
     }
+    //std::cerr << "Add stops distances"sv << std::endl;
 
     catalogue.SetBusRouteCommonSettings(detail_base::CreateRouteSettings(reader.RoutingSettings()));
 
@@ -502,14 +504,17 @@ void RequestHandlerMakeBaseProcess(std::istream& input) {
         bus_catalogue::BusHelper helper = detail_base::RequestBaseBusProcess(node);
         request_handler.AddBus(std::move(helper));
     }
+    //std::cerr << "Add buses"sv << std::endl;
 
     if (!reader.RenderSettings().empty()) {
         detail_base::RequestBaseMapProcess(request_handler, reader.RenderSettings());
     }
+    //std::cerr << "Create render settings"sv << std::endl;
 
     std::ofstream out(
         reader.SerializationSettings().at("file"sv)->AsString(),
         std::ofstream::out | std::ofstream::binary | std::ofstream::trunc);
+    //std::cerr << "Open file and start serialization"sv << std::endl;
 
     transport_serialization::Serialization(out, request_handler);
 }

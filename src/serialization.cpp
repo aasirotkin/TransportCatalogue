@@ -65,7 +65,7 @@ transport_proto::Color CreateProtoColor(const svg::Color& color) {
     return proto_color;
 }
 
-transport_proto::MapRenderSettings CreateProtoRenderSettings(const map_renderer::MapRendererSettings& setting) {
+transport_proto::MapRenderSettings CreateProtoMapRenderSettings(const map_renderer::MapRendererSettings& setting) {
     transport_proto::MapRenderSettings proto_settings;
 
     proto_settings.set_width(setting.width);
@@ -89,9 +89,17 @@ transport_proto::MapRenderSettings CreateProtoRenderSettings(const map_renderer:
 void Serialization(std::ofstream& out, const request_handler::RequestHandler& request_handler) {
     transport_proto::TransportCatalogue tc;
 
-    
+    for (const transport_catalogue::stop_catalogue::Stop* stop : request_handler.GetStops()) {
+        *tc.add_stop() = CreateProtoStop(stop);
+    }
 
-    (void)request_handler;
+    for (const transport_catalogue::bus_catalogue::Bus* bus : request_handler.GetBuses()) {
+        *tc.add_bus() = CreateProtoBus(bus);
+    }
+
+    *tc.mutable_route_settings() = CreateProtoRouteSetting(request_handler.GetRouteSettings());
+
+    *tc.mutable_map_render_setting() = CreateProtoMapRenderSettings(request_handler.GetMapRenderSettings().value());
 
     tc.SerializeToOstream(&out);
 }
