@@ -5,22 +5,17 @@
     "stat_requests": [
         {
             "id": 1,
-            "name": "289",
+            "name": "297",
             "type": "Bus"
         },
         {
             "id": 2,
-            "name": "Lipetskaya ulitsa 46",
-            "type": "Stop"
+            "name": "635",
+            "type": "Bus"
         },
         {
             "id": 3,
-            "name": "Lipetskaya ulitsa 40",
-            "type": "Stop"
-        },
-        {
-            "id": 4,
-            "name": "Moskvorechye",
+            "name": "Universam",
             "type": "Stop"
         }
     ]

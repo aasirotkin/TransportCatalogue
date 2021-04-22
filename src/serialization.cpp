@@ -141,10 +141,10 @@ transport_catalogue::bus_catalogue::Bus CreateBus(const transport_proto::Bus& pr
     transport_catalogue::bus_catalogue::Bus bus;
 
     bus.name = proto_bus.name();
-    std::cerr << bus.name << " route size is " << proto_bus.route_size() << std::endl;
+    // std::cerr << bus.name << " route size is " << proto_bus.route_size() << std::endl;
     for (int i = 0; i < proto_bus.route_size(); ++i) {
         const transport_catalogue::stop_catalogue::Stop* stop = request_handler.GetStopById(proto_bus.route(i));
-        std::cerr << stop->id << ' ' << stop->name << std::endl;
+        // std::cerr << stop->id << ' ' << stop->name << std::endl;
         bus.route.push_back(stop);
     }
     bus.route_type = CreateRouteType(proto_bus.type());
@@ -164,11 +164,11 @@ void Deserialization(request_handler::RequestHandler& request_handler, std::ifst
         const transport_proto::Stop& stop = tc.stop(i);
         std::string name = stop.name();
         Coordinates coord = CreateCoord(stop.coord());
-        std::cerr << stop.id() << ' ' << name << std::endl;
+        // std::cerr << stop.id() << ' ' << name << std::endl;
         request_handler.AddStop(stop.id(), std::move(name), std::move(coord));
     }
 
-    std::cerr << "Bus size is " << tc.bus_size() << std::endl;
+    // std::cerr << "Bus size is " << tc.bus_size() << std::endl;
     for (int i = 0; i < tc.bus_size(); ++i) {
         transport_catalogue::bus_catalogue::Bus bus = CreateBus(tc.bus(i), request_handler);
         request_handler.AddBus(std::move(bus));

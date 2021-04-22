@@ -35,7 +35,7 @@ const Stop* Catalogue::Push(std::string&& name, std::string&& string_coord) {
 }
 
 const Stop* Catalogue::Push(std::string&& name, Coordinates&& coord) {
-    return Push(id_auto_increment++, std::move(name), std::move(coord));
+    return Push(id_to_stop_.size(), std::move(name), std::move(coord));
 }
 
 const Stop* Catalogue::Push(size_t id, std::string&& name, Coordinates&& coord) {

@@ -536,20 +536,20 @@ void RequestHandlerProcessRequestProcess(std::istream& input, std::ostream& outp
     std::ifstream in(
         reader.SerializationSettings().at("file"sv)->AsString(),
         std::ofstream::in | std::ofstream::binary);
-    std::cerr << "Open file and start deserialization"sv << std::endl;
+    // std::cerr << "Open file and start deserialization"sv << std::endl;
 
     transport_serialization::Deserialization(request_handler, in);
 
     json::Builder builder;
 
-    std::cerr << "Start executing stat requests"sv << std::endl;
+    // std::cerr << "Start executing stat requests"sv << std::endl;
     builder.StartArray();
     for (const json::Node* node : reader.StatRequests()) {
         detail_stat::RequestStatProcess(builder, request_handler, node);
     }
     builder.EndArray();
 
-    std::cerr << "Start printing"sv << std::endl;
+    // std::cerr << "Start printing"sv << std::endl;
     json::Print(json::Document(builder.Build()), output);
 }
 
