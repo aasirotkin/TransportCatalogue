@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.0.0)
 
 # Sets the name of the project, and stores it in the variable PROJECT_NAME
-project(Transport VERSION 0.0.1 LANGUAGES CXX)
+project(transport_catalogue VERSION 0.0.1 LANGUAGES CXX)
 
 # The C++ standard whose features are requested to build this target
 set(CMAKE_CXX_STANDARD 17)
@@ -15,7 +15,7 @@ find_package(Protobuf REQUIRED)
 find_package(Threads REQUIRED)
 
 # Execute protoc.
-protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS transport.proto)
+protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS transport_catalogue.proto)
 
 # If this property is set to ON, then the value of the CXX_STANDARD target property is treated as a requirement
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -51,4 +51,4 @@ message(STATUS "${CMAKE_SYSTEM_NAME} operation system")
 message(STATUS "CMAKE_CXX_FLAGS is ${CMAKE_CXX_FLAGS}")
 
 # Adds -D define flags to the compilation of source files
-add_definitions(-D_DEBUG -D_SIROTKIN_HOME_TESTS_)
+# add_definitions(-D_DEBUG -D_SIROTKIN_HOME_TESTS_)
