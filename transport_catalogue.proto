@@ -8,14 +8,14 @@ message Coordinates {
 }
 
 message Stop {
-    uint64 id = 1;
+    uint32 id = 1;
     string name = 2;
     Coordinates coord = 3;
 }
 
 message Bus {
     string name = 1;
-    repeated uint64 route = 2;
+    repeated uint32 route = 2;
     uint32 type = 3;
     double route_geo_length = 4;
     double route_true_length = 5;
@@ -55,7 +55,7 @@ message MapRenderSettings {
 message TransportCatalogue {
     repeated Stop stop = 1;
     repeated Bus bus = 2;
-    RouteSettings route_settings = 3;
-    MapRenderSettings map_render_setting = 4;
+//    RouteSettings route_settings = 3;
+//    MapRenderSettings map_render_setting = 4;
 }
 

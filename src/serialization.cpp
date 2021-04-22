@@ -99,9 +99,9 @@ void Serialization(std::ofstream& out, const request_handler::RequestHandler& re
         *tc.add_bus() = CreateProtoBus(bus);
     }
 
-    *tc.mutable_route_settings() = CreateProtoRouteSetting(request_handler.GetRouteSettings());
+    // *tc.mutable_route_settings() = CreateProtoRouteSetting(request_handler.GetRouteSettings());
 
-    *tc.mutable_map_render_setting() = CreateProtoMapRenderSettings(request_handler.GetMapRenderSettings().value());
+    // *tc.mutable_map_render_setting() = CreateProtoMapRenderSettings(request_handler.GetMapRenderSettings().value());
 
     tc.SerializeToOstream(&out);
 }
