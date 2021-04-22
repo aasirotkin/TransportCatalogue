@@ -101,6 +101,20 @@ struct Rgb {
         , green(green)
         , blue(blue) {
     }
+
+    static Rgb FromStringView(std::string_view str) {
+        size_t from = str.find_first_of('(') + 1;
+        size_t to = str.find_first_of(',', from);
+        uint8_t r = std::stoi(std::string(str.substr(from, to - from)));
+        from = to + 1;
+        to = str.find_first_of(',', from);
+        uint8_t g = std::stoi(std::string(str.substr(from, to - from)));
+        from = to + 1;
+        to = str.find_first_of(')', from);
+        uint8_t b = std::stoi(std::string(str.substr(from, to - from)));
+        // std::cerr << "rgb: " << (int)r << ' ' << (int)g << ' ' << (int)b << std::endl;
+        return {r, g, b};
+    }
 };
 
 inline std::ostream& operator<< (std::ostream& out, const Rgb& rgb) {
@@ -120,6 +134,23 @@ struct Rgba : public Rgb {
         : Rgb(red, green, blue)
         , opacity(opacity) {
     }
+
+    static Rgba FromStringView(std::string_view str) {
+        size_t from = str.find_first_of('(') + 1;
+        size_t to = str.find_first_of(',', from);
+        uint8_t r = std::stoi(std::string(str.substr(from, to - from)));
+        from = to + 1;
+        to = str.find_first_of(',', from);
+        uint8_t g = std::stoi(std::string(str.substr(from, to - from)));
+        from = to + 1;
+        to = str.find_first_of(',', from);
+        uint8_t b = std::stoi(std::string(str.substr(from, to - from)));
+        from = to + 1;
+        to = str.find_first_of(')', from);
+        double o = std::stod(std::string(str.substr(from, to - from)));
+        // std::cerr << "rgba: " << (int)r << ' ' << (int)g << ' ' << (int)b << ' ' << o << std::endl;
+        return {r, g, b, o};
+    }
 };
 
 inline std::ostream& operator<< (std::ostream& out, const Rgba& rgba) {
@@ -129,6 +160,34 @@ inline std::ostream& operator<< (std::ostream& out, const Rgba& rgba) {
 }
 
 // ---------- Color -----------------------------------------------------------
+
+enum class ColorType {
+    MONOSTATE = 1,
+    STRING = 2,
+    RGB = 3,
+    RGBA = 4,
+    UNKNOWN = 5
+};
+
+inline uint32_t ColorTypeToInt(ColorType type) {
+    return static_cast<uint32_t>(type);
+}
+
+inline ColorType ColorTypeFromInt(uint32_t type) {
+    if (type == 1) {
+        return ColorType::MONOSTATE;
+    }
+    else if (type == 2) {
+        return ColorType::STRING;
+    }
+    else if (type == 3) {
+        return ColorType::RGB;
+    }
+    else if (type == 4) {
+        return ColorType::RGBA;
+    }
+    return ColorType::UNKNOWN;
+}
 
 using Color = std::variant<std::monostate, std::string, Rgb, Rgba>;
 
@@ -165,6 +224,28 @@ inline std::string GetColorStringName(const Color& color) {
     std::stringstream ss;
     PRINT_COLOR(ss, color);
     return ss.str();
+}
+
+struct ColorTypeGetter {
+    ColorType operator()(std::monostate) const {
+        return ColorType::MONOSTATE;
+    }
+
+    ColorType operator()(const std::string&) const {
+        return ColorType::STRING;
+    }
+
+    ColorType operator()(const Rgb&) const {
+        return ColorType::RGB;
+    }
+
+    ColorType operator()(const Rgba&) const {
+        return ColorType::RGBA;
+    }
+};
+
+inline ColorType GetColorType(const Color& color) {
+    return std::visit(ColorTypeGetter{}, color);
 }
 
 // ---------- PathProps -------------------------------------------------------

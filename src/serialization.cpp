@@ -62,6 +62,7 @@ transport_proto::Point CreateProtoPoint(const svg::Point& point) {
 transport_proto::Color CreateProtoColor(const svg::Color& color) {
     transport_proto::Color proto_color;
 
+    proto_color.set_type(svg::ColorTypeToInt(svg::GetColorType(color)));
     proto_color.set_name(svg::GetColorStringName(color));
 
     return proto_color;
@@ -99,9 +100,9 @@ void Serialization(std::ofstream& out, const request_handler::RequestHandler& re
         *tc.add_bus() = CreateProtoBus(bus);
     }
 
-    // *tc.mutable_route_settings() = CreateProtoRouteSetting(request_handler.GetRouteSettings());
+    *tc.mutable_map_render_setting() = CreateProtoMapRenderSettings(request_handler.GetMapRenderSettings().value());
 
-    // *tc.mutable_map_render_setting() = CreateProtoMapRenderSettings(request_handler.GetMapRenderSettings().value());
+    // *tc.mutable_route_settings() = CreateProtoRouteSetting(request_handler.GetRouteSettings());
 
     tc.SerializeToOstream(&out);
 }
@@ -125,18 +126,6 @@ transport_catalogue::stop_catalogue::Stop CreateStop(const transport_proto::Stop
     return stop;
 }
 
-transport_catalogue::RouteType CreateRouteType(uint32_t type) {
-    if (type == 0) {
-        return transport_catalogue::RouteType::Direct;
-    }
-    else if (type == 1) {
-        return transport_catalogue::RouteType::BackAndForth;
-    }
-    else {
-        return transport_catalogue::RouteType::Round;
-    }
-}
-
 transport_catalogue::bus_catalogue::Bus CreateBus(const transport_proto::Bus& proto_bus, const request_handler::RequestHandler& request_handler) {
     transport_catalogue::bus_catalogue::Bus bus;
 
@@ -147,13 +136,60 @@ transport_catalogue::bus_catalogue::Bus CreateBus(const transport_proto::Bus& pr
         // std::cerr << stop->id << ' ' << stop->name << std::endl;
         bus.route.push_back(stop);
     }
-    bus.route_type = CreateRouteType(proto_bus.type());
+    bus.route_type = transport_catalogue::RouteTypeFromInt(proto_bus.type());
     bus.route_geo_length = proto_bus.route_geo_length();
     bus.route_true_length = proto_bus.route_true_length();
     bus.stops_on_route = proto_bus.stops_on_route();
     bus.unique_stops = proto_bus.unique_stops();
 
     return bus;
+}
+
+svg::Point CreatePoint(const transport_proto::Point& proto_point) {
+    svg::Point point;
+
+    point.x = proto_point.x();
+    point.y = proto_point.y();
+
+    return point;
+}
+
+svg::Color CreateColor(const transport_proto::Color& proto_color) {
+    svg::Color color; // monostate by default
+
+    svg::ColorType type = svg::ColorTypeFromInt(proto_color.type());
+    if (type == svg::ColorType::STRING) {
+        color = proto_color.name();
+    }
+    else if (type == svg::ColorType::RGB) {
+        color = svg::Rgb::FromStringView(proto_color.name());
+    }
+    else if (type == svg::ColorType::RGBA) {
+        color = svg::Rgba::FromStringView(proto_color.name());
+    }
+
+    return color;
+}
+
+map_renderer::MapRendererSettings CreateMapRenderSettings(const transport_proto::MapRenderSettings& proto_settings) {
+    map_renderer::MapRendererSettings settings;
+
+    settings.width = proto_settings.width();
+    settings.height = proto_settings.height();
+    settings.padding = proto_settings.padding();
+    settings.line_width = proto_settings.line_width();
+    settings.stop_radius = proto_settings.stop_radius();
+    settings.bus_label_font_size = proto_settings.bus_label_font_size();
+    settings.bus_label_offset = CreatePoint(proto_settings.bus_label_offset());
+    settings.stop_label_font_size = proto_settings.stop_label_font_size();
+    settings.stop_label_offset = CreatePoint(proto_settings.stop_label_offset());
+    settings.underlayer_color = CreateColor(proto_settings.underlayer_color());
+    settings.underlayer_width = proto_settings.underlayer_width();
+    for (int i = 0; i < proto_settings.color_palette_size(); ++i) {
+        settings.color_palette.push_back(CreateColor(proto_settings.color_palette(i)));
+    }
+
+    return settings;
 }
 
 void Deserialization(request_handler::RequestHandler& request_handler, std::ifstream& in) {
@@ -173,6 +209,9 @@ void Deserialization(request_handler::RequestHandler& request_handler, std::ifst
         transport_catalogue::bus_catalogue::Bus bus = CreateBus(tc.bus(i), request_handler);
         request_handler.AddBus(std::move(bus));
     }
+
+    map_renderer::MapRendererSettings map_renderer_settings = CreateMapRenderSettings(tc.map_render_setting());
+    request_handler.RenderMap(std::move(map_renderer_settings));
 }
 
 } // namespace transport_serialization

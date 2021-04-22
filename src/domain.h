@@ -18,8 +18,22 @@ namespace transport_catalogue {
 enum class RouteType {
     Direct = 0,
     BackAndForth = 1,
-    Round = 2
+    Round = 2,
+    Unknown = 3
 };
+
+inline RouteType RouteTypeFromInt(uint32_t type) {
+    if (type == 0) {
+        return RouteType::Direct;
+    }
+    else if (type == 1) {
+        return RouteType::BackAndForth;
+    }
+    else {
+        return RouteType::Round;
+    }
+    return RouteType::Unknown;
+}
 
 struct RouteSettings {
     double bus_velocity = 0.0;
