@@ -192,6 +192,15 @@ map_renderer::MapRendererSettings CreateMapRenderSettings(const transport_proto:
     return settings;
 }
 
+transport_catalogue::RouteSettings CreateRouteSettings(const transport_proto::RouteSettings& proto_settings) {
+    transport_catalogue::RouteSettings settings;
+
+    settings.bus_velocity = proto_settings.bus_velocity();
+    settings.bus_wait_time = proto_settings.bus_waiting_time();
+
+    return settings;
+}
+
 void Deserialization(request_handler::RequestHandler& request_handler, std::ifstream& in) {
     transport_proto::TransportCatalogue tc;
     tc.ParseFromIstream(&in);
@@ -212,6 +221,9 @@ void Deserialization(request_handler::RequestHandler& request_handler, std::ifst
 
     map_renderer::MapRendererSettings map_renderer_settings = CreateMapRenderSettings(tc.map_render_setting());
     request_handler.RenderMap(std::move(map_renderer_settings));
+
+    // transport_catalogue::RouteSettings route_settings = CreateRouteSettings(tc.route_settings());
+    // request_handler.SetRouteSettings(std::move(route_settings));
 }
 
 } // namespace transport_serialization

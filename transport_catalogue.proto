@@ -57,6 +57,6 @@ message TransportCatalogue {
     repeated Stop stop = 1;
     repeated Bus bus = 2;
     MapRenderSettings map_render_setting = 3;
-//    RouteSettings route_settings = 4;
+    // RouteSettings route_settings = 4;
 }
 

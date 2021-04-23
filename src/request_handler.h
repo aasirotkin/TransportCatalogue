@@ -65,6 +65,11 @@ public:
         return catalogue_.GetStops().At(name) != std::nullopt;
     }
 
+    // Метод устанавливает общие настройки маршрута
+    void SetRouteSettings(transport_catalogue::RouteSettings&& settings) {
+        catalogue_.SetBusRouteCommonSettings(std::move(settings));
+    }
+
     // Метод возвращает массив автобусов, проходящих через заданную остановку
     const std::set<std::string_view>& GetStopBuses(std::string_view name) const {
         return catalogue_.GetBusesForStop(name);
