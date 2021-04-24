@@ -34,6 +34,9 @@ ProgrammType ParseProgrammType(int argc, const char** argv) {
         else if (argument == "process_requests"sv) {
             return ProgrammType::PROCESS_REQUESTS;
         }
+        else if (argument == "old_tests") {
+            return ProgrammType::OLD_TESTS;
+        }
     }
 
     return ProgrammType::UNKNOWN;

@@ -204,7 +204,7 @@ transport_catalogue::RouteSettings CreateRouteSettings(const transport_proto::Ro
 void Deserialization(request_handler::RequestHandler& request_handler, std::ifstream& in) {
     transport_proto::TransportCatalogue tc;
     tc.ParseFromIstream(&in);
-    
+
     for (int i = 0; i < tc.stop_size(); ++i) {
         const transport_proto::Stop& stop = tc.stop(i);
         std::string name = stop.name();

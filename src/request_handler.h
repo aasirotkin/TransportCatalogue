@@ -21,6 +21,7 @@ namespace request_handler {
 enum class ProgrammType {
     MAKE_BASE,
     PROCESS_REQUESTS,
+    OLD_TESTS,
     UNKNOWN
 };
 

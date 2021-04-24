@@ -40,7 +40,7 @@ target_link_libraries(${PROJECT_NAME} "$<IF:$<CONFIG:Debug>,${Protobuf_LIBRARY_D
 # CXXFLAGS - This is a CMake Environment Variable
 set (CMAKE_CXX_FLAGS "-Wall")
 
-if (NOT CMAKE_SYSTEM_NAME MATCHES ".*WIN.*")
+if (NOT CMAKE_SYSTEM_NAME MATCHES ".*Win.*")
     # Specify libraries or flags to use when linking a given target and/or its dependents
     # tbb - is an intel Threading Building Blocks
     target_link_libraries(${PROJECT_NAME} -ltbb -lpthread)
