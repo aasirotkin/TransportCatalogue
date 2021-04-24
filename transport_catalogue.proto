@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "map_renderer.proto";
+
 package transport_proto;
 
 message Coordinates {
@@ -28,35 +30,9 @@ message RouteSettings {
     uint32 bus_waiting_time = 2;
 }
 
-message Point {
-    double x = 1;
-    double y = 2;
-}
-
-message Color {
-    uint32 type = 1;
-    string name = 2;
-}
-
-message MapRenderSettings {
-    double width = 1;
-    double height = 2;
-    double padding = 3;
-    double line_width = 4;
-    double stop_radius = 5;
-    uint32 bus_label_font_size = 6;
-    Point bus_label_offset = 7;
-    uint32 stop_label_font_size = 8;
-    Point stop_label_offset = 9;
-    Color underlayer_color = 10;
-    double underlayer_width = 11;
-    repeated Color color_palette = 12;
-}
-
 message TransportCatalogue {
     repeated Stop stop = 1;
     repeated Bus bus = 2;
     MapRenderSettings map_render_setting = 3;
     // RouteSettings route_settings = 4;
 }
-
