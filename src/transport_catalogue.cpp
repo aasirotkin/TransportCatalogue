@@ -3,7 +3,15 @@
 namespace transport_catalogue {
 
 void TransportCatalogue::AddBus(bus_catalogue::Bus&& add_bus) {
-    const bus_catalogue::Bus* bus = buses_.Push(std::move(add_bus));
+    const bus_catalogue::Bus* bus = buses_.PushData(std::move(add_bus));
+
+    for (const stop_catalogue::Stop* stop : bus->route) {
+        stops_.PushBusToStop(stop, bus->name);
+    }
+}
+
+void TransportCatalogue::AddBus(size_t id, bus_catalogue::Bus&& add_bus) {
+    const bus_catalogue::Bus* bus = buses_.PushData(id, std::move(add_bus));
 
     for (const stop_catalogue::Stop* stop : bus->route) {
         stops_.PushBusToStop(stop, bus->name);
@@ -20,6 +28,10 @@ void TransportCatalogue::AddStop(std::string&& name, Coordinates&& coord) {
 
 void TransportCatalogue::AddStop(size_t id, std::string&& name, Coordinates&& coord) {
     stops_.Push(id, std::move(name), std::move(coord));
+}
+
+void TransportCatalogue::AddStop(size_t id, stop_catalogue::Stop&& stop) {
+    stops_.Push(id, std::move(stop));
 }
 
 void TransportCatalogue::AddDistanceBetweenStops(const std::string_view& stop_from_name, const std::string_view& stop_to_name, double distance) {

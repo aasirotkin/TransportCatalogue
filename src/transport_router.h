@@ -37,6 +37,15 @@ public:
         CreateGraph(catalogue);
     }
 
+    explicit TransportGraph(
+        std::vector<graph::Edge<TransportTime>>&& edges, std::vector<IncidenceList>&& incidence_lists,
+        std::unordered_map<graph::EdgeId, TransportGraphData>&& edge_id_to_graph_data,
+        std::unordered_map<const stop_catalogue::Stop*, VertexIdLoop>&& stop_to_vertex_id)
+        : graph::DirectedWeightedGraph<TransportTime>(std::move(edges), std::move(incidence_lists))
+        , edge_id_to_graph_data_(std::move(edge_id_to_graph_data))
+        , stop_to_vertex_id_(std::move(stop_to_vertex_id)) {
+    }
+
     const std::unordered_map<graph::EdgeId, TransportGraphData>& GetEdgeIdToGraphData() const {
         return edge_id_to_graph_data_;
     }

@@ -49,9 +49,15 @@ class CatalogueTemplate {
 public:
     CatalogueTemplate() = default;
 
-    const Type* Push(Type&& data) {
+    const Type* PushData(Type&& data) {
+        return PushData(id_to_data_.size(), std::move(data));
+    }
+
+    const Type* PushData(size_t id, Type&& data) {
         const Type& emplaced = data_.emplace_back(data);
         name_to_data_.emplace(emplaced.name, &emplaced);
+        id_to_data_.emplace(id, &emplaced);
+        data_to_id_.emplace(&emplaced, id);
         return &emplaced;
     }
 
@@ -66,6 +72,20 @@ public:
         return std::nullopt;
     }
 
+    std::optional<const Type*> At(size_t id) const {
+        if (id_to_data_.count(id) > 0) {
+            return id_to_data_.at(id);
+        }
+        return std::nullopt;
+    }
+
+    size_t GetId(const Type* data) const {
+        if (!data || !data_to_id_.count(data)) {
+            throw std::logic_error("Couldn't find this data or data is nullptr");
+        }
+        return data_to_id_.at(data);
+    }
+
     auto begin() const {
         return name_to_data_.begin();
     }
@@ -77,6 +97,8 @@ public:
 private:
     std::deque<Type> data_ = {};
     std::unordered_map<std::string_view, const Type*> name_to_data_ = {};
+    std::unordered_map<size_t, const Type*> id_to_data_ = {};
+    std::unordered_map<const Type*, size_t> data_to_id_ = {};
 };
 
 template <typename Pointer>
@@ -99,7 +121,6 @@ private:
 namespace stop_catalogue {
 
 struct Stop {
-    size_t id;
     std::string name;
     Coordinates coord;
 
@@ -125,7 +146,9 @@ public:
 
     const Stop* Push(std::string&& name, Coordinates&& coord);
 
-    const Stop* Push(size_t id,  std::string&& name, Coordinates&& coord);
+    const Stop* Push(size_t id, std::string&& name, Coordinates&& coord);
+
+    const Stop* Push(size_t id, Stop&& stop_value);
 
     void PushBusToStop(const Stop* stop, const std::string_view& bus_name);
 
@@ -143,20 +166,9 @@ public:
         return stop_buses_.count(stop) == 0 || stop_buses_.at(stop).empty();
     }
 
-    const Stop* GetStopById(size_t id) const {
-        if (id_to_stop_.count(id) == 0) {
-            assert(false);
-        }
-        return id_to_stop_.at(id);
-    }
-
 private:
-    std::unordered_map<size_t, const Stop*> id_to_stop_ = {};
     std::unordered_map<const Stop*, BusesToStopNames> stop_buses_ = {};
     DistancesContainer distances_between_stops_ = {};
-
-private:
-    static size_t id_auto_increment;
 };
 
 } // namespace stop_catalogue

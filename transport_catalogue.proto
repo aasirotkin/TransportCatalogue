@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 import "map_renderer.proto";
+import "transport_router.proto";
 
 package transport_proto;
 
@@ -16,13 +17,14 @@ message Stop {
 }
 
 message Bus {
-    string name = 1;
-    repeated uint32 route = 2;
-    uint32 type = 3;
-    double route_geo_length = 4;
-    double route_true_length = 5;
-    uint32 stops_on_route = 6;
-    uint32 unique_stops = 7;
+    uint32 id = 1;
+    string name = 2;
+    repeated uint32 route = 3;
+    uint32 type = 4;
+    double route_geo_length = 5;
+    double route_true_length = 6;
+    uint32 stops_on_route = 7;
+    uint32 unique_stops = 8;
 }
 
 message RouteSettings {
@@ -34,5 +36,6 @@ message TransportCatalogue {
     repeated Stop stop = 1;
     repeated Bus bus = 2;
     MapRenderSettings map_render_setting = 3;
-    // RouteSettings route_settings = 4;
+    RouteSettings route_settings = 4;
+    Graph graph = 5;
 }

@@ -41,6 +41,10 @@ public:
 
     void AddStop(size_t id, std::string&& name, Coordinates&& coord);
 
+    void AddStop(size_t id, transport_catalogue::stop_catalogue::Stop&& stop) {
+        catalogue_.AddStop(id, std::move(stop));
+    }
+
     // Метод добавляет реальную дистанцию между двумя остановками
     void AddDistance(std::string_view name_from, std::string_view name_to, double distance);
 
@@ -49,6 +53,10 @@ public:
 
     void AddBus(transport_catalogue::bus_catalogue::Bus&& bus) {
         catalogue_.AddBus(std::move(bus));
+    }
+
+    void AddBus(size_t id, transport_catalogue::bus_catalogue::Bus&& bus) {
+        catalogue_.AddBus(id, std::move(bus));
     }
 
     // Метод инициализирует переменную с значением карты маршрутов в svg формате
@@ -66,9 +74,25 @@ public:
         return catalogue_.GetStops().At(name) != std::nullopt;
     }
 
+    // Метод возвращает значение id
+    template <typename Type>
+    size_t GetId(const Type* data) const {
+        return catalogue_.GetId(data);
+    }
+
     // Метод устанавливает общие настройки маршрута
     void SetRouteSettings(transport_catalogue::RouteSettings&& settings) {
         catalogue_.SetBusRouteCommonSettings(std::move(settings));
+    }
+
+    // Метод устанавливает граф
+    void SetGraph(transport_graph::TransportGraph&& graph) {
+        graph_ = std::make_unique<transport_graph::TransportGraph>(std::move(graph));
+    }
+
+    // Метод устанавливает роутер
+    void SetRouter(transport_graph::TransportRouter&& router) {
+        router_ = std::make_unique<transport_graph::TransportRouter>(std::move(router));
     }
 
     // Метод возвращает массив автобусов, проходящих через заданную остановку
@@ -95,26 +119,10 @@ public:
     std::optional<RouteData> GetRoute(std::string_view from, std::string_view to) const;
 
     // Метод возвращает все существующие остановки
-    std::vector<const transport_catalogue::stop_catalogue::Stop*> GetStops() const {
-        std::vector<const transport_catalogue::stop_catalogue::Stop*> stops;
-
-        for (const auto& [name, stop] : catalogue_.GetStops()) {
-            stops.push_back(stop);
-        }
-
-        return stops;
-    }
+    std::vector<const transport_catalogue::stop_catalogue::Stop*> GetStops() const;
 
     // Метод возвращает все существующие автобусные маршруты
-    std::vector<const transport_catalogue::bus_catalogue::Bus*> GetBuses() const {
-        std::vector<const transport_catalogue::bus_catalogue::Bus*> buses;
-
-        for (const auto& [name, bus] : catalogue_.GetBuses()) {
-            buses.push_back(bus);
-        }
-
-        return buses;
-    }
+    std::vector<const transport_catalogue::bus_catalogue::Bus*> GetBuses() const;
 
     // Метод возвращает настройки маршрута
     const transport_catalogue::RouteSettings& GetRouteSettings() const {
@@ -123,7 +131,17 @@ public:
 
     // Метод возвращает указатель на остановку через уникальный номер
     const transport_catalogue::stop_catalogue::Stop* GetStopById(size_t id) const {
-        return catalogue_.GetStops().GetStopById(id);
+        return catalogue_.GetStops().At(id).value();
+    }
+
+    // Метод возвращает ссылку на граф
+    const transport_graph::TransportGraph* GetGraph() const {
+        return graph_.get();
+    }
+
+    // Метод возвращает ссылку на роутер
+    const transport_graph::TransportRouter* GetRouter() const {
+        return router_.get();
     }
 
 private:

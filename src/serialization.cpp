@@ -15,22 +15,22 @@ transport_proto::Coordinates CreateProtoCoord(const Coordinates& coord) {
     return proto_coord;
 }
 
-transport_proto::Stop CreateProtoStop(const transport_catalogue::stop_catalogue::Stop* stop) {
+transport_proto::Stop CreateProtoStop(const transport_catalogue::stop_catalogue::Stop* stop, const request_handler::RequestHandler& rh) {
     transport_proto::Stop proto_stop;
 
-    proto_stop.set_id(stop->id);
+    proto_stop.set_id(rh.GetId(stop));
     proto_stop.set_name(stop->name);
     *proto_stop.mutable_coord() = CreateProtoCoord(stop->coord);
 
     return proto_stop;
 }
 
-transport_proto::Bus CreateProtoBus(const transport_catalogue::bus_catalogue::Bus* bus) {
+transport_proto::Bus CreateProtoBus(const transport_catalogue::bus_catalogue::Bus* bus, const request_handler::RequestHandler& rh) {
     transport_proto::Bus proto_bus;
 
     proto_bus.set_name(bus->name);
     for (const auto* stop : bus->route) {
-        proto_bus.add_route(stop->id);
+        proto_bus.add_route(rh.GetId(stop));
     }
     proto_bus.set_type(static_cast<uint32_t>(bus->route_type));
     proto_bus.set_route_geo_length(bus->route_geo_length);
@@ -89,20 +89,99 @@ transport_proto::MapRenderSettings CreateProtoMapRenderSettings(const map_render
     return proto_settings;
 }
 
-void Serialization(std::ofstream& out, const request_handler::RequestHandler& request_handler) {
+transport_proto::EdgeId CreateProtoEdgeId(graph::EdgeId id) {
+    transport_proto::EdgeId proto_edge_id;
+
+    proto_edge_id.set_id(id);
+
+    return proto_edge_id;
+}
+
+transport_proto::VertexId CreateProtoVertexId(graph::VertexId id) {
+    transport_proto::VertexId proto_vertex_id;
+
+    proto_vertex_id.set_id(id);
+
+    return proto_vertex_id;
+}
+
+transport_proto::Weight CreateProtoWeight(double weight) {
+    transport_proto::Weight proto_weight;
+
+    proto_weight.set_value(weight);
+
+    return proto_weight;
+}
+
+transport_proto::Edge CreateProtoEdge(const graph::Edge<double>& edge) {
+    transport_proto::Edge proto_edge;
+
+    *proto_edge.mutable_from() = CreateProtoVertexId(edge.from);
+    *proto_edge.mutable_to() = CreateProtoVertexId(edge.to);
+    *proto_edge.mutable_weight() = CreateProtoWeight(edge.weight);
+
+    return proto_edge;
+}
+
+transport_proto::IncidenceList CreateProtoIncidenceList(const graph::DirectedWeightedGraph<double>::IncidenceList& incidence_list) {
+    transport_proto::IncidenceList proto_incidence_list;
+
+    for (const auto& edge_id : incidence_list) {
+        *proto_incidence_list.add_id() = CreateProtoEdgeId(edge_id);
+    }
+
+    return proto_incidence_list;
+}
+
+transport_proto::TransportGraphData CreateProtoTransportGraphData(const transport_graph::TransportGraph::TransportGraphData& data, const request_handler::RequestHandler& rh) {
+    transport_proto::TransportGraphData proto_data;
+
+    proto_data.set_stop_to_id(rh.GetId(data.to));
+    proto_data.set_stop_from_id(rh.GetId(data.from));
+    if (data.bus) {
+        proto_data.set_bus_id(rh.GetId(data.bus));
+    }
+    proto_data.set_stop_count(data.stop_count);
+    proto_data.set_time(data.time);
+
+    return proto_data;
+}
+
+transport_proto::Graph CreateProtoGraph(const transport_graph::TransportGraph& graph) {
+    transport_proto::Graph proto_graph;
+
+    for (const auto& edge : graph.GetEdges()) {
+        *proto_graph.add_edge() = CreateProtoEdge(edge);
+    }
+
+    for (const auto& incidence_list : graph.GetIncidenceList()) {
+        *proto_graph.add_incidence_list() = CreateProtoIncidenceList(incidence_list);
+    }
+
+    //const std::unordered_map<graph::EdgeId, TransportGraphData>
+    for (const auto& [edge_id, graph_data] : graph.GetEdgeIdToGraphData()) {
+
+    }
+
+    return proto_graph;
+}
+
+void Serialization(std::ofstream& out, const request_handler::RequestHandler& rh) {
     transport_proto::TransportCatalogue tc;
 
-    for (const transport_catalogue::stop_catalogue::Stop* stop : request_handler.GetStops()) {
-        *tc.add_stop() = CreateProtoStop(stop);
+    for (const transport_catalogue::stop_catalogue::Stop* stop : rh.GetStops()) {
+        *tc.add_stop() = CreateProtoStop(stop, rh);
     }
 
-    for (const transport_catalogue::bus_catalogue::Bus* bus : request_handler.GetBuses()) {
-        *tc.add_bus() = CreateProtoBus(bus);
+    for (const transport_catalogue::bus_catalogue::Bus* bus : rh.GetBuses()) {
+        *tc.add_bus() = CreateProtoBus(bus, rh);
     }
 
-    *tc.mutable_map_render_setting() = CreateProtoMapRenderSettings(request_handler.GetMapRenderSettings().value());
+    *tc.mutable_map_render_setting() = CreateProtoMapRenderSettings(rh.GetMapRenderSettings().value());
 
-    // *tc.mutable_route_settings() = CreateProtoRouteSetting(request_handler.GetRouteSettings());
+    //*tc.mutable_route_settings() = CreateProtoRouteSetting(rh.GetRouteSettings());
+
+    //*tc.mutable_graph() = CreateProtoGraph(*rh.GetGraph());
 
     tc.SerializeToOstream(&out);
 }
@@ -119,21 +198,18 @@ Coordinates CreateCoord(const transport_proto::Coordinates& proto_coord) {
 transport_catalogue::stop_catalogue::Stop CreateStop(const transport_proto::Stop& proto_stop) {
     transport_catalogue::stop_catalogue::Stop stop;
 
-    stop.id = proto_stop.id();
     stop.name = proto_stop.name();
     stop.coord = CreateCoord(proto_stop.coord());
 
     return stop;
 }
 
-transport_catalogue::bus_catalogue::Bus CreateBus(const transport_proto::Bus& proto_bus, const request_handler::RequestHandler& request_handler) {
+transport_catalogue::bus_catalogue::Bus CreateBus(const transport_proto::Bus& proto_bus, const request_handler::RequestHandler& rh) {
     transport_catalogue::bus_catalogue::Bus bus;
 
     bus.name = proto_bus.name();
-    // std::cerr << bus.name << " route size is " << proto_bus.route_size() << std::endl;
     for (int i = 0; i < proto_bus.route_size(); ++i) {
-        const transport_catalogue::stop_catalogue::Stop* stop = request_handler.GetStopById(proto_bus.route(i));
-        // std::cerr << stop->id << ' ' << stop->name << std::endl;
+        const transport_catalogue::stop_catalogue::Stop* stop = rh.GetStopById(proto_bus.route(i));
         bus.route.push_back(stop);
     }
     bus.route_type = transport_catalogue::RouteTypeFromInt(proto_bus.type());
@@ -201,29 +277,31 @@ transport_catalogue::RouteSettings CreateRouteSettings(const transport_proto::Ro
     return settings;
 }
 
-void Deserialization(request_handler::RequestHandler& request_handler, std::ifstream& in) {
+//transport_graph::TransportGraph CreateGraph(const transport_proto::Graph& proto_graph) {
+//    transport_graph::TransportGraph graph;
+//    (void)proto_graph;
+//    return graph;
+//}
+
+void Deserialization(request_handler::RequestHandler& rh, std::ifstream& in) {
     transport_proto::TransportCatalogue tc;
     tc.ParseFromIstream(&in);
 
     for (int i = 0; i < tc.stop_size(); ++i) {
         const transport_proto::Stop& stop = tc.stop(i);
-        std::string name = stop.name();
-        Coordinates coord = CreateCoord(stop.coord());
-        // std::cerr << stop.id() << ' ' << name << std::endl;
-        request_handler.AddStop(stop.id(), std::move(name), std::move(coord));
+        rh.AddStop(stop.id(), CreateStop(stop));
     }
 
-    // std::cerr << "Bus size is " << tc.bus_size() << std::endl;
     for (int i = 0; i < tc.bus_size(); ++i) {
-        transport_catalogue::bus_catalogue::Bus bus = CreateBus(tc.bus(i), request_handler);
-        request_handler.AddBus(std::move(bus));
+        const transport_proto::Bus& bus = tc.bus(i);
+        rh.AddBus(bus.id(), CreateBus(bus, rh));
     }
 
-    map_renderer::MapRendererSettings map_renderer_settings = CreateMapRenderSettings(tc.map_render_setting());
-    request_handler.RenderMap(std::move(map_renderer_settings));
+    rh.RenderMap(CreateMapRenderSettings(tc.map_render_setting()));
 
-    // transport_catalogue::RouteSettings route_settings = CreateRouteSettings(tc.route_settings());
-    // request_handler.SetRouteSettings(std::move(route_settings));
+    //rh.SetRouteSettings(std::move(CreateRouteSettings(tc.route_settings())));
+
+    //request_handler.SetGraph(std::move(CreateGraph(tc.graph())));
 }
 
 } // namespace transport_serialization
