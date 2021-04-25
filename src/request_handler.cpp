@@ -107,10 +107,7 @@ bool RequestHandler::IsRouteValid(
 std::optional<RequestHandler::RouteData> RequestHandler::GetRoute(std::string_view from, std::string_view to) const {
     using namespace transport_graph;
 
-    if (!graph_ && !router_) {
-        graph_ = std::make_unique<TransportGraph>(catalogue_);
-        router_ = std::make_unique<TransportRouter>(*graph_);
-    }
+    InitRouter();
 
     auto stop_from = catalogue_.GetStops().At(from);
     auto stop_to = catalogue_.GetStops().At(to);
@@ -119,6 +116,19 @@ std::optional<RequestHandler::RouteData> RequestHandler::GetRoute(std::string_vi
         return router_->GetRoute(*stop_from, *stop_to);
     } else {
         return std::nullopt;
+    }
+}
+
+bool RequestHandler::InitRouter() const {
+    using namespace transport_graph;
+
+    if (!graph_ && !router_) {
+        graph_ = std::make_unique<TransportGraph>(catalogue_);
+        router_ = std::make_unique<TransportRouter>(*graph_);
+        return true;
+    }
+    else {
+        return false;
     }
 }
 
@@ -533,6 +543,8 @@ void RequestHandlerMakeBaseProcess(std::istream& input) {
     if (!reader.RenderSettings().empty()) {
         detail_base::RequestBaseMapProcess(request_handler, reader.RenderSettings());
     }
+
+    request_handler.InitRouter();
 
     std::ofstream out(
         reader.SerializationSettings().at("file"sv)->AsString(),

@@ -116,8 +116,11 @@ transport_proto::Weight CreateProtoWeight(double weight) {
 transport_proto::Edge CreateProtoEdge(const graph::Edge<double>& edge) {
     transport_proto::Edge proto_edge;
 
+    //std::cerr << "Serializing mutable_from" << std::endl;
     *proto_edge.mutable_from() = CreateProtoVertexId(edge.from);
+    //std::cerr << "Serializing mutable_to" << std::endl;
     *proto_edge.mutable_to() = CreateProtoVertexId(edge.to);
+    //std::cerr << "Serializing mutable_weight" << std::endl;
     *proto_edge.mutable_weight() = CreateProtoWeight(edge.weight);
 
     return proto_edge;
@@ -147,20 +150,22 @@ transport_proto::TransportGraphData CreateProtoTransportGraphData(const transpor
     return proto_data;
 }
 
-transport_proto::Graph CreateProtoGraph(const transport_graph::TransportGraph& graph) {
+transport_proto::Graph CreateProtoGraph(const transport_graph::TransportGraph& graph, const request_handler::RequestHandler& rh) {
     transport_proto::Graph proto_graph;
 
+    //std::cerr << "Serializing edges" << std::endl;
     for (const auto& edge : graph.GetEdges()) {
         *proto_graph.add_edge() = CreateProtoEdge(edge);
     }
 
+    //std::cerr << "Serializing incidence_list" << std::endl;
     for (const auto& incidence_list : graph.GetIncidenceList()) {
         *proto_graph.add_incidence_list() = CreateProtoIncidenceList(incidence_list);
     }
 
-    //const std::unordered_map<graph::EdgeId, TransportGraphData>
+    //std::cerr << "Serializing graph_data" << std::endl;
     for (const auto& [edge_id, graph_data] : graph.GetEdgeIdToGraphData()) {
-
+        (*proto_graph.mutable_edge_id_to_graph_data())[static_cast<uint32_t>(edge_id)] = CreateProtoTransportGraphData(graph_data, rh);
     }
 
     return proto_graph;
@@ -177,11 +182,16 @@ void Serialization(std::ofstream& out, const request_handler::RequestHandler& rh
         *tc.add_bus() = CreateProtoBus(bus, rh);
     }
 
-    *tc.mutable_map_render_setting() = CreateProtoMapRenderSettings(rh.GetMapRenderSettings().value());
+    const auto& map_render_settings = rh.GetMapRenderSettings();
+    if (map_render_settings) {
+        *tc.mutable_map_render_setting() = CreateProtoMapRenderSettings(map_render_settings.value());
+    }
 
-    //*tc.mutable_route_settings() = CreateProtoRouteSetting(rh.GetRouteSettings());
+    *tc.mutable_route_settings() = CreateProtoRouteSetting(rh.GetRouteSettings());
 
-    //*tc.mutable_graph() = CreateProtoGraph(*rh.GetGraph());
+    if (rh.GetGraph()) {
+        *tc.mutable_graph() = CreateProtoGraph(*rh.GetGraph(), rh);
+    }
 
     tc.SerializeToOstream(&out);
 }
