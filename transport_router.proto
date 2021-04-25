@@ -24,10 +24,14 @@ message IncidenceList {
     repeated EdgeId id = 1;
 }
 
+message BusId {
+    uint32 id = 1;
+}
+
 message TransportGraphData {
     uint32 stop_from_id = 1;
     uint32 stop_to_id = 2;
-    optional uint32 bus_id = 3;
+    BusId bus_id = 3;
     uint32 stop_count = 4;
     double time = 5;
 }

@@ -119,7 +119,7 @@ public:
     std::optional<RouteData> GetRoute(std::string_view from, std::string_view to) const;
 
     // Метод инициализирует маршрутиризатор
-    bool InitRouter() const;
+    void InitRouter() const;
 
     // Метод возвращает все существующие остановки
     std::vector<const transport_catalogue::stop_catalogue::Stop*> GetStops() const;
@@ -139,6 +139,15 @@ public:
             return nullptr;
         }
         return *stop_optional;
+    }
+
+    // Метод возвращает указатель на автобус через уникальный номер
+    const transport_catalogue::bus_catalogue::Bus* GetBusById(size_t id) const {
+        const auto& bus_optional = catalogue_.GetBuses().At(id);
+        if (!bus_optional) {
+            return nullptr;
+        }
+        return *bus_optional;
     }
 
     // Метод возвращает ссылку на граф

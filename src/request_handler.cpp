@@ -119,16 +119,15 @@ std::optional<RequestHandler::RouteData> RequestHandler::GetRoute(std::string_vi
     }
 }
 
-bool RequestHandler::InitRouter() const {
+void RequestHandler::InitRouter() const {
     using namespace transport_graph;
 
-    if (!graph_ && !router_) {
+    if (!graph_) {
         graph_ = std::make_unique<TransportGraph>(catalogue_);
-        router_ = std::make_unique<TransportRouter>(*graph_);
-        return true;
     }
-    else {
-        return false;
+
+    if (!router_) {
+        router_ = std::make_unique<TransportRouter>(*graph_);
     }
 }
 

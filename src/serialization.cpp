@@ -28,6 +28,7 @@ transport_proto::Stop CreateProtoStop(const transport_catalogue::stop_catalogue:
 transport_proto::Bus CreateProtoBus(const transport_catalogue::bus_catalogue::Bus* bus, const request_handler::RequestHandler& rh) {
     transport_proto::Bus proto_bus;
 
+    proto_bus.set_id(rh.GetId(bus));
     proto_bus.set_name(bus->name);
     for (const auto* stop : bus->route) {
         proto_bus.add_route(rh.GetId(stop));
@@ -142,12 +143,21 @@ transport_proto::TransportGraphData CreateProtoTransportGraphData(const transpor
     proto_data.set_stop_to_id(rh.GetId(data.to));
     proto_data.set_stop_from_id(rh.GetId(data.from));
     if (data.bus) {
-        proto_data.set_bus_id(rh.GetId(data.bus));
+        (*proto_data.mutable_bus_id()).set_id(rh.GetId(data.bus));
     }
     proto_data.set_stop_count(data.stop_count);
     proto_data.set_time(data.time);
 
     return proto_data;
+}
+
+transport_proto::VertexIdLoop CreateProtoVertexIdLoop(const transport_graph::TransportGraph::VertexIdLoop& vertex_id_loop) {
+    transport_proto::VertexIdLoop proto_vertex_id_loop;
+
+    *proto_vertex_id_loop.mutable_id() = CreateProtoVertexId(vertex_id_loop.id);
+    *proto_vertex_id_loop.mutable_transfer_id() = CreateProtoVertexId(vertex_id_loop.transfer_id);
+
+    return proto_vertex_id_loop;
 }
 
 transport_proto::Graph CreateProtoGraph(const transport_graph::TransportGraph& graph, const request_handler::RequestHandler& rh) {
@@ -166,6 +176,11 @@ transport_proto::Graph CreateProtoGraph(const transport_graph::TransportGraph& g
     //std::cerr << "Serializing graph_data" << std::endl;
     for (const auto& [edge_id, graph_data] : graph.GetEdgeIdToGraphData()) {
         (*proto_graph.mutable_edge_id_to_graph_data())[static_cast<uint32_t>(edge_id)] = CreateProtoTransportGraphData(graph_data, rh);
+    }
+
+    //std::cerr << "Serializing stop id to vertex id loop" << std::endl;
+    for (const auto& [stop_ptr, vertex_id_loop] : graph.GetStopToVertexId()) {
+        (*proto_graph.mutable_stop_to_vertex_id())[rh.GetId(stop_ptr)] = CreateProtoVertexIdLoop(vertex_id_loop);
     }
 
     return proto_graph;
@@ -287,11 +302,93 @@ transport_catalogue::RouteSettings CreateRouteSettings(const transport_proto::Ro
     return settings;
 }
 
-//transport_graph::TransportGraph CreateGraph(const transport_proto::Graph& proto_graph) {
-//    transport_graph::TransportGraph graph;
-//    (void)proto_graph;
-//    return graph;
-//}
+graph::VertexId CreateVertexId(const transport_proto::VertexId& proto_vertex_id) {
+    return proto_vertex_id.id();
+}
+
+graph::Edge<transport_graph::TransportTime> CreateEdge(const transport_proto::Edge& proto_edge) {
+    graph::Edge<transport_graph::TransportTime> edge{};
+
+    edge.from = CreateVertexId(proto_edge.from());
+    edge.to = CreateVertexId(proto_edge.to());
+    edge.weight = proto_edge.weight().value();
+
+    return edge;
+}
+
+graph::DirectedWeightedGraph<transport_graph::TransportTime>::IncidenceList CreateIncidenceList(const transport_proto::IncidenceList& proto_list) {
+    graph::DirectedWeightedGraph<transport_graph::TransportTime>::IncidenceList list;
+
+    for (int i = 0; i < proto_list.id_size(); ++i) {
+        list.push_back(proto_list.id(i).id());
+    }
+
+    return list;
+}
+
+graph::EdgeId CreateEdgeId(uint32_t proto_edge_id) {
+    return proto_edge_id;
+}
+
+transport_graph::TransportGraph::TransportGraphData CreateTransportGraphData(
+    const transport_proto::TransportGraphData& proto_data, request_handler::RequestHandler& rh) {
+    transport_graph::TransportGraph::TransportGraphData data{};
+
+    data.from = rh.GetStopById(proto_data.stop_from_id());
+    data.to = rh.GetStopById(proto_data.stop_to_id());
+    if (proto_data.has_bus_id()) {
+        data.bus = rh.GetBusById(proto_data.bus_id().id());
+    }
+    else {
+        data.bus = nullptr;
+    }
+    data.stop_count = proto_data.stop_count();
+    data.time = proto_data.time();
+
+    return data;
+}
+
+transport_graph::TransportGraph::VertexIdLoop CreateVertexIdLoop(const transport_proto::VertexIdLoop& proto_vertex_id_loop) {
+    transport_graph::TransportGraph::VertexIdLoop vertex_id_loop;
+
+    vertex_id_loop.id = proto_vertex_id_loop.id().id();
+    vertex_id_loop.transfer_id = proto_vertex_id_loop.transfer_id().id();
+
+    return vertex_id_loop;
+}
+
+transport_graph::TransportGraph CreateGraph(const transport_proto::Graph& proto_graph, request_handler::RequestHandler& rh) {
+    using namespace transport_graph;
+
+    std::vector<graph::Edge<TransportTime>> edges;
+    std::vector<graph::DirectedWeightedGraph<TransportTime>::IncidenceList> incidence_lists;
+    std::unordered_map<graph::EdgeId, TransportGraph::TransportGraphData> edge_id_to_graph_data;
+    std::unordered_map<const stop_catalogue::Stop*, TransportGraph::VertexIdLoop> stop_to_vertex_id;
+
+    for (int i = 0; i < proto_graph.edge_size(); ++i) {
+        edges.push_back(CreateEdge(proto_graph.edge(i)));
+    }
+
+    for (int i = 0; i < proto_graph.incidence_list_size(); ++i) {
+        incidence_lists.push_back(CreateIncidenceList(proto_graph.incidence_list(i)));
+    }
+
+    for (const auto& [proto_edge_id, proto_transport_graph_data] : proto_graph.edge_id_to_graph_data()) {
+        edge_id_to_graph_data.emplace(CreateEdgeId(proto_edge_id), CreateTransportGraphData(proto_transport_graph_data, rh));
+    }
+
+    for (const auto& [proto_stop_id, proto_vertex_id_loop] : proto_graph.stop_to_vertex_id()) {
+        stop_to_vertex_id.emplace(rh.GetStopById(proto_stop_id), CreateVertexIdLoop(proto_vertex_id_loop));
+    }
+
+    TransportGraph graph(
+        std::move(edges),
+        std::move(incidence_lists),
+        std::move(edge_id_to_graph_data),
+        std::move(stop_to_vertex_id));
+
+    return graph;
+}
 
 void Deserialization(request_handler::RequestHandler& rh, std::ifstream& in) {
     transport_proto::TransportCatalogue tc;
@@ -309,9 +406,11 @@ void Deserialization(request_handler::RequestHandler& rh, std::ifstream& in) {
 
     rh.RenderMap(CreateMapRenderSettings(tc.map_render_setting()));
 
-    //rh.SetRouteSettings(std::move(CreateRouteSettings(tc.route_settings())));
+    rh.SetRouteSettings(std::move(CreateRouteSettings(tc.route_settings())));
 
-    //request_handler.SetGraph(std::move(CreateGraph(tc.graph())));
+    if (tc.has_graph()) {
+        rh.SetGraph(std::move(CreateGraph(tc.graph(), rh)));
+    }
 }
 
 } // namespace transport_serialization

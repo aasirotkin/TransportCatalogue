@@ -128,7 +128,7 @@ public:
     std::optional<TransportRouter::TransportRouterData> GetRoute(const stop_catalogue::Stop* from, const stop_catalogue::Stop* to) const;
 
 private:
-    const TransportGraph transport_graph_;
+    const TransportGraph& transport_graph_;
 };
 
 } // namespace transport_graph

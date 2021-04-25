@@ -15,7 +15,7 @@ find_package(Protobuf REQUIRED)
 find_package(Threads REQUIRED)
 
 # Execute protoc.
-protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS svg.proto map_renderer.proto transport_router.proto transport_catalogue.proto)
+protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS svg.proto map_renderer.proto graph.proto transport_router.proto transport_catalogue.proto)
 
 # If this property is set to ON, then the value of the CXX_STANDARD target property is treated as a requirement
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
