@@ -3,6 +3,7 @@
 #include "geo.h"
 #include "json_reader.h"
 #include "log_duration.h"
+#include "request_handler.h"
 
 #include <algorithm>
 #include <chrono>
@@ -15,6 +16,7 @@
 #include <random>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 using namespace std;
@@ -255,7 +257,8 @@ std::map<int, TestDataResult> TestFromFileInitData(const std::set<int>& ids) {
 
         if (file_name.front() == 'i') {
             std::stringstream output;
-            request_handler::RequestHandlerProcess(input, output);
+            request_handler::RequestHandlerProcess rhp(input, output);
+            rhp.OldTests();
             test_data[id].program = output.str();
             SAVE_FILE("output_program_"s + std::to_string(id) + ".txt"s, test_data[id].program);
         }
@@ -568,14 +571,17 @@ void TestTransportCatalogue() {
 
 void TestTransportCatalogueMakeBase(std::string_view file_name) {
     std::stringstream in;
+    std::stringstream out;
     LOAD_FILE(in, std::string(file_name));
-    request_handler::RequestHandlerMakeBaseProcess(in);
+    request_handler::RequestHandlerProcess rhp(in, out);
+    rhp.MakeBase();
 }
 
 void TestTransportCatalogueProcessRequests(std::string_view file_name) {
     std::stringstream in;
     std::stringstream out;
     LOAD_FILE(in, std::string(file_name));
-    request_handler::RequestHandlerProcessRequestProcess(in, out);
+    request_handler::RequestHandlerProcess rhp(in, out);
+    rhp.ProcessRequests();
     SAVE_FILE(std::string(file_name), out.str());
 }

@@ -2,6 +2,7 @@
 
 #include "json.h"
 #include "json_builder.h"
+#include "json_reader.h"
 #include "geo.h"
 #include "map_renderer.h"
 #include "transport_catalogue.h"
@@ -228,10 +229,31 @@ void RequestStatProcess(
 
 // ----------------------------------------------------------------------------
 
-void RequestHandlerProcess(std::istream& input, std::ostream& output);
+class RequestHandlerProcess {
+public:
+    RequestHandlerProcess(std::istream& input, std::ostream& output)
+        : input_(input)
+        , output_(output)
+        , reader_(input)
+        , handler_(catalogue_) {
+        }
 
-void RequestHandlerMakeBaseProcess(std::istream& input);
+    void OldTests();
 
-void RequestHandlerProcessRequestProcess(std::istream& input, std::ostream& output);
+    void MakeBase();
+
+    void ProcessRequests();
+
+private:
+    void BaseProcess();
+    void StatProcess();
+
+private:
+    std::istream& input_;
+    std::ostream& output_;
+    const json::Reader reader_;
+    RequestHandler handler_;
+    transport_catalogue::TransportCatalogue catalogue_;
+};
 
 } // namespace request_handler

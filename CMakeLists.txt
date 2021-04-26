@@ -55,4 +55,4 @@ message(STATUS "${MY_OS} is MY_OS value")
 message(STATUS "CMAKE_CXX_FLAGS is ${CMAKE_CXX_FLAGS}")
 
 # Adds -D define flags to the compilation of source files
-# add_definitions(-D_DEBUG -D_SIROTKIN_HOME_TESTS_)
+# add_definitions(-D_DEBUG -D${MY_OS} -D_SIROTKIN_HOME_TESTS_)

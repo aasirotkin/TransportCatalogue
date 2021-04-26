@@ -1,7 +1,6 @@
 #include "request_handler.h"
 
 #include "geo.h"
-#include "json_reader.h"
 #include "serialization.h"
 
 #ifdef _SIROTKIN_HOME_TESTS_
@@ -436,147 +435,95 @@ void RequestStatProcess(
 
 // ----------------------------------------------------------------------------
 
-void RequestHandlerProcess(std::istream& input, std::ostream& output) {
-    try {
-        using namespace std::literals;
-
-        TransportCatalogue catalogue;
-        RequestHandler request_handler(catalogue);
-
-        json::Builder builder;
-        json::Reader reader(input);
-
-        {
-            //LOG_DURATION("Stops"s);
-            // Добавляемые остановки
-            for (const json::Node* node : reader.StopRequests()) {
-                detail_base::RequestBaseStopProcess(request_handler, node);
-            }
-        }
-
-        {
-            //LOG_DURATION("Distances"s);
-            // Добавляемые реальные расстояния между остановками
-            for (const auto& [name_from, distances] : reader.RoadDistances()) {
-                for (const auto& [name_to, distance] : *distances) {
-                    request_handler.AddDistance(name_from, name_to, distance.AsDouble());
-                }
-            }
-        }
-
-        {
-            //LOG_DURATION("Buses"s);
-            // Создаём переменную с настройками маршрута
-            catalogue.SetBusRouteCommonSettings(detail_base::CreateRouteSettings(reader.RoutingSettings()));
-
-            // Добавляемые автобусные маршруты
-            for (const json::Node* node : reader.BusRequests()) {
-                bus_catalogue::BusHelper helper = detail_base::RequestBaseBusProcess(node);
-                request_handler.AddBus(std::move(helper));
-            }
-        }
-
-        {
-            //LOG_DURATION("Init map"s);
-            // Инициализируем карту маршрутов
-            if (!reader.RenderSettings().empty()) {
-                detail_base::RequestBaseMapProcess(request_handler, reader.RenderSettings());
-            }
-        }
-
-        {
-            //LOG_DURATION("Init builder"s); // Самая долгая операция, почти что всё время тратит
-            // Получаем результат
-            builder.StartArray();
-            for (const json::Node* node : reader.StatRequests()) {
-                detail_stat::RequestStatProcess(builder, request_handler, node);
-            }
-            builder.EndArray();
-        }
-
-        {
-            //LOG_DURATION("Print result"s);
-            // Выводим результат
-            json::Print(json::Document(builder.Build()), output);
-        }
-    }
-    catch (const json::ParsingError& error) {
-        output << error.what();
-    }
-    catch (const std::exception& error) {
-        output << std::string("Unknown error has occurred") << std::endl;
-        output << error.what();
-    }
-    catch (...) {
-        output << std::string("Unknown error has occurred") << std::endl;
-    }
+void RequestHandlerProcess::OldTests() {
+    BaseProcess();
+    StatProcess();
 }
 
-// ----------------------------------------------------------------------------
-
-void RequestHandlerMakeBaseProcess(std::istream& input) {
+void RequestHandlerProcess::MakeBase() {
     using namespace std::literals;
 
-    TransportCatalogue catalogue;
-    RequestHandler request_handler(catalogue);
+    BaseProcess();
 
-    json::Reader reader(input);
-
-    for (const json::Node* node : reader.StopRequests()) {
-        detail_base::RequestBaseStopProcess(request_handler, node);
-    }
-
-    for (const auto& [name_from, distances] : reader.RoadDistances()) {
-        for (const auto& [name_to, distance] : *distances) {
-            request_handler.AddDistance(name_from, name_to, distance.AsDouble());
-        }
-    }
-
-    catalogue.SetBusRouteCommonSettings(detail_base::CreateRouteSettings(reader.RoutingSettings()));
-
-    for (const json::Node* node : reader.BusRequests()) {
-        bus_catalogue::BusHelper helper = detail_base::RequestBaseBusProcess(node);
-        request_handler.AddBus(std::move(helper));
-    }
-
-    if (!reader.RenderSettings().empty()) {
-        detail_base::RequestBaseMapProcess(request_handler, reader.RenderSettings());
-    }
-
-    request_handler.InitRouter();
+    handler_.InitRouter();
 
     std::ofstream out(
-        reader.SerializationSettings().at("file"sv)->AsString(),
+        reader_.SerializationSettings().at("file"sv)->AsString(),
         std::ofstream::out | std::ofstream::binary | std::ofstream::trunc);
 
-    transport_serialization::Serialization(out, request_handler);
+    transport_serialization::Serialization(out, handler_);
 }
 
-// ----------------------------------------------------------------------------
-
-void RequestHandlerProcessRequestProcess(std::istream& input, std::ostream& output) {
+void RequestHandlerProcess::ProcessRequests() {
     using namespace std::literals;
 
-    TransportCatalogue catalogue;
-    RequestHandler request_handler(catalogue);
-
-    json::Reader reader(input);
-
     std::ifstream in(
-        reader.SerializationSettings().at("file"sv)->AsString(),
+        reader_.SerializationSettings().at("file"sv)->AsString(),
         std::ofstream::in | std::ofstream::binary);
 
-    transport_serialization::Deserialization(request_handler, in);
+    transport_serialization::Deserialization(handler_, in);
 
+    StatProcess();
+}
+
+void RequestHandlerProcess::BaseProcess() {
+    {
+        //LOG_DURATION("Stops"s);
+        // Добавляемые остановки
+        for (const json::Node* node : reader_.StopRequests()) {
+            detail_base::RequestBaseStopProcess(handler_, node);
+        }
+    }
+
+    {
+        //LOG_DURATION("Distances"s);
+        // Добавляемые реальные расстояния между остановками
+        for (const auto& [name_from, distances] : reader_.RoadDistances()) {
+            for (const auto& [name_to, distance] : *distances) {
+                handler_.AddDistance(name_from, name_to, distance.AsDouble());
+            }
+        }
+    }
+
+    {
+        //LOG_DURATION("Buses"s);
+        // Создаём переменную с настройками маршрута
+        catalogue_.SetBusRouteCommonSettings(detail_base::CreateRouteSettings(reader_.RoutingSettings()));
+
+        // Добавляемые автобусные маршруты
+        for (const json::Node* node : reader_.BusRequests()) {
+            bus_catalogue::BusHelper helper = detail_base::RequestBaseBusProcess(node);
+            handler_.AddBus(std::move(helper));
+        }
+    }
+
+    {
+        //LOG_DURATION("Init map"s);
+        // Инициализируем карту маршрутов
+        if (!reader_.RenderSettings().empty()) {
+            detail_base::RequestBaseMapProcess(handler_, reader_.RenderSettings());
+        }
+    }
+}
+
+void RequestHandlerProcess::StatProcess() {
     json::Builder builder;
 
-    builder.StartArray();
-    for (const json::Node* node : reader.StatRequests()) {
-        detail_stat::RequestStatProcess(builder, request_handler, node);
+    {
+        //LOG_DURATION("Init builder"s); // Самая долгая операция, почти что всё время тратит
+        // Получаем результат
+        builder.StartArray();
+        for (const json::Node* node : reader_.StatRequests()) {
+            detail_stat::RequestStatProcess(builder, handler_, node);
+        }
+        builder.EndArray();
     }
-    builder.EndArray();
 
-    json::Print(json::Document(builder.Build()), output);
+    {
+        //LOG_DURATION("Print result"s);
+        // Выводим результат
+        json::Print(json::Document(builder.Build()), output_);
+    }
 }
 
 } // namespace request_handler

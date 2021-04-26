@@ -85,15 +85,22 @@ int mainTests(int argc, const char** argv) {
 #endif
 
 int mainPlatform(int argc, const char** argv) {
+    using namespace request_handler;
     request_handler::ProgrammType type = request_handler::ParseProgrammType(argc, argv);
+
+    if (type == request_handler::ProgrammType::UNKNOWN) {
+        return 1;
+    }
+
+    RequestHandlerProcess rhp(std::cin, std::cout);
     if (type == request_handler::ProgrammType::MAKE_BASE) {
-        request_handler::RequestHandlerMakeBaseProcess(std::cin);
+        rhp.MakeBase();
     }
     else if (type == request_handler::ProgrammType::PROCESS_REQUESTS) {
-        request_handler::RequestHandlerProcessRequestProcess(std::cin, std::cout);
+        rhp.ProcessRequests();
     }
     else {
-        return 1;
+        return 2;
     }
 
     return 0;
