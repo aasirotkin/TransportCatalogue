@@ -4,6 +4,10 @@
 
 #include "test_example_functions.h"
 
+#if !defined(_WINDOWS_OS_) && !defined(_LINUX_OS_)
+    #error "_WINDOWS_OS_ or _LINUX_OS_ must be defined in CMakeLists file"
+#endif
+
 #endif // _SIROTKIN_HOME_TESTS_
 
 #include <iostream>
@@ -12,6 +16,34 @@
 using namespace std::literals;
 
 #ifdef _SIROTKIN_HOME_TESTS_
+
+void SetOldTestFilePath() {
+#ifdef _WINDOWS_OS_
+    FilePathHelper::SetFilePathInput("C:\\Users\\aasir\\source\\repos\\aasirotkin\\TransportCatalogue\\tests\\input"s);
+    FilePathHelper::SetFilePathOutput("C:\\Users\\aasir\\source\\repos\\aasirotkin\\TransportCatalogue\\tests\\output"s);
+#elif defined _LINUX_OS_
+    FilePathHelper::SetFilePathInput("/home/aasirotkin/Projects/TransportCatalogue/tests/input"s);
+    FilePathHelper::SetFilePathOutput("/home/aasirotkin/Projects/TransportCatalogue/tests/output"s);
+#endif
+}
+
+void SetMakeBaseFilePath() {
+#ifdef _WINDOWS_OS_
+    FilePathHelper::SetFilePathInput("C:\\Users\\aasir\\source\\repos\\aasirotkin\\TransportCatalogue\\tests\\make_base"s);
+#elif defined _LINUX_OS_
+    FilePathHelper::SetFilePathInput("/home/aasirotkin/Projects/TransportCatalogue/tests/make_base"s);
+#endif
+}
+
+void SetProcessRequestsFilePath() {
+#ifdef _WINDOWS_OS_
+    FilePathHelper::SetFilePathInput("C:\\Users\\aasir\\source\\repos\\aasirotkin\\TransportCatalogue\\tests\\process_requests"s);
+    FilePathHelper::SetFilePathOutput("C:\\Users\\aasir\\source\\repos\\aasirotkin\\TransportCatalogue\\tests\\process_requests_output"s);
+#elif defined _LINUX_OS_
+    FilePathHelper::SetFilePathInput("/home/aasirotkin/Projects/TransportCatalogue/tests/process_requests"s);
+    FilePathHelper::SetFilePathOutput("/home/aasirotkin/Projects/TransportCatalogue/tests/process_requests_output"s);
+#endif
+}
 
 int mainTests(int argc, const char** argv) {
     if (argc < 2) {
@@ -26,8 +58,7 @@ int mainTests(int argc, const char** argv) {
     }
 
     if (type == request_handler::ProgrammType::OLD_TESTS) {
-        FilePathHelper::SetFilePathInput("C:\\Users\\aasir\\source\\repos\\aasirotkin\\TransportCatalogue\\tests\\input"s);
-        FilePathHelper::SetFilePathOutput("C:\\Users\\aasir\\source\\repos\\aasirotkin\\TransportCatalogue\\tests\\output"s);
+        SetOldTestFilePath();
         TestTransportCatalogue();
     }
     else {
@@ -39,12 +70,11 @@ int mainTests(int argc, const char** argv) {
         std::string_view file_name(argv[2]);
 
         if (type == request_handler::ProgrammType::MAKE_BASE) {
-            FilePathHelper::SetFilePathInput("C:\\Users\\aasir\\source\\repos\\aasirotkin\\TransportCatalogue\\tests\\make_base"s);
+            SetMakeBaseFilePath();
             TestTransportCatalogueMakeBase(file_name);
         }
         else {
-            FilePathHelper::SetFilePathInput("C:\\Users\\aasir\\source\\repos\\aasirotkin\\TransportCatalogue\\tests\\process_requests"s);
-            FilePathHelper::SetFilePathOutput("C:\\Users\\aasir\\source\\repos\\aasirotkin\\TransportCatalogue\\tests\\process_requests_output"s);
+            SetProcessRequestsFilePath();
             TestTransportCatalogueProcessRequests(file_name);
         }
     }
@@ -77,3 +107,4 @@ int main(int argc, const char** argv) {
 #endif
     return 0;
 }
+

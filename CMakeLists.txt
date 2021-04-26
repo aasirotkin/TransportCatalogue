@@ -46,8 +46,12 @@ if (NOT CMAKE_SYSTEM_NAME MATCHES ".*Win.*")
     target_link_libraries(${PROJECT_NAME} -ltbb -lpthread)
 
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra -Wpedantic")
+    set (MY_OS "_LINUX_OS_")
+else()
+    set (MY_OS "_WINDOWS_OS_")
 endif()
 message(STATUS "${CMAKE_SYSTEM_NAME} operation system")
+message(STATUS "${MY_OS} is MY_OS value")
 message(STATUS "CMAKE_CXX_FLAGS is ${CMAKE_CXX_FLAGS}")
 
 # Adds -D define flags to the compilation of source files
