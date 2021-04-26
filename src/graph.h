@@ -4,6 +4,7 @@
 
 #include <cstdlib>
 #include <vector>
+#include <utility>
 
 namespace graph {
 
@@ -18,6 +19,46 @@ namespace graph {
     };
 
     template <typename Weight>
+    class DirectedWeightedGraph;
+
+    template <typename Weight>
+    class GraphSerialization {
+    public:
+        GraphSerialization() = default;
+
+        const auto& GetEdges(const DirectedWeightedGraph<Weight>& graph) const {
+            return graph.edges_;
+        }
+
+        const auto& GetIncidenceList(const DirectedWeightedGraph<Weight>& graph) const {
+            return graph.incidence_lists_;
+        }
+    };
+
+    template <typename Weight>
+    class GraphDeserialization {
+    public:
+        GraphDeserialization() = default;
+
+        GraphDeserialization& SetEdges(std::vector<Edge<Weight>>&& edges) {
+            graph_.edges_ = std::move(edges);
+            return *this;
+        }
+
+        GraphDeserialization& SetIncidenceList(std::vector<std::vector<EdgeId>>&& incidence_list) {
+            graph_.incidence_lists_ = std::move(incidence_list);
+            return *this;
+        }
+
+        DirectedWeightedGraph<Weight>&& Build() {
+            return std::move(graph_);
+        }
+    
+    private:
+        DirectedWeightedGraph<Weight> graph_{};
+    };
+
+    template <typename Weight>
     class DirectedWeightedGraph {
     public:
         using IncidenceList = std::vector<EdgeId>;
@@ -26,22 +67,16 @@ namespace graph {
     public:
         DirectedWeightedGraph() = default;
         explicit DirectedWeightedGraph(size_t vertex_count);
-        DirectedWeightedGraph(std::vector<Edge<Weight>>&& edges, std::vector<IncidenceList>&& incidence_lists)
-            : edges_(std::move(edges))
-            , incidence_lists_(std::move(incidence_lists)) {
-        }
         EdgeId AddEdge(const Edge<Weight>& edge);
 
         size_t GetVertexCount() const;
         size_t GetEdgeCount() const;
         const Edge<Weight>& GetEdge(EdgeId edge_id) const;
-        const std::vector<Edge<Weight>>& GetEdges() const {
-            return edges_;
-        }
         IncidentEdgesRange GetIncidentEdges(VertexId vertex) const;
-        const std::vector<IncidenceList>& GetIncidenceList() const {
-            return incidence_lists_;
-        }
+
+    public:
+        friend class GraphSerialization<Weight>;
+        friend class GraphDeserialization<Weight>;
 
     private:
         std::vector<Edge<Weight>> edges_;

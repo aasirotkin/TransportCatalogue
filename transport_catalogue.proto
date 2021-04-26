@@ -2,6 +2,7 @@ syntax = "proto3";
 
 import "map_renderer.proto";
 import "transport_router.proto";
+import "graph.proto";
 
 package transport_proto;
 

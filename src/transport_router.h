@@ -14,36 +14,34 @@ using namespace transport_catalogue;
 
 using TransportTime = double;
 
-class TransportGraph : public graph::DirectedWeightedGraph<TransportTime> {
-public:
-    struct TransportGraphData {
-        const stop_catalogue::Stop* from;
-        const stop_catalogue::Stop* to;
-        const bus_catalogue::Bus* bus;
-        int stop_count;
-        double time;
-    };
+struct TransportGraphData {
+    const stop_catalogue::Stop* from;
+    const stop_catalogue::Stop* to;
+    const bus_catalogue::Bus* bus;
+    int stop_count;
+    double time;
+};
 
-    struct VertexIdLoop {
-        graph::VertexId id{};
-        graph::VertexId transfer_id{};
-    };
+struct VertexIdLoop {
+    graph::VertexId id{};
+    graph::VertexId transfer_id{};
+};
 
+using EdgesData = std::unordered_map<graph::VertexId, std::unordered_map<graph::VertexId, TransportGraphData>>;
+
+class TransportGraphDeserialization;
+
+class TransportGraph {
 public:
     explicit TransportGraph(const TransportCatalogue& catalogue)
-        : graph::DirectedWeightedGraph<TransportTime>(2 * catalogue.GetStops().Size()) {
+        : graph_(2 * catalogue.GetStops().Size()) {
         InitVertexId(catalogue);
         CreateDiagonalEdges(catalogue);
         CreateGraph(catalogue);
     }
 
-    explicit TransportGraph(
-        std::vector<graph::Edge<TransportTime>>&& edges, std::vector<IncidenceList>&& incidence_lists,
-        std::unordered_map<graph::EdgeId, TransportGraphData>&& edge_id_to_graph_data,
-        std::unordered_map<const stop_catalogue::Stop*, VertexIdLoop>&& stop_to_vertex_id)
-        : graph::DirectedWeightedGraph<TransportTime>(std::move(edges), std::move(incidence_lists))
-        , edge_id_to_graph_data_(std::move(edge_id_to_graph_data))
-        , stop_to_vertex_id_(std::move(stop_to_vertex_id)) {
+    const graph::DirectedWeightedGraph<TransportTime>& GetGraph() const {
+        return graph_;
     }
 
     const std::unordered_map<graph::EdgeId, TransportGraphData>& GetEdgeIdToGraphData() const {
@@ -54,10 +52,14 @@ public:
         return stop_to_vertex_id_;
     }
 
+public:
+    friend class TransportGraphDeserialization;
+
+private:
+    TransportGraph() = default;
+
 private:
     static constexpr double TO_MINUTES = (3.6 / 60.0);
-
-    using EdgesData = std::unordered_map<graph::VertexId, std::unordered_map<graph::VertexId, TransportGraphData>>;
 
 private:
     void InitVertexId(const TransportCatalogue& catalogue);
@@ -74,17 +76,19 @@ private:
     void AddEdgesToGraph(EdgesData& edges);
 
 private:
-    std::unordered_map<graph::EdgeId, TransportGraphData> edge_id_to_graph_data_;
+    std::unordered_map<graph::EdgeId, TransportGraphData> edge_id_to_graph_data_{};
 
-    std::unordered_map<const stop_catalogue::Stop*, VertexIdLoop> stop_to_vertex_id_;
+    std::unordered_map<const stop_catalogue::Stop*, VertexIdLoop> stop_to_vertex_id_{};
+
+    graph::DirectedWeightedGraph<TransportTime> graph_{};
 };
 
 template <typename It>
-inline std::vector<TransportGraph::TransportGraphData> TransportGraph::CreateTransportGraphData(ranges::BusRange<It> bus_range, const TransportCatalogue& catalogue) {
+inline std::vector<TransportGraphData> TransportGraph::CreateTransportGraphData(ranges::BusRange<It> bus_range, const TransportCatalogue& catalogue) {
     const auto& stop_distances = catalogue.GetStops().GetDistances();
     const double bus_velocity = catalogue.GetBuses().GetRouteSettings().bus_velocity;
 
-    std::vector<TransportGraph::TransportGraphData> data;
+    std::vector<TransportGraphData> data;
 
     for (auto it_from = bus_range.begin(); it_from != bus_range.end(); ++it_from) {
         const stop_catalogue::Stop* stop_from = *it_from;
@@ -112,16 +116,53 @@ inline std::vector<TransportGraph::TransportGraphData> TransportGraph::CreateTra
 
 // ----------------------------------------------------------------------------
 
+class TransportGraphDeserialization {
+public:
+    TransportGraphDeserialization() = default;
+
+    TransportGraphDeserialization& SetEdgeIdToGraphData(std::unordered_map<graph::EdgeId, TransportGraphData>&& edge_id_to_graph_data) {
+        transport_graph_.edge_id_to_graph_data_ = std::move(edge_id_to_graph_data);
+        return *this;
+    }
+
+    TransportGraphDeserialization& SetStopToVertexId(std::unordered_map<const stop_catalogue::Stop*, VertexIdLoop>&& stop_to_vertex_id) {
+        transport_graph_.stop_to_vertex_id_ = std::move(stop_to_vertex_id);
+        return *this;
+    }
+
+    TransportGraphDeserialization& CreateGraph(
+        std::vector<graph::Edge<TransportTime>>&& edges,
+        std::vector<std::vector<graph::EdgeId>>&& incidence_list) {
+
+        graph::GraphDeserialization<TransportTime> gd;
+        gd.SetEdges(std::move(edges));
+        gd.SetIncidenceList(std::move(incidence_list));
+
+        transport_graph_.graph_ = std::move(gd.Build());
+
+        return *this;
+    }
+
+    TransportGraph&& Build() {
+        return std::move(transport_graph_);
+    }
+
+private:
+    TransportGraph transport_graph_;
+};
+
+// ----------------------------------------------------------------------------
+
 class TransportRouter : private graph::Router<TransportTime> {
 public:
     struct TransportRouterData {
-        std::vector<TransportGraph::TransportGraphData> route{};
+        std::vector<TransportGraphData> route{};
         TransportTime time{};
     };
 
 public:
     explicit TransportRouter(const TransportGraph& transport_graph)
-        : graph::Router<TransportTime>(transport_graph)
+        : graph::Router<TransportTime>(transport_graph.GetGraph())
         , transport_graph_(transport_graph) {
     }
 

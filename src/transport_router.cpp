@@ -17,7 +17,7 @@ void TransportGraph::CreateDiagonalEdges(const TransportCatalogue& catalogue) {
     const double time = static_cast<double>(catalogue.GetBuses().GetRouteSettings().bus_wait_time);
 
     for (const auto& [stop_ptr, vertex_id] : stop_to_vertex_id_) {
-        graph::EdgeId id = AddEdge({ vertex_id.transfer_id, vertex_id.id, time });
+        graph::EdgeId id = graph_.AddEdge({ vertex_id.transfer_id, vertex_id.id, time });
 
         edge_id_to_graph_data_.insert({ id, { stop_ptr, stop_ptr, nullptr, 0, time } });
     }
@@ -57,7 +57,7 @@ void TransportGraph::CreateEdges(EdgesData& edges, std::vector<TransportGraphDat
 void TransportGraph::AddEdgesToGraph(EdgesData& edges) {
     for (auto& [from, to_map] : edges) {
         for (auto& [to, data_i] : to_map) {
-            graph::EdgeId id = AddEdge({ from, to, data_i.time });
+            graph::EdgeId id = graph_.AddEdge({ from, to, data_i.time });
             edge_id_to_graph_data_.emplace(id, std::move(data_i));
         }
     }

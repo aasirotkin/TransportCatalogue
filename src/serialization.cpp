@@ -4,9 +4,12 @@
 
 #include "map_renderer.h"
 #include "svg.h"
-#include "variant"
 
 namespace transport_serialization {
+
+// ----------------------------------------------------------------------------
+
+namespace detail_serialization {
 
 transport_proto::Coordinates CreateProtoCoord(const Coordinates& coord) {
     transport_proto::Coordinates proto_coord;
@@ -40,15 +43,6 @@ transport_proto::Bus CreateProtoBus(const transport_catalogue::bus_catalogue::Bu
     proto_bus.set_unique_stops(bus->unique_stops);
 
     return proto_bus;
-}
-
-transport_proto::RouteSettings CreateProtoRouteSetting(const transport_catalogue::RouteSettings& settings) {
-    transport_proto::RouteSettings proto_settings;
-
-    proto_settings.set_bus_velocity(settings.bus_velocity);
-    proto_settings.set_bus_waiting_time(settings.bus_wait_time);
-
-    return proto_settings;
 }
 
 transport_proto::Point CreateProtoPoint(const svg::Point& point) {
@@ -90,60 +84,45 @@ transport_proto::MapRenderSettings CreateProtoMapRenderSettings(const map_render
     return proto_settings;
 }
 
-transport_proto::EdgeId CreateProtoEdgeId(graph::EdgeId id) {
-    transport_proto::EdgeId proto_edge_id;
+transport_proto::RouteSettings CreateProtoRouteSetting(const transport_catalogue::RouteSettings& settings) {
+    transport_proto::RouteSettings proto_settings;
 
-    proto_edge_id.set_id(id);
+    proto_settings.set_bus_velocity(settings.bus_velocity);
+    proto_settings.set_bus_waiting_time(settings.bus_wait_time);
 
-    return proto_edge_id;
-}
-
-transport_proto::VertexId CreateProtoVertexId(graph::VertexId id) {
-    transport_proto::VertexId proto_vertex_id;
-
-    proto_vertex_id.set_id(id);
-
-    return proto_vertex_id;
-}
-
-transport_proto::Weight CreateProtoWeight(double weight) {
-    transport_proto::Weight proto_weight;
-
-    proto_weight.set_value(weight);
-
-    return proto_weight;
+    return proto_settings;
 }
 
 transport_proto::Edge CreateProtoEdge(const graph::Edge<double>& edge) {
     transport_proto::Edge proto_edge;
 
-    //std::cerr << "Serializing mutable_from" << std::endl;
-    *proto_edge.mutable_from() = CreateProtoVertexId(edge.from);
-    //std::cerr << "Serializing mutable_to" << std::endl;
-    *proto_edge.mutable_to() = CreateProtoVertexId(edge.to);
-    //std::cerr << "Serializing mutable_weight" << std::endl;
-    *proto_edge.mutable_weight() = CreateProtoWeight(edge.weight);
+    proto_edge.set_from(edge.from);
+    proto_edge.set_to(edge.to);
+    proto_edge.set_weight(edge.weight);
 
     return proto_edge;
 }
 
-transport_proto::IncidenceList CreateProtoIncidenceList(const graph::DirectedWeightedGraph<double>::IncidenceList& incidence_list) {
+transport_proto::IncidenceList CreateProtoIncidenceList(const graph::DirectedWeightedGraph<transport_graph::TransportTime>::IncidenceList& incidence_list) {
     transport_proto::IncidenceList proto_incidence_list;
 
     for (const auto& edge_id : incidence_list) {
-        *proto_incidence_list.add_id() = CreateProtoEdgeId(edge_id);
+        proto_incidence_list.add_id(edge_id);
     }
 
     return proto_incidence_list;
 }
 
-transport_proto::TransportGraphData CreateProtoTransportGraphData(const transport_graph::TransportGraph::TransportGraphData& data, const request_handler::RequestHandler& rh) {
+transport_proto::TransportGraphData CreateProtoTransportGraphData(const transport_graph::TransportGraphData& data, const request_handler::RequestHandler& rh) {
     transport_proto::TransportGraphData proto_data;
 
     proto_data.set_stop_to_id(rh.GetId(data.to));
     proto_data.set_stop_from_id(rh.GetId(data.from));
     if (data.bus) {
-        (*proto_data.mutable_bus_id()).set_id(rh.GetId(data.bus));
+        proto_data.set_bus_id(rh.GetId(data.bus));
+        proto_data.set_is_bus(true);
+    } else {
+        proto_data.set_is_bus(false);
     }
     proto_data.set_stop_count(data.stop_count);
     proto_data.set_time(data.time);
@@ -151,11 +130,11 @@ transport_proto::TransportGraphData CreateProtoTransportGraphData(const transpor
     return proto_data;
 }
 
-transport_proto::VertexIdLoop CreateProtoVertexIdLoop(const transport_graph::TransportGraph::VertexIdLoop& vertex_id_loop) {
+transport_proto::VertexIdLoop CreateProtoVertexIdLoop(const transport_graph::VertexIdLoop& vertex_id_loop) {
     transport_proto::VertexIdLoop proto_vertex_id_loop;
 
-    *proto_vertex_id_loop.mutable_id() = CreateProtoVertexId(vertex_id_loop.id);
-    *proto_vertex_id_loop.mutable_transfer_id() = CreateProtoVertexId(vertex_id_loop.transfer_id);
+    proto_vertex_id_loop.set_id(vertex_id_loop.id);
+    proto_vertex_id_loop.set_transfer_id(vertex_id_loop.transfer_id);
 
     return proto_vertex_id_loop;
 }
@@ -163,22 +142,20 @@ transport_proto::VertexIdLoop CreateProtoVertexIdLoop(const transport_graph::Tra
 transport_proto::Graph CreateProtoGraph(const transport_graph::TransportGraph& graph, const request_handler::RequestHandler& rh) {
     transport_proto::Graph proto_graph;
 
-    //std::cerr << "Serializing edges" << std::endl;
-    for (const auto& edge : graph.GetEdges()) {
+    graph::GraphSerialization<transport_graph::TransportTime> gs;
+
+    for (const auto& edge : gs.GetEdges(graph.GetGraph())) {
         *proto_graph.add_edge() = CreateProtoEdge(edge);
     }
 
-    //std::cerr << "Serializing incidence_list" << std::endl;
-    for (const auto& incidence_list : graph.GetIncidenceList()) {
+    for (const auto& incidence_list : gs.GetIncidenceList(graph.GetGraph())) {
         *proto_graph.add_incidence_list() = CreateProtoIncidenceList(incidence_list);
     }
 
-    //std::cerr << "Serializing graph_data" << std::endl;
     for (const auto& [edge_id, graph_data] : graph.GetEdgeIdToGraphData()) {
         (*proto_graph.mutable_edge_id_to_graph_data())[static_cast<uint32_t>(edge_id)] = CreateProtoTransportGraphData(graph_data, rh);
     }
 
-    //std::cerr << "Serializing stop id to vertex id loop" << std::endl;
     for (const auto& [stop_ptr, vertex_id_loop] : graph.GetStopToVertexId()) {
         (*proto_graph.mutable_stop_to_vertex_id())[rh.GetId(stop_ptr)] = CreateProtoVertexIdLoop(vertex_id_loop);
     }
@@ -186,7 +163,198 @@ transport_proto::Graph CreateProtoGraph(const transport_graph::TransportGraph& g
     return proto_graph;
 }
 
+} // namespace detail_serialization
+
+// ----------------------------------------------------------------------------
+
+namespace detail_deserialization {
+
+// Coordinates CreateCoord(const transport_proto::Coordinates& proto_coord) {
+//     Coordinates coord;
+
+//     coord.lat = proto_coord.lat();
+//     coord.lng = proto_coord.lng();
+
+//     return coord;
+// }
+
+// transport_catalogue::stop_catalogue::Stop CreateStop(const transport_proto::Stop& proto_stop) {
+//     transport_catalogue::stop_catalogue::Stop stop;
+
+//     stop.name = proto_stop.name();
+//     stop.coord = CreateCoord(proto_stop.coord());
+
+//     return stop;
+// }
+
+// transport_catalogue::bus_catalogue::Bus CreateBus(const transport_proto::Bus& proto_bus, const request_handler::RequestHandler& rh) {
+//     transport_catalogue::bus_catalogue::Bus bus;
+
+//     bus.name = proto_bus.name();
+//     for (int i = 0; i < proto_bus.route_size(); ++i) {
+//         const transport_catalogue::stop_catalogue::Stop* stop = rh.GetStopById(proto_bus.route(i));
+//         bus.route.push_back(stop);
+//     }
+//     bus.route_type = transport_catalogue::RouteTypeFromInt(proto_bus.type());
+//     bus.route_geo_length = proto_bus.route_geo_length();
+//     bus.route_true_length = proto_bus.route_true_length();
+//     bus.stops_on_route = proto_bus.stops_on_route();
+//     bus.unique_stops = proto_bus.unique_stops();
+
+//     return bus;
+// }
+
+// svg::Point CreatePoint(const transport_proto::Point& proto_point) {
+//     svg::Point point;
+
+//     point.x = proto_point.x();
+//     point.y = proto_point.y();
+
+//     return point;
+// }
+
+// svg::Color CreateColor(const transport_proto::Color& proto_color) {
+//     svg::Color color; // monostate by default
+
+//     svg::ColorType type = svg::ColorTypeFromInt(proto_color.type());
+//     if (type == svg::ColorType::STRING) {
+//         color = proto_color.name();
+//     }
+//     else if (type == svg::ColorType::RGB) {
+//         color = svg::Rgb::FromStringView(proto_color.name());
+//     }
+//     else if (type == svg::ColorType::RGBA) {
+//         color = svg::Rgba::FromStringView(proto_color.name());
+//     }
+
+//     return color;
+// }
+
+// map_renderer::MapRendererSettings CreateMapRenderSettings(const transport_proto::MapRenderSettings& proto_settings) {
+//     map_renderer::MapRendererSettings settings;
+
+//     settings.width = proto_settings.width();
+//     settings.height = proto_settings.height();
+//     settings.padding = proto_settings.padding();
+//     settings.line_width = proto_settings.line_width();
+//     settings.stop_radius = proto_settings.stop_radius();
+//     settings.bus_label_font_size = proto_settings.bus_label_font_size();
+//     settings.bus_label_offset = CreatePoint(proto_settings.bus_label_offset());
+//     settings.stop_label_font_size = proto_settings.stop_label_font_size();
+//     settings.stop_label_offset = CreatePoint(proto_settings.stop_label_offset());
+//     settings.underlayer_color = CreateColor(proto_settings.underlayer_color());
+//     settings.underlayer_width = proto_settings.underlayer_width();
+//     for (int i = 0; i < proto_settings.color_palette_size(); ++i) {
+//         settings.color_palette.push_back(CreateColor(proto_settings.color_palette(i)));
+//     }
+
+//     return settings;
+// }
+
+// transport_catalogue::RouteSettings CreateRouteSettings(const transport_proto::RouteSettings& proto_settings) {
+//     transport_catalogue::RouteSettings settings;
+
+//     settings.bus_velocity = proto_settings.bus_velocity();
+//     settings.bus_wait_time = proto_settings.bus_waiting_time();
+
+//     return settings;
+// }
+
+// graph::VertexId CreateVertexId(const transport_proto::VertexId& proto_vertex_id) {
+//     return proto_vertex_id.id();
+// }
+
+// graph::Edge<transport_graph::TransportTime> CreateEdge(const transport_proto::Edge& proto_edge) {
+//     graph::Edge<transport_graph::TransportTime> edge{};
+
+//     edge.from = CreateVertexId(proto_edge.from());
+//     edge.to = CreateVertexId(proto_edge.to());
+//     edge.weight = proto_edge.weight().value();
+
+//     return edge;
+// }
+
+// graph::DirectedWeightedGraph<transport_graph::TransportTime>::IncidenceList CreateIncidenceList(const transport_proto::IncidenceList& proto_list) {
+//     graph::DirectedWeightedGraph<transport_graph::TransportTime>::IncidenceList list;
+
+//     for (int i = 0; i < proto_list.id_size(); ++i) {
+//         list.push_back(proto_list.id(i).id());
+//     }
+
+//     return list;
+// }
+
+// graph::EdgeId CreateEdgeId(uint32_t proto_edge_id) {
+//     return proto_edge_id;
+// }
+
+// transport_graph::TransportGraph::TransportGraphData CreateTransportGraphData(
+//     const transport_proto::TransportGraphData& proto_data, request_handler::RequestHandler& rh) {
+//     transport_graph::TransportGraph::TransportGraphData data{};
+
+//     data.from = rh.GetStopById(proto_data.stop_from_id());
+//     data.to = rh.GetStopById(proto_data.stop_to_id());
+//     if (proto_data.has_bus_id()) {
+//         data.bus = rh.GetBusById(proto_data.bus_id().id());
+//     }
+//     else {
+//         data.bus = nullptr;
+//     }
+//     data.stop_count = proto_data.stop_count();
+//     data.time = proto_data.time();
+
+//     return data;
+// }
+
+// transport_graph::TransportGraph::VertexIdLoop CreateVertexIdLoop(const transport_proto::VertexIdLoop& proto_vertex_id_loop) {
+//     transport_graph::TransportGraph::VertexIdLoop vertex_id_loop;
+
+//     vertex_id_loop.id = proto_vertex_id_loop.id().id();
+//     vertex_id_loop.transfer_id = proto_vertex_id_loop.transfer_id().id();
+
+//     return vertex_id_loop;
+// }
+
+// transport_graph::TransportGraph CreateGraph(const transport_proto::Graph& proto_graph, request_handler::RequestHandler& rh) {
+//     using namespace transport_graph;
+
+//     std::vector<graph::Edge<TransportTime>> edges;
+//     std::vector<graph::DirectedWeightedGraph<TransportTime>::IncidenceList> incidence_lists;
+//     std::unordered_map<graph::EdgeId, TransportGraph::TransportGraphData> edge_id_to_graph_data;
+//     std::unordered_map<const stop_catalogue::Stop*, TransportGraph::VertexIdLoop> stop_to_vertex_id;
+
+//     for (int i = 0; i < proto_graph.edge_size(); ++i) {
+//         edges.push_back(CreateEdge(proto_graph.edge(i)));
+//     }
+
+//     for (int i = 0; i < proto_graph.incidence_list_size(); ++i) {
+//         incidence_lists.push_back(CreateIncidenceList(proto_graph.incidence_list(i)));
+//     }
+
+//     for (const auto& [proto_edge_id, proto_transport_graph_data] : proto_graph.edge_id_to_graph_data()) {
+//         edge_id_to_graph_data.emplace(CreateEdgeId(proto_edge_id), CreateTransportGraphData(proto_transport_graph_data, rh));
+//     }
+
+//     for (const auto& [proto_stop_id, proto_vertex_id_loop] : proto_graph.stop_to_vertex_id()) {
+//         stop_to_vertex_id.emplace(rh.GetStopById(proto_stop_id), CreateVertexIdLoop(proto_vertex_id_loop));
+//     }
+
+//     TransportGraph graph(
+//         std::move(edges),
+//         std::move(incidence_lists),
+//         std::move(edge_id_to_graph_data),
+//         std::move(stop_to_vertex_id));
+
+//     return graph;
+// }
+
+} // namespace detail_deserialization
+
+// ----------------------------------------------------------------------------
+
 void Serialization(std::ofstream& out, const request_handler::RequestHandler& rh) {
+    using namespace detail_serialization;
+
     transport_proto::TransportCatalogue tc;
 
     for (const transport_catalogue::stop_catalogue::Stop* stop : rh.GetStops()) {
@@ -211,206 +379,29 @@ void Serialization(std::ofstream& out, const request_handler::RequestHandler& rh
     tc.SerializeToOstream(&out);
 }
 
-Coordinates CreateCoord(const transport_proto::Coordinates& proto_coord) {
-    Coordinates coord;
-
-    coord.lat = proto_coord.lat();
-    coord.lng = proto_coord.lng();
-
-    return coord;
-}
-
-transport_catalogue::stop_catalogue::Stop CreateStop(const transport_proto::Stop& proto_stop) {
-    transport_catalogue::stop_catalogue::Stop stop;
-
-    stop.name = proto_stop.name();
-    stop.coord = CreateCoord(proto_stop.coord());
-
-    return stop;
-}
-
-transport_catalogue::bus_catalogue::Bus CreateBus(const transport_proto::Bus& proto_bus, const request_handler::RequestHandler& rh) {
-    transport_catalogue::bus_catalogue::Bus bus;
-
-    bus.name = proto_bus.name();
-    for (int i = 0; i < proto_bus.route_size(); ++i) {
-        const transport_catalogue::stop_catalogue::Stop* stop = rh.GetStopById(proto_bus.route(i));
-        bus.route.push_back(stop);
-    }
-    bus.route_type = transport_catalogue::RouteTypeFromInt(proto_bus.type());
-    bus.route_geo_length = proto_bus.route_geo_length();
-    bus.route_true_length = proto_bus.route_true_length();
-    bus.stops_on_route = proto_bus.stops_on_route();
-    bus.unique_stops = proto_bus.unique_stops();
-
-    return bus;
-}
-
-svg::Point CreatePoint(const transport_proto::Point& proto_point) {
-    svg::Point point;
-
-    point.x = proto_point.x();
-    point.y = proto_point.y();
-
-    return point;
-}
-
-svg::Color CreateColor(const transport_proto::Color& proto_color) {
-    svg::Color color; // monostate by default
-
-    svg::ColorType type = svg::ColorTypeFromInt(proto_color.type());
-    if (type == svg::ColorType::STRING) {
-        color = proto_color.name();
-    }
-    else if (type == svg::ColorType::RGB) {
-        color = svg::Rgb::FromStringView(proto_color.name());
-    }
-    else if (type == svg::ColorType::RGBA) {
-        color = svg::Rgba::FromStringView(proto_color.name());
-    }
-
-    return color;
-}
-
-map_renderer::MapRendererSettings CreateMapRenderSettings(const transport_proto::MapRenderSettings& proto_settings) {
-    map_renderer::MapRendererSettings settings;
-
-    settings.width = proto_settings.width();
-    settings.height = proto_settings.height();
-    settings.padding = proto_settings.padding();
-    settings.line_width = proto_settings.line_width();
-    settings.stop_radius = proto_settings.stop_radius();
-    settings.bus_label_font_size = proto_settings.bus_label_font_size();
-    settings.bus_label_offset = CreatePoint(proto_settings.bus_label_offset());
-    settings.stop_label_font_size = proto_settings.stop_label_font_size();
-    settings.stop_label_offset = CreatePoint(proto_settings.stop_label_offset());
-    settings.underlayer_color = CreateColor(proto_settings.underlayer_color());
-    settings.underlayer_width = proto_settings.underlayer_width();
-    for (int i = 0; i < proto_settings.color_palette_size(); ++i) {
-        settings.color_palette.push_back(CreateColor(proto_settings.color_palette(i)));
-    }
-
-    return settings;
-}
-
-transport_catalogue::RouteSettings CreateRouteSettings(const transport_proto::RouteSettings& proto_settings) {
-    transport_catalogue::RouteSettings settings;
-
-    settings.bus_velocity = proto_settings.bus_velocity();
-    settings.bus_wait_time = proto_settings.bus_waiting_time();
-
-    return settings;
-}
-
-graph::VertexId CreateVertexId(const transport_proto::VertexId& proto_vertex_id) {
-    return proto_vertex_id.id();
-}
-
-graph::Edge<transport_graph::TransportTime> CreateEdge(const transport_proto::Edge& proto_edge) {
-    graph::Edge<transport_graph::TransportTime> edge{};
-
-    edge.from = CreateVertexId(proto_edge.from());
-    edge.to = CreateVertexId(proto_edge.to());
-    edge.weight = proto_edge.weight().value();
-
-    return edge;
-}
-
-graph::DirectedWeightedGraph<transport_graph::TransportTime>::IncidenceList CreateIncidenceList(const transport_proto::IncidenceList& proto_list) {
-    graph::DirectedWeightedGraph<transport_graph::TransportTime>::IncidenceList list;
-
-    for (int i = 0; i < proto_list.id_size(); ++i) {
-        list.push_back(proto_list.id(i).id());
-    }
-
-    return list;
-}
-
-graph::EdgeId CreateEdgeId(uint32_t proto_edge_id) {
-    return proto_edge_id;
-}
-
-transport_graph::TransportGraph::TransportGraphData CreateTransportGraphData(
-    const transport_proto::TransportGraphData& proto_data, request_handler::RequestHandler& rh) {
-    transport_graph::TransportGraph::TransportGraphData data{};
-
-    data.from = rh.GetStopById(proto_data.stop_from_id());
-    data.to = rh.GetStopById(proto_data.stop_to_id());
-    if (proto_data.has_bus_id()) {
-        data.bus = rh.GetBusById(proto_data.bus_id().id());
-    }
-    else {
-        data.bus = nullptr;
-    }
-    data.stop_count = proto_data.stop_count();
-    data.time = proto_data.time();
-
-    return data;
-}
-
-transport_graph::TransportGraph::VertexIdLoop CreateVertexIdLoop(const transport_proto::VertexIdLoop& proto_vertex_id_loop) {
-    transport_graph::TransportGraph::VertexIdLoop vertex_id_loop;
-
-    vertex_id_loop.id = proto_vertex_id_loop.id().id();
-    vertex_id_loop.transfer_id = proto_vertex_id_loop.transfer_id().id();
-
-    return vertex_id_loop;
-}
-
-transport_graph::TransportGraph CreateGraph(const transport_proto::Graph& proto_graph, request_handler::RequestHandler& rh) {
-    using namespace transport_graph;
-
-    std::vector<graph::Edge<TransportTime>> edges;
-    std::vector<graph::DirectedWeightedGraph<TransportTime>::IncidenceList> incidence_lists;
-    std::unordered_map<graph::EdgeId, TransportGraph::TransportGraphData> edge_id_to_graph_data;
-    std::unordered_map<const stop_catalogue::Stop*, TransportGraph::VertexIdLoop> stop_to_vertex_id;
-
-    for (int i = 0; i < proto_graph.edge_size(); ++i) {
-        edges.push_back(CreateEdge(proto_graph.edge(i)));
-    }
-
-    for (int i = 0; i < proto_graph.incidence_list_size(); ++i) {
-        incidence_lists.push_back(CreateIncidenceList(proto_graph.incidence_list(i)));
-    }
-
-    for (const auto& [proto_edge_id, proto_transport_graph_data] : proto_graph.edge_id_to_graph_data()) {
-        edge_id_to_graph_data.emplace(CreateEdgeId(proto_edge_id), CreateTransportGraphData(proto_transport_graph_data, rh));
-    }
-
-    for (const auto& [proto_stop_id, proto_vertex_id_loop] : proto_graph.stop_to_vertex_id()) {
-        stop_to_vertex_id.emplace(rh.GetStopById(proto_stop_id), CreateVertexIdLoop(proto_vertex_id_loop));
-    }
-
-    TransportGraph graph(
-        std::move(edges),
-        std::move(incidence_lists),
-        std::move(edge_id_to_graph_data),
-        std::move(stop_to_vertex_id));
-
-    return graph;
-}
-
 void Deserialization(request_handler::RequestHandler& rh, std::ifstream& in) {
-    transport_proto::TransportCatalogue tc;
-    tc.ParseFromIstream(&in);
+    (void)rh;
+    (void)in;
+    // transport_proto::TransportCatalogue tc;
+    // tc.ParseFromIstream(&in);
 
-    for (int i = 0; i < tc.stop_size(); ++i) {
-        const transport_proto::Stop& stop = tc.stop(i);
-        rh.AddStop(stop.id(), CreateStop(stop));
-    }
+    // for (int i = 0; i < tc.stop_size(); ++i) {
+    //     const transport_proto::Stop& stop = tc.stop(i);
+    //     rh.AddStop(stop.id(), CreateStop(stop));
+    // }
 
-    for (int i = 0; i < tc.bus_size(); ++i) {
-        const transport_proto::Bus& bus = tc.bus(i);
-        rh.AddBus(bus.id(), CreateBus(bus, rh));
-    }
+    // for (int i = 0; i < tc.bus_size(); ++i) {
+    //     const transport_proto::Bus& bus = tc.bus(i);
+    //     rh.AddBus(bus.id(), CreateBus(bus, rh));
+    // }
 
-    rh.RenderMap(CreateMapRenderSettings(tc.map_render_setting()));
+    // rh.RenderMap(CreateMapRenderSettings(tc.map_render_setting()));
 
-    rh.SetRouteSettings(std::move(CreateRouteSettings(tc.route_settings())));
+    // rh.SetRouteSettings(std::move(CreateRouteSettings(tc.route_settings())));
 
-    if (tc.has_graph()) {
-        rh.SetGraph(std::move(CreateGraph(tc.graph(), rh)));
-    }
+    // if (tc.has_graph()) {
+    //     rh.SetGraph(std::move(CreateGraph(tc.graph(), rh)));
+    // }
 }
 
 } // namespace transport_serialization
