@@ -169,184 +169,176 @@ transport_proto::Graph CreateProtoGraph(const transport_graph::TransportGraph& g
 
 namespace detail_deserialization {
 
-// Coordinates CreateCoord(const transport_proto::Coordinates& proto_coord) {
-//     Coordinates coord;
+Coordinates CreateCoord(const transport_proto::Coordinates& proto_coord) {
+    Coordinates coord;
 
-//     coord.lat = proto_coord.lat();
-//     coord.lng = proto_coord.lng();
+    coord.lat = proto_coord.lat();
+    coord.lng = proto_coord.lng();
 
-//     return coord;
-// }
+    return coord;
+}
 
-// transport_catalogue::stop_catalogue::Stop CreateStop(const transport_proto::Stop& proto_stop) {
-//     transport_catalogue::stop_catalogue::Stop stop;
+transport_catalogue::stop_catalogue::Stop CreateStop(const transport_proto::Stop& proto_stop) {
+    transport_catalogue::stop_catalogue::Stop stop;
 
-//     stop.name = proto_stop.name();
-//     stop.coord = CreateCoord(proto_stop.coord());
+    stop.name = proto_stop.name();
+    stop.coord = CreateCoord(proto_stop.coord());
 
-//     return stop;
-// }
+    return stop;
+}
 
-// transport_catalogue::bus_catalogue::Bus CreateBus(const transport_proto::Bus& proto_bus, const request_handler::RequestHandler& rh) {
-//     transport_catalogue::bus_catalogue::Bus bus;
+transport_catalogue::bus_catalogue::Bus CreateBus(const transport_proto::Bus& proto_bus, const request_handler::RequestHandler& rh) {
+    transport_catalogue::bus_catalogue::Bus bus;
 
-//     bus.name = proto_bus.name();
-//     for (int i = 0; i < proto_bus.route_size(); ++i) {
-//         const transport_catalogue::stop_catalogue::Stop* stop = rh.GetStopById(proto_bus.route(i));
-//         bus.route.push_back(stop);
-//     }
-//     bus.route_type = transport_catalogue::RouteTypeFromInt(proto_bus.type());
-//     bus.route_geo_length = proto_bus.route_geo_length();
-//     bus.route_true_length = proto_bus.route_true_length();
-//     bus.stops_on_route = proto_bus.stops_on_route();
-//     bus.unique_stops = proto_bus.unique_stops();
+    bus.name = proto_bus.name();
+    for (int i = 0; i < proto_bus.route_size(); ++i) {
+        const transport_catalogue::stop_catalogue::Stop* stop = rh.GetStopById(proto_bus.route(i));
+        bus.route.push_back(stop);
+    }
+    bus.route_type = transport_catalogue::RouteTypeFromInt(proto_bus.type());
+    bus.route_geo_length = proto_bus.route_geo_length();
+    bus.route_true_length = proto_bus.route_true_length();
+    bus.stops_on_route = proto_bus.stops_on_route();
+    bus.unique_stops = proto_bus.unique_stops();
 
-//     return bus;
-// }
+    return bus;
+}
 
-// svg::Point CreatePoint(const transport_proto::Point& proto_point) {
-//     svg::Point point;
+svg::Point CreatePoint(const transport_proto::Point& proto_point) {
+    svg::Point point;
 
-//     point.x = proto_point.x();
-//     point.y = proto_point.y();
+    point.x = proto_point.x();
+    point.y = proto_point.y();
 
-//     return point;
-// }
+    return point;
+}
 
-// svg::Color CreateColor(const transport_proto::Color& proto_color) {
-//     svg::Color color; // monostate by default
+svg::Color CreateColor(const transport_proto::Color& proto_color) {
+    svg::Color color; // monostate by default
 
-//     svg::ColorType type = svg::ColorTypeFromInt(proto_color.type());
-//     if (type == svg::ColorType::STRING) {
-//         color = proto_color.name();
-//     }
-//     else if (type == svg::ColorType::RGB) {
-//         color = svg::Rgb::FromStringView(proto_color.name());
-//     }
-//     else if (type == svg::ColorType::RGBA) {
-//         color = svg::Rgba::FromStringView(proto_color.name());
-//     }
+    svg::ColorType type = svg::ColorTypeFromInt(proto_color.type());
+    if (type == svg::ColorType::STRING) {
+        color = proto_color.name();
+    }
+    else if (type == svg::ColorType::RGB) {
+        color = svg::Rgb::FromStringView(proto_color.name());
+    }
+    else if (type == svg::ColorType::RGBA) {
+        color = svg::Rgba::FromStringView(proto_color.name());
+    }
 
-//     return color;
-// }
+    return color;
+}
 
-// map_renderer::MapRendererSettings CreateMapRenderSettings(const transport_proto::MapRenderSettings& proto_settings) {
-//     map_renderer::MapRendererSettings settings;
+map_renderer::MapRendererSettings CreateMapRenderSettings(const transport_proto::MapRenderSettings& proto_settings) {
+    map_renderer::MapRendererSettings settings;
 
-//     settings.width = proto_settings.width();
-//     settings.height = proto_settings.height();
-//     settings.padding = proto_settings.padding();
-//     settings.line_width = proto_settings.line_width();
-//     settings.stop_radius = proto_settings.stop_radius();
-//     settings.bus_label_font_size = proto_settings.bus_label_font_size();
-//     settings.bus_label_offset = CreatePoint(proto_settings.bus_label_offset());
-//     settings.stop_label_font_size = proto_settings.stop_label_font_size();
-//     settings.stop_label_offset = CreatePoint(proto_settings.stop_label_offset());
-//     settings.underlayer_color = CreateColor(proto_settings.underlayer_color());
-//     settings.underlayer_width = proto_settings.underlayer_width();
-//     for (int i = 0; i < proto_settings.color_palette_size(); ++i) {
-//         settings.color_palette.push_back(CreateColor(proto_settings.color_palette(i)));
-//     }
+    settings.width = proto_settings.width();
+    settings.height = proto_settings.height();
+    settings.padding = proto_settings.padding();
+    settings.line_width = proto_settings.line_width();
+    settings.stop_radius = proto_settings.stop_radius();
+    settings.bus_label_font_size = proto_settings.bus_label_font_size();
+    settings.bus_label_offset = CreatePoint(proto_settings.bus_label_offset());
+    settings.stop_label_font_size = proto_settings.stop_label_font_size();
+    settings.stop_label_offset = CreatePoint(proto_settings.stop_label_offset());
+    settings.underlayer_color = CreateColor(proto_settings.underlayer_color());
+    settings.underlayer_width = proto_settings.underlayer_width();
+    for (int i = 0; i < proto_settings.color_palette_size(); ++i) {
+        settings.color_palette.push_back(CreateColor(proto_settings.color_palette(i)));
+    }
 
-//     return settings;
-// }
+    return settings;
+}
 
-// transport_catalogue::RouteSettings CreateRouteSettings(const transport_proto::RouteSettings& proto_settings) {
-//     transport_catalogue::RouteSettings settings;
+transport_catalogue::RouteSettings CreateRouteSettings(const transport_proto::RouteSettings& proto_settings) {
+    transport_catalogue::RouteSettings settings;
 
-//     settings.bus_velocity = proto_settings.bus_velocity();
-//     settings.bus_wait_time = proto_settings.bus_waiting_time();
+    settings.bus_velocity = proto_settings.bus_velocity();
+    settings.bus_wait_time = proto_settings.bus_waiting_time();
 
-//     return settings;
-// }
+    return settings;
+}
 
-// graph::VertexId CreateVertexId(const transport_proto::VertexId& proto_vertex_id) {
-//     return proto_vertex_id.id();
-// }
+graph::Edge<transport_graph::TransportTime> CreateEdge(const transport_proto::Edge& proto_edge) {
+    graph::Edge<transport_graph::TransportTime> edge{};
 
-// graph::Edge<transport_graph::TransportTime> CreateEdge(const transport_proto::Edge& proto_edge) {
-//     graph::Edge<transport_graph::TransportTime> edge{};
+    edge.from = proto_edge.from();
+    edge.to = proto_edge.to();
+    edge.weight = proto_edge.weight();
 
-//     edge.from = CreateVertexId(proto_edge.from());
-//     edge.to = CreateVertexId(proto_edge.to());
-//     edge.weight = proto_edge.weight().value();
+    return edge;
+}
 
-//     return edge;
-// }
+graph::DirectedWeightedGraph<transport_graph::TransportTime>::IncidenceList CreateIncidenceList(const transport_proto::IncidenceList& proto_list) {
+    graph::DirectedWeightedGraph<transport_graph::TransportTime>::IncidenceList list;
 
-// graph::DirectedWeightedGraph<transport_graph::TransportTime>::IncidenceList CreateIncidenceList(const transport_proto::IncidenceList& proto_list) {
-//     graph::DirectedWeightedGraph<transport_graph::TransportTime>::IncidenceList list;
+    for (int i = 0; i < proto_list.id_size(); ++i) {
+        list.push_back(proto_list.id(i));
+    }
 
-//     for (int i = 0; i < proto_list.id_size(); ++i) {
-//         list.push_back(proto_list.id(i).id());
-//     }
+    return list;
+}
 
-//     return list;
-// }
+transport_graph::TransportGraphData CreateTransportGraphData(
+    const transport_proto::TransportGraphData& proto_data, request_handler::RequestHandler& rh) {
+    transport_graph::TransportGraphData data{};
 
-// graph::EdgeId CreateEdgeId(uint32_t proto_edge_id) {
-//     return proto_edge_id;
-// }
+    data.from = rh.GetStopById(proto_data.stop_from_id());
+    data.to = rh.GetStopById(proto_data.stop_to_id());
+    if (proto_data.is_bus()) {
+        data.bus = rh.GetBusById(proto_data.bus_id());
+    }
+    else {
+        data.bus = nullptr;
+    }
+    data.stop_count = proto_data.stop_count();
+    data.time = proto_data.time();
 
-// transport_graph::TransportGraph::TransportGraphData CreateTransportGraphData(
-//     const transport_proto::TransportGraphData& proto_data, request_handler::RequestHandler& rh) {
-//     transport_graph::TransportGraph::TransportGraphData data{};
+    return data;
+}
 
-//     data.from = rh.GetStopById(proto_data.stop_from_id());
-//     data.to = rh.GetStopById(proto_data.stop_to_id());
-//     if (proto_data.has_bus_id()) {
-//         data.bus = rh.GetBusById(proto_data.bus_id().id());
-//     }
-//     else {
-//         data.bus = nullptr;
-//     }
-//     data.stop_count = proto_data.stop_count();
-//     data.time = proto_data.time();
+transport_graph::VertexIdLoop CreateVertexIdLoop(const transport_proto::VertexIdLoop& proto_vertex_id_loop) {
+    transport_graph::VertexIdLoop vertex_id_loop;
 
-//     return data;
-// }
+    vertex_id_loop.id = proto_vertex_id_loop.id();
+    vertex_id_loop.transfer_id = proto_vertex_id_loop.transfer_id();
 
-// transport_graph::TransportGraph::VertexIdLoop CreateVertexIdLoop(const transport_proto::VertexIdLoop& proto_vertex_id_loop) {
-//     transport_graph::TransportGraph::VertexIdLoop vertex_id_loop;
+    return vertex_id_loop;
+}
 
-//     vertex_id_loop.id = proto_vertex_id_loop.id().id();
-//     vertex_id_loop.transfer_id = proto_vertex_id_loop.transfer_id().id();
+transport_graph::TransportGraph CreateGraph(const transport_proto::Graph& proto_graph, request_handler::RequestHandler& rh) {
+    using namespace transport_graph;
 
-//     return vertex_id_loop;
-// }
+    std::vector<graph::Edge<TransportTime>> edges;
+    std::vector<graph::DirectedWeightedGraph<TransportTime>::IncidenceList> incidence_lists;
+    std::unordered_map<graph::EdgeId, TransportGraphData> edge_id_to_graph_data;
+    std::unordered_map<const stop_catalogue::Stop*, VertexIdLoop> stop_to_vertex_id;
 
-// transport_graph::TransportGraph CreateGraph(const transport_proto::Graph& proto_graph, request_handler::RequestHandler& rh) {
-//     using namespace transport_graph;
+    for (int i = 0; i < proto_graph.edge_size(); ++i) {
+        edges.push_back(CreateEdge(proto_graph.edge(i)));
+    }
 
-//     std::vector<graph::Edge<TransportTime>> edges;
-//     std::vector<graph::DirectedWeightedGraph<TransportTime>::IncidenceList> incidence_lists;
-//     std::unordered_map<graph::EdgeId, TransportGraph::TransportGraphData> edge_id_to_graph_data;
-//     std::unordered_map<const stop_catalogue::Stop*, TransportGraph::VertexIdLoop> stop_to_vertex_id;
+    for (int i = 0; i < proto_graph.incidence_list_size(); ++i) {
+        incidence_lists.push_back(CreateIncidenceList(proto_graph.incidence_list(i)));
+    }
 
-//     for (int i = 0; i < proto_graph.edge_size(); ++i) {
-//         edges.push_back(CreateEdge(proto_graph.edge(i)));
-//     }
+    for (const auto& [proto_edge_id, proto_transport_graph_data] : proto_graph.edge_id_to_graph_data()) {
+        edge_id_to_graph_data.emplace(proto_edge_id, CreateTransportGraphData(proto_transport_graph_data, rh));
+    }
 
-//     for (int i = 0; i < proto_graph.incidence_list_size(); ++i) {
-//         incidence_lists.push_back(CreateIncidenceList(proto_graph.incidence_list(i)));
-//     }
+    for (const auto& [proto_stop_id, proto_vertex_id_loop] : proto_graph.stop_to_vertex_id()) {
+        stop_to_vertex_id.emplace(rh.GetStopById(proto_stop_id), CreateVertexIdLoop(proto_vertex_id_loop));
+    }
 
-//     for (const auto& [proto_edge_id, proto_transport_graph_data] : proto_graph.edge_id_to_graph_data()) {
-//         edge_id_to_graph_data.emplace(CreateEdgeId(proto_edge_id), CreateTransportGraphData(proto_transport_graph_data, rh));
-//     }
+    TransportGraphDeserialization deserializer;
 
-//     for (const auto& [proto_stop_id, proto_vertex_id_loop] : proto_graph.stop_to_vertex_id()) {
-//         stop_to_vertex_id.emplace(rh.GetStopById(proto_stop_id), CreateVertexIdLoop(proto_vertex_id_loop));
-//     }
+    deserializer.CreateGraph(std::move(edges), std::move(incidence_lists));
+    deserializer.SetEdgeIdToGraphData(std::move(edge_id_to_graph_data));
+    deserializer.SetStopToVertexId(std::move(stop_to_vertex_id));
 
-//     TransportGraph graph(
-//         std::move(edges),
-//         std::move(incidence_lists),
-//         std::move(edge_id_to_graph_data),
-//         std::move(stop_to_vertex_id));
-
-//     return graph;
-// }
+    return deserializer.Build();
+}
 
 } // namespace detail_deserialization
 
@@ -380,28 +372,28 @@ void Serialization(std::ofstream& out, const request_handler::RequestHandler& rh
 }
 
 void Deserialization(request_handler::RequestHandler& rh, std::ifstream& in) {
-    (void)rh;
-    (void)in;
-    // transport_proto::TransportCatalogue tc;
-    // tc.ParseFromIstream(&in);
+    using namespace detail_deserialization;
 
-    // for (int i = 0; i < tc.stop_size(); ++i) {
-    //     const transport_proto::Stop& stop = tc.stop(i);
-    //     rh.AddStop(stop.id(), CreateStop(stop));
-    // }
+    transport_proto::TransportCatalogue tc;
+    tc.ParseFromIstream(&in);
 
-    // for (int i = 0; i < tc.bus_size(); ++i) {
-    //     const transport_proto::Bus& bus = tc.bus(i);
-    //     rh.AddBus(bus.id(), CreateBus(bus, rh));
-    // }
+    for (int i = 0; i < tc.stop_size(); ++i) {
+        const transport_proto::Stop& stop = tc.stop(i);
+        rh.AddStop(stop.id(), CreateStop(stop));
+    }
 
-    // rh.RenderMap(CreateMapRenderSettings(tc.map_render_setting()));
+    for (int i = 0; i < tc.bus_size(); ++i) {
+        const transport_proto::Bus& bus = tc.bus(i);
+        rh.AddBus(bus.id(), CreateBus(bus, rh));
+    }
 
-    // rh.SetRouteSettings(std::move(CreateRouteSettings(tc.route_settings())));
+    rh.RenderMap(CreateMapRenderSettings(tc.map_render_setting()));
 
-    // if (tc.has_graph()) {
-    //     rh.SetGraph(std::move(CreateGraph(tc.graph(), rh)));
-    // }
+    rh.SetRouteSettings(CreateRouteSettings(tc.route_settings()));
+
+    if (tc.has_graph()) {
+        rh.SetGraph(CreateGraph(tc.graph(), rh));
+    }
 }
 
 } // namespace transport_serialization

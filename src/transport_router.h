@@ -134,11 +134,11 @@ public:
         std::vector<graph::Edge<TransportTime>>&& edges,
         std::vector<std::vector<graph::EdgeId>>&& incidence_list) {
 
-        graph::GraphDeserialization<TransportTime> gd;
-        gd.SetEdges(std::move(edges));
-        gd.SetIncidenceList(std::move(incidence_list));
+        graph::GraphDeserialization<TransportTime> deserializer;
+        deserializer.SetEdges(std::move(edges));
+        deserializer.SetIncidenceList(std::move(incidence_list));
 
-        transport_graph_.graph_ = std::move(gd.Build());
+        transport_graph_.graph_ = std::move(deserializer.Build());
 
         return *this;
     }
