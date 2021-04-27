@@ -65,7 +65,7 @@ void TransportGraph::AddEdgesToGraph(EdgesData& edges) {
 
 std::optional<TransportRouter::TransportRouterData> TransportRouter::GetRoute(const stop_catalogue::Stop* from, const stop_catalogue::Stop* to) const {
     const auto& stop_to_vertex_id = transport_graph_.GetStopToVertexId();
-    auto route = BuildRoute(stop_to_vertex_id.at(from).transfer_id, stop_to_vertex_id.at(to).transfer_id);
+    auto route = router_.BuildRoute(stop_to_vertex_id.at(from).transfer_id, stop_to_vertex_id.at(to).transfer_id);
     if (route) {
         TransportRouterData output_data;
         output_data.time = (*route).weight;

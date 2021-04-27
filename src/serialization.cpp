@@ -1,6 +1,7 @@
 #include "serialization.h"
 
 #include <iostream>
+#include <vector>
 
 #include "map_renderer.h"
 #include "svg.h"
@@ -161,6 +162,46 @@ transport_proto::Graph CreateProtoGraph(const transport_graph::TransportGraph& g
     }
 
     return proto_graph;
+}
+
+transport_proto::RouteInternalData CreateProtoRouteInternalData(size_t pos, const graph::Router<transport_graph::TransportTime>::RouteInternalData& data) {
+    transport_proto::RouteInternalData proto_route_internal_data;
+
+    proto_route_internal_data.set_pos(pos);
+    proto_route_internal_data.set_weight(data.weight);
+    if (data.prev_edge) {
+        proto_route_internal_data.set_is_prev_edge(true);
+        proto_route_internal_data.set_prev_edge_id(*data.prev_edge);
+    }
+    else {
+        proto_route_internal_data.set_is_prev_edge(false);
+    }
+
+    return proto_route_internal_data;
+}
+
+transport_proto::Router CreateProtoRouter(const transport_graph::TransportRouter& transport_router) {
+    transport_proto::Router proto_router;
+
+    const auto& router = transport_graph::TransportRouterGetter::GetRouter(transport_router);
+
+    transport_proto::RoutesInternalData routes_internal_data;
+    for (const auto& vector_with_internal_data : graph::RouterDataGetter<transport_graph::TransportTime>::GetInternalData(router)) {
+        transport_proto::RouteInternalDataVector data_vector;
+        data_vector.set_size(vector_with_internal_data.size());
+        size_t pos = 0;
+        for (const auto& internal_data : vector_with_internal_data) {
+            if (internal_data) {
+                *data_vector.add_route_internal_data() = CreateProtoRouteInternalData(pos, *internal_data);
+            }
+            pos++;
+        }
+        *routes_internal_data.add_routes_internal_data_vector() = std::move(data_vector);
+    }
+
+    *proto_router.mutable_routes_internal_data() = std::move(routes_internal_data);
+
+    return proto_router;
 }
 
 } // namespace detail_serialization
@@ -340,6 +381,46 @@ transport_graph::TransportGraph CreateGraph(const transport_proto::Graph& proto_
     return deserializer.Build();
 }
 
+graph::Router<transport_graph::TransportTime>::RouteInternalData CreateRouteInternalData(const transport_proto::RouteInternalData& proto_data) {
+    graph::Router<transport_graph::TransportTime>::RouteInternalData data;
+
+    data.weight = proto_data.weight();
+    if (proto_data.is_prev_edge()) {
+        data.prev_edge = proto_data.prev_edge_id();
+    }
+
+    return data;
+}
+
+transport_graph::TransportRouter CreateRouter(const transport_graph::TransportGraph* ptr_graph, const transport_proto::Router& proto_router) {
+    using namespace graph;
+    using namespace transport_graph;
+
+    Router<TransportTime>::RoutesInternalData routes_internal_data;
+
+    for (int i = 0; i < proto_router.routes_internal_data().routes_internal_data_vector_size(); ++i) {
+        const auto& proto_data_vector = proto_router.routes_internal_data().routes_internal_data_vector(i);
+
+        std::vector<std::optional<Router<TransportTime>::RouteInternalData>> routes_internal_data_vector(proto_data_vector.size());
+
+        for (int j = 0; j < proto_data_vector.route_internal_data_size(); ++j) {
+            const auto& proto_internal_data = proto_data_vector.route_internal_data(j);
+
+            routes_internal_data_vector.at(proto_internal_data.pos()) = CreateRouteInternalData(proto_internal_data);
+        }
+
+        routes_internal_data.emplace_back(std::move(routes_internal_data_vector));
+    }
+
+    return transport_graph::TransportRouterCreator::Build(
+        *ptr_graph,
+        graph::RouterCreator<transport_graph::TransportTime>::Build(
+            ptr_graph->GetGraph(),
+            std::move(routes_internal_data)
+        )
+    );
+}
+
 } // namespace detail_deserialization
 
 // ----------------------------------------------------------------------------
@@ -368,6 +449,10 @@ void Serialization(std::ofstream& out, const request_handler::RequestHandler& rh
         *tc.mutable_graph() = CreateProtoGraph(*rh.GetGraph(), rh);
     }
 
+    if (rh.GetRouter()) {
+        *tc.mutable_router() = CreateProtoRouter(*rh.GetRouter());
+    }
+
     tc.SerializeToOstream(&out);
 }
 
@@ -393,6 +478,10 @@ void Deserialization(request_handler::RequestHandler& rh, std::ifstream& in) {
 
     if (tc.has_graph()) {
         rh.SetGraph(CreateGraph(tc.graph(), rh));
+    }
+
+    if (tc.has_router()) {
+        rh.SetRouter(CreateRouter(rh.GetGraph(), tc.router()));
     }
 }
 

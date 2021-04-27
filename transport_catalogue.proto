@@ -39,4 +39,5 @@ message TransportCatalogue {
     MapRenderSettings map_render_setting = 3;
     RouteSettings route_settings = 4;
     Graph graph = 5;
+    Router router = 6;
 }

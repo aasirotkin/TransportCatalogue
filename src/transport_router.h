@@ -153,7 +153,10 @@ private:
 
 // ----------------------------------------------------------------------------
 
-class TransportRouter : private graph::Router<TransportTime> {
+class TransportRouterGetter;
+class TransportRouterCreator;
+
+class TransportRouter {
 public:
     struct TransportRouterData {
         std::vector<TransportGraphData> route{};
@@ -162,14 +165,43 @@ public:
 
 public:
     explicit TransportRouter(const TransportGraph& transport_graph)
-        : graph::Router<TransportTime>(transport_graph.GetGraph())
-        , transport_graph_(transport_graph) {
+        : transport_graph_(transport_graph)
+        , router_(transport_graph.GetGraph()) {
     }
 
     std::optional<TransportRouter::TransportRouterData> GetRoute(const stop_catalogue::Stop* from, const stop_catalogue::Stop* to) const;
 
+public:
+    friend class TransportRouterGetter;
+    friend class TransportRouterCreator;
+
+private:
+    TransportRouter(
+        const TransportGraph& transport_graph,
+        graph::Router<TransportTime>&& router)
+        : transport_graph_(transport_graph)
+        , router_(std::move(router)) {
+    }
+
 private:
     const TransportGraph& transport_graph_;
+    graph::Router<TransportTime> router_;
+};
+
+class TransportRouterGetter {
+public:
+    static const auto& GetRouter(const TransportRouter& router) {
+        return router.router_;
+    }
+};
+
+class TransportRouterCreator {
+public:
+    static TransportRouter Build(
+        const TransportGraph& transport_graph,
+        graph::Router<TransportTime>&& router) {
+        return { transport_graph, std::move(router) };
+    }
 };
 
 } // namespace transport_graph

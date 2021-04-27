@@ -15,6 +15,33 @@
 namespace graph {
 
     template <typename Weight>
+    class Router;
+
+// ----------------------------------------------------------------------------
+
+    template <typename Weight>
+    class RouterDataGetter {
+    public:
+        static const auto& GetInternalData(const Router<Weight>& router) {
+            return router.routes_internal_data_;
+        }
+    };
+
+// ----------------------------------------------------------------------------
+
+    template <typename Weight>
+    class RouterCreator {
+    public:
+        static Router<Weight> Build(
+            const graph::DirectedWeightedGraph<Weight>& graph,
+            typename Router<Weight>::RoutesInternalData&& routes_internal_data) {
+            return { graph, std::move(routes_internal_data) };
+        }
+    };
+
+// ----------------------------------------------------------------------------
+
+    template <typename Weight>
     class Router {
     private:
         using Graph = DirectedWeightedGraph<Weight>;
@@ -30,11 +57,21 @@ namespace graph {
         std::optional<RouteInfo> BuildRoute(VertexId from, VertexId to) const;
 
     private:
+        friend class RouterDataGetter<Weight>;
+        friend class RouterCreator<Weight>;
+
+    public:
         struct RouteInternalData {
             Weight weight;
             std::optional<EdgeId> prev_edge;
         };
         using RoutesInternalData = std::vector<std::vector<std::optional<RouteInternalData>>>;
+
+    private:
+        Router(const Graph& graph, RoutesInternalData&& routes_internal_data)
+            : graph_(graph)
+            , routes_internal_data_(std::move(routes_internal_data)) {
+        }
 
         void InitializeRoutesInternalData(const Graph& graph) {
             const size_t vertex_count = graph.GetVertexCount();
@@ -79,6 +116,8 @@ namespace graph {
         const Graph& graph_;
         RoutesInternalData routes_internal_data_;
     };
+
+// ----------------------------------------------------------------------------
 
     template <typename Weight>
     Router<Weight>::Router(const Graph& graph)
