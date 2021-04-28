@@ -69,7 +69,7 @@ private:
     void CreateGraph(const TransportCatalogue& catalogue);
 
     template <typename It>
-    std::vector<TransportGraphData> CreateTransportGraphData(ranges::BusRange<It> bus_range, const TransportCatalogue& catalogue);
+    std::vector<TransportGraphData> CreateTransportGraphData(const ranges::BusRange<It>& bus_range, const TransportCatalogue& catalogue);
 
     void CreateEdges(EdgesData& edges, std::vector<TransportGraphData>&& data);
 
@@ -84,7 +84,7 @@ private:
 };
 
 template <typename It>
-inline std::vector<TransportGraphData> TransportGraph::CreateTransportGraphData(ranges::BusRange<It> bus_range, const TransportCatalogue& catalogue) {
+inline std::vector<TransportGraphData> TransportGraph::CreateTransportGraphData(const ranges::BusRange<It>& bus_range, const TransportCatalogue& catalogue) {
     const auto& stop_distances = catalogue.GetStops().GetDistances();
     const double bus_velocity = catalogue.GetBuses().GetRouteSettings().bus_velocity;
 
