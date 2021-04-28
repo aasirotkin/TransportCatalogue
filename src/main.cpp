@@ -94,10 +94,10 @@ int mainPlatform(int argc, const char** argv) {
 
     RequestHandlerProcess rhp(std::cin, std::cout);
     if (type == request_handler::ProgrammType::MAKE_BASE) {
-        rhp.MakeBase();
+        rhp.ExecuteMakeBaseRequests();
     }
     else if (type == request_handler::ProgrammType::PROCESS_REQUESTS) {
-        rhp.ProcessRequests();
+        rhp.ExecuteProcessRequests();
     }
     else {
         return 2;

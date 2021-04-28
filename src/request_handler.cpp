@@ -435,15 +435,15 @@ void RequestStatProcess(
 
 // ----------------------------------------------------------------------------
 
-void RequestHandlerProcess::OldTests() {
-    BaseProcess();
-    StatProcess();
+void RequestHandlerProcess::RunOldTests() {
+    ExecuteBaseProcess();
+    ExecuteStatProcess();
 }
 
-void RequestHandlerProcess::MakeBase() {
+void RequestHandlerProcess::ExecuteMakeBaseRequests() {
     using namespace std::literals;
 
-    BaseProcess();
+    ExecuteBaseProcess();
 
     handler_.InitRouter();
 
@@ -451,22 +451,22 @@ void RequestHandlerProcess::MakeBase() {
         reader_.SerializationSettings().at("file"sv)->AsString(),
         std::ofstream::out | std::ofstream::binary | std::ofstream::trunc);
 
-    transport_serialization::Serialization(out, handler_);
+    transport_serialization::Serialize(out, handler_);
 }
 
-void RequestHandlerProcess::ProcessRequests() {
+void RequestHandlerProcess::ExecuteProcessRequests() {
     using namespace std::literals;
 
     std::ifstream in(
         reader_.SerializationSettings().at("file"sv)->AsString(),
         std::ofstream::in | std::ofstream::binary);
 
-    transport_serialization::Deserialization(handler_, in);
+    transport_serialization::Deserialize(handler_, in);
 
-    StatProcess();
+    ExecuteStatProcess();
 }
 
-void RequestHandlerProcess::BaseProcess() {
+void RequestHandlerProcess::ExecuteBaseProcess() {
     {
         //LOG_DURATION("Stops"s);
         // Добавляемые остановки
@@ -506,7 +506,7 @@ void RequestHandlerProcess::BaseProcess() {
     }
 }
 
-void RequestHandlerProcess::StatProcess() {
+void RequestHandlerProcess::ExecuteStatProcess() {
     json::Builder builder;
 
     {

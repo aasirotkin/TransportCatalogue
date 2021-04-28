@@ -238,15 +238,15 @@ public:
         , handler_(catalogue_) {
         }
 
-    void OldTests();
+    void RunOldTests();
 
-    void MakeBase();
+    void ExecuteMakeBaseRequests();
 
-    void ProcessRequests();
+    void ExecuteProcessRequests();
 
 private:
-    void BaseProcess();
-    void StatProcess();
+    void ExecuteBaseProcess();
+    void ExecuteStatProcess();
 
 private:
     std::istream& input_;

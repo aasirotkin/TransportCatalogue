@@ -425,7 +425,7 @@ transport_graph::TransportRouter CreateRouter(const transport_graph::TransportGr
 
 // ----------------------------------------------------------------------------
 
-void Serialization(std::ofstream& out, const request_handler::RequestHandler& rh) {
+void Serialize(std::ofstream& out, const request_handler::RequestHandler& rh) {
     using namespace detail_serialization;
 
     transport_proto::TransportCatalogue tc;
@@ -456,7 +456,7 @@ void Serialization(std::ofstream& out, const request_handler::RequestHandler& rh
     tc.SerializeToOstream(&out);
 }
 
-void Deserialization(request_handler::RequestHandler& rh, std::ifstream& in) {
+void Deserialize(request_handler::RequestHandler& rh, std::ifstream& in) {
     using namespace detail_deserialization;
 
     transport_proto::TransportCatalogue tc;

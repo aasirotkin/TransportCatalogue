@@ -258,7 +258,7 @@ std::map<int, TestDataResult> TestFromFileInitData(const std::set<int>& ids) {
         if (file_name.front() == 'i') {
             std::stringstream output;
             request_handler::RequestHandlerProcess rhp(input, output);
-            rhp.OldTests();
+            rhp.RunOldTests();
             test_data[id].program = output.str();
             SAVE_FILE("output_program_"s + std::to_string(id) + ".txt"s, test_data[id].program);
         }
@@ -574,7 +574,7 @@ void TestTransportCatalogueMakeBase(std::string_view file_name) {
     std::stringstream out;
     LOAD_FILE(in, std::string(file_name));
     request_handler::RequestHandlerProcess rhp(in, out);
-    rhp.MakeBase();
+    rhp.ExecuteMakeBaseRequests();
 }
 
 void TestTransportCatalogueProcessRequests(std::string_view file_name) {
@@ -582,6 +582,6 @@ void TestTransportCatalogueProcessRequests(std::string_view file_name) {
     std::stringstream out;
     LOAD_FILE(in, std::string(file_name));
     request_handler::RequestHandlerProcess rhp(in, out);
-    rhp.ProcessRequests();
+    rhp.ExecuteProcessRequests();
     SAVE_FILE(std::string(file_name), out.str());
 }
