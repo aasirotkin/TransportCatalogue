@@ -3,4 +3,5 @@ build/
 tests/output*/
 .clang-tidy
 CMakeSettings.json
-
+out/
+tests/process_requests_output/

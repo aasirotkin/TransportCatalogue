@@ -19,8 +19,8 @@ using namespace std::literals;
 
 void SetOldTestFilePath() {
 #ifdef _WINDOWS_OS_
-    FilePathHelper::SetFilePathInput("C:\\Users\\aasir\\source\\repos\\aasirotkin\\TransportCatalogue\\tests\\input"s);
-    FilePathHelper::SetFilePathOutput("C:\\Users\\aasir\\source\\repos\\aasirotkin\\TransportCatalogue\\tests\\output"s);
+    FilePathHelper::SetFilePathInput("C:\\Users\\aasir\\source\\repos\\TransportCatalogue\\tests\\input"s);
+    FilePathHelper::SetFilePathOutput("C:\\Users\\aasir\\source\\repos\\TransportCatalogue\\tests\\output"s);
 #elif defined _LINUX_OS_
     FilePathHelper::SetFilePathInput("/home/aasirotkin/Projects/TransportCatalogue/tests/input"s);
     FilePathHelper::SetFilePathOutput("/home/aasirotkin/Projects/TransportCatalogue/tests/output"s);
@@ -29,7 +29,7 @@ void SetOldTestFilePath() {
 
 void SetMakeBaseFilePath() {
 #ifdef _WINDOWS_OS_
-    FilePathHelper::SetFilePathInput("C:\\Users\\aasir\\source\\repos\\aasirotkin\\TransportCatalogue\\tests\\make_base"s);
+    FilePathHelper::SetFilePathInput("C:\\Users\\aasir\\source\\repos\\TransportCatalogue\\tests\\make_base"s);
 #elif defined _LINUX_OS_
     FilePathHelper::SetFilePathInput("/home/aasirotkin/Projects/TransportCatalogue/tests/make_base"s);
 #endif
@@ -37,8 +37,8 @@ void SetMakeBaseFilePath() {
 
 void SetProcessRequestsFilePath() {
 #ifdef _WINDOWS_OS_
-    FilePathHelper::SetFilePathInput("C:\\Users\\aasir\\source\\repos\\aasirotkin\\TransportCatalogue\\tests\\process_requests"s);
-    FilePathHelper::SetFilePathOutput("C:\\Users\\aasir\\source\\repos\\aasirotkin\\TransportCatalogue\\tests\\process_requests_output"s);
+    FilePathHelper::SetFilePathInput("C:\\Users\\aasir\\source\\repos\\TransportCatalogue\\tests\\process_requests"s);
+    FilePathHelper::SetFilePathOutput("C:\\Users\\aasir\\source\\repos\\TransportCatalogue\\tests\\process_requests_output"s);
 #elif defined _LINUX_OS_
     FilePathHelper::SetFilePathInput("/home/aasirotkin/Projects/TransportCatalogue/tests/process_requests"s);
     FilePathHelper::SetFilePathOutput("/home/aasirotkin/Projects/TransportCatalogue/tests/process_requests_output"s);

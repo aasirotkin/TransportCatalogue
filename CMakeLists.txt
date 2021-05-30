@@ -15,7 +15,10 @@ find_package(Protobuf REQUIRED)
 find_package(Threads REQUIRED)
 
 # Execute protoc.
-protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS svg.proto map_renderer.proto graph.proto transport_router.proto transport_catalogue.proto)
+protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS
+                      proto/svg.proto proto/map_renderer.proto
+                      proto/graph.proto proto/transport_router.proto
+                      proto/transport_catalogue.proto)
 
 # If this property is set to ON, then the value of the CXX_STANDARD target property is treated as a requirement
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -55,4 +58,4 @@ message(STATUS "${MY_OS} is MY_OS value")
 message(STATUS "CMAKE_CXX_FLAGS is ${CMAKE_CXX_FLAGS}")
 
 # Adds -D define flags to the compilation of source files
-# add_definitions(-D_DEBUG -D${MY_OS} -D_SIROTKIN_HOME_TESTS_)
+add_definitions(-D_DEBUG -D${MY_OS} -D_SIROTKIN_HOME_TESTS_)
